@@ -8,7 +8,7 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// The available HTTP methods (verbs).
     /// </summary>
-    enum HTTPRequestMethod
+    public enum HTTPRequestMethod
     {
         GET, POST
     }

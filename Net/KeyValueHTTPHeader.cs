@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -10,7 +11,7 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public sealed class KeyValueHTTPHeader : BasicHTTPHeader
     {
-        private Dictionary<string, object> _values;
+        private ReadOnlyDictionary<string, object> _values;
 
         public KeyValueHTTPHeader(string fieldName, Dictionary<string, object> values)
             : base(
@@ -20,17 +21,17 @@ namespace SynapLink.Zener.Net
                     .ToString()
             ) 
         {
-            _values = values;
+            _values = (ReadOnlyDictionary<string, object>)(values as IDictionary<string, object>);
         }
 
         /// <summary>
         /// The key-value pairs stored within the header.
         /// </summary>
-        public Dictionary<string, object> Values
+        public ReadOnlyDictionary<string, object> Values
         {
             get
             {
-                return new Dictionary<string, object>(_values);
+                return new ReadOnlyDictionary<string, object>(_values);
             }
             internal set { _values = value; }
         }
@@ -41,7 +42,7 @@ namespace SynapLink.Zener.Net
         /// <param name="headerText">The full text of the header.</param>
         /// <returns>A KeyValueHTTPHeader equivalent to the provided string.</returns>
         /// <exception cref="System.ArgumentException"></exception>
-        public static KeyValueHTTPHeader Parse(string headerText)
+        public static new KeyValueHTTPHeader Parse(string headerText)
         {
             var basic = BasicHTTPHeader.Parse(headerText);
 
@@ -77,6 +78,11 @@ namespace SynapLink.Zener.Net
                         inString = false;
                         continue;
                     }
+                }
+                else if (c == '\n' || c == '\r')
+                {
+                    throw new ArgumentException
+                    ("Cannot have CR/LF in header.");
                 }
                 else
                 {
