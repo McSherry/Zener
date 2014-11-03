@@ -10,14 +10,37 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public sealed class KeyValueHTTPHeader : BasicHTTPHeader
     {
+        private Dictionary<string, object> _values;
+
         public KeyValueHTTPHeader(string fieldName, Dictionary<string, object> values)
             : base(
                 fieldName,
                 values
                     .Aggregate(new StringBuilder(), (b, o) => b.AppendFormat("{0}={1};", o.Key, o.Value))
                     .ToString()
-            ) { }
+            ) 
+        {
+            _values = values;
+        }
 
+        /// <summary>
+        /// The key-value pairs stored within the header.
+        /// </summary>
+        public Dictionary<string, object> Values
+        {
+            get
+            {
+                return new Dictionary<string, object>(_values);
+            }
+            internal set { _values = value; }
+        }
+
+        /// <summary>
+        /// Converts a string to a KeyValueHTTPHeader.
+        /// </summary>
+        /// <param name="headerText">The full text of the header.</param>
+        /// <returns>A KeyValueHTTPHeader equivalent to the provided string.</returns>
+        /// <exception cref="System.ArgumentException"></exception>
         public static KeyValueHTTPHeader Parse(string headerText)
         {
             var basic = BasicHTTPHeader.Parse(headerText);
@@ -36,7 +59,7 @@ namespace SynapLink.Zener.Net
                 else if (c == ';' && !inString)
                 {
                     inVal = false;
-                    dict.Add(fBuilder.ToString(), vBuilder.ToString());
+                    dict.Add(fBuilder.ToString().Trim(), vBuilder.ToString().Trim());
                     fBuilder.Clear();
                     vBuilder.Clear();
                 }

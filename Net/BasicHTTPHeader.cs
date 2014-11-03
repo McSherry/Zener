@@ -63,12 +63,12 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="headerText">The full text of the header.</param>
         /// <returns>A BasicHTTPHeader equivalent to the provided string.</returns>
+        /// <exception cref="System.ArgumentException"></exception>
         public static BasicHTTPHeader Parse(string headerText)
         {
             headerText = headerText.Trim(new[] { ' ', '\r', '\n' });
 
-            StringBuilder fieldBuilder = new StringBuilder(),
-                valueBuilder = new StringBuilder();
+            StringBuilder fieldBuilder = new StringBuilder();
 
             int i = 0;
             for (; i < headerText.Length;)
