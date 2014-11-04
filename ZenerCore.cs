@@ -4,7 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SynapLink.Zener.Server;
+using SynapLink.Zener.Net;
+using SynapLink.Zener.Core;
 
 namespace SynapLink.Zener
 {
@@ -18,6 +19,7 @@ namespace SynapLink.Zener
         private int _port;
         private string _webroot;
         private FileSystem _filesystem;
+        private HttpServer _http;
 
         /// <summary>
         /// Initialises the ZenerCore with the server on a random port, and attempts
@@ -38,11 +40,8 @@ namespace SynapLink.Zener
         /// <exception cref="System.ArgumentException"></exception>
         public ZenerCore(string webroot, int port, bool precache)
         {
-            if (port <= 1024 || port > 65535) throw new ArgumentException
-            ("Cannot bind to ports 1024 or under, or ports above 65535.");
-
             _webroot = webroot;
-            _port = port;
+            _http = new HttpServer(port);
             _filesystem = new FileSystem(this.WebRoot);
         }
 
@@ -58,7 +57,7 @@ namespace SynapLink.Zener
         /// </summary>
         public int Port
         {
-            get { return _port; }
+            get { return _http.Port; }
         }
     }
 }

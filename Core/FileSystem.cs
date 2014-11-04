@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace SynapLink.Zener.Server
+namespace SynapLink.Zener.Core
 {
     /// <summary>
     /// A class used to cache files in memory.
