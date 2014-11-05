@@ -63,8 +63,8 @@ namespace SynapLink.Zener.Net
                 // reached the end of the stream, and that there isn't
                 // a CRLF indicating the end of a line. In this instance,
                 // we return any bytes in the buffer. Any further calls to
-                // ReadNextLine() should return an empty byte[].
-                if (remLeng == 0) return buf;
+                // ReadNextLine() will return null.
+                if (remLeng == 0) return buf.Length == 0 ? null : buf;
 
                 // Since it's likely we'll be iterating, and likely
                 // that we'll be growing the buffer before the next
