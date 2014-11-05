@@ -8,7 +8,7 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// An interface providing a contract for HTTP headers.
     /// </summary>
-    public interface IHTTPHeader
+    public interface IHttpHeader
     {
         /// <summary>
         /// The field or header name (e.g. Content-Type).

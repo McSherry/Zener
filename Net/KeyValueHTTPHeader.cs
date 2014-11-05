@@ -9,11 +9,11 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// Implements an HTTP header with key-value pairs as its value.
     /// </summary>
-    public sealed class KeyValueHTTPHeader : BasicHTTPHeader
+    public sealed class KeyValueHttpHeader : BasicHttpHeader
     {
         private ReadOnlyDictionary<string, object> _values;
 
-        public KeyValueHTTPHeader(string fieldName, Dictionary<string, object> values)
+        public KeyValueHttpHeader(string fieldName, Dictionary<string, object> values)
             : base(
                 fieldName,
                 values
@@ -42,9 +42,9 @@ namespace SynapLink.Zener.Net
         /// <param name="headerText">The full text of the header.</param>
         /// <returns>A KeyValueHTTPHeader equivalent to the provided string.</returns>
         /// <exception cref="System.ArgumentException"></exception>
-        public static new KeyValueHTTPHeader Parse(string headerText)
+        public static new KeyValueHttpHeader Parse(string headerText)
         {
-            var basic = BasicHTTPHeader.Parse(headerText);
+            var basic = BasicHttpHeader.Parse(headerText);
 
             StringBuilder fBuilder = new StringBuilder(),
                 vBuilder = new StringBuilder();
@@ -91,7 +91,7 @@ namespace SynapLink.Zener.Net
                 }
             }
 
-            return new KeyValueHTTPHeader(basic.Field, dict);
+            return new KeyValueHttpHeader(basic.Field, dict);
         }
     }
 }

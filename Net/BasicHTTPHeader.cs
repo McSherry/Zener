@@ -8,7 +8,7 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// Implements a basic HTTP header.
     /// </summary>
-    public class BasicHTTPHeader : IHTTPHeader
+    public class BasicHttpHeader : IHttpHeader
     {
         /// <summary>
         /// Creates a new basic HTTP header.
@@ -16,7 +16,7 @@ namespace SynapLink.Zener.Net
         /// <param name="fieldName">The header/field name (e.g. Content-Type).</param>
         /// <param name="value">The value of the header/field (e.g. text/html).</param>
         /// <exception cref="System.ArgumentException"></exception>
-        public BasicHTTPHeader(string fieldName, string value)
+        public BasicHttpHeader(string fieldName, string value)
         {
             fieldName = fieldName.Trim();
             value = value.Trim();
@@ -64,7 +64,7 @@ namespace SynapLink.Zener.Net
         /// <param name="headerText">The full text of the header.</param>
         /// <returns>A BasicHTTPHeader equivalent to the provided string.</returns>
         /// <exception cref="System.ArgumentException"></exception>
-        public static BasicHTTPHeader Parse(string headerText)
+        public static BasicHttpHeader Parse(string headerText)
         {
             headerText = headerText.Trim(new[] { ' ', '\r', '\n' });
 
@@ -77,7 +77,7 @@ namespace SynapLink.Zener.Net
                 fieldBuilder.Append(headerText[i++]);
             }
 
-            return new BasicHTTPHeader(fieldBuilder.ToString(), headerText.Substring(i));
+            return new BasicHttpHeader(fieldBuilder.ToString(), headerText.Substring(i));
         }
     }
 }
