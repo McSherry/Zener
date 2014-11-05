@@ -10,6 +10,7 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class BasicHttpHeader : IHttpHeader
     {
+
         /// <summary>
         /// Creates a new basic HTTP header.
         /// </summary>
@@ -57,6 +58,13 @@ namespace SynapLink.Zener.Net
         /// The value of the field/header, as a string.
         /// </summary>
         public virtual string Value { get; internal set; }
+
+        public override string ToString()
+        {
+            return new StringBuilder()
+                .AppendFormat("{0}: {1}", this.Field, this.Value)
+                    .ToString();
+        }
 
         /// <summary>
         /// Converts a string to a BasicHTTPHeader.

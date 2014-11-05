@@ -8,11 +8,14 @@ using System.IO;
 namespace SynapLink.Zener.Net
 {
     /// <summary>
-    /// The available HTTP methods (verbs).
+    /// Thrown when there is an issue with a request.
     /// </summary>
-    public enum HTTPRequestMethod
+    sealed class HttpRequestException : Exception
     {
-        GET, POST
+        public HttpRequestException() : base() { }
+        public HttpRequestException(string message) : base(message) { }
+        public HttpRequestException(string message, Exception innerException)
+            : base(message, innerException) { }
     }
 
     /// <summary>
@@ -21,8 +24,8 @@ namespace SynapLink.Zener.Net
     public class HttpRequest
     {
         private List<IHttpHeader> _headers;
-        private List<string> _post, _get;
-        private string _raw;
+        private NameValueCollection _post, _get;
+        private byte[] _raw;
         private ASCIIEncoding _ascii;
 
         /// <summary>
@@ -48,13 +51,6 @@ namespace SynapLink.Zener.Net
                 // we return any bytes in the buffer. Any further calls to
                 // ReadNextLine() will return null.
                 if (remLeng == 0) return buf.Length == 0 ? null : buf;
-
-                // Since it's likely we'll be iterating, and likely
-                // that we'll be growing the buffer before the next
-                // iteration, we'll use the (new) buffer size and the
-                // offset to find out how many new bytes we need to
-                // read in to the buffer.
-                ms.Read(buf, offset, buf.Length - offset);
 
                 // If offset is greater than zero at this point, it means
                 // that we've performed at least a single iteration, and that
