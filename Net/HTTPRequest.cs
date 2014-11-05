@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -63,7 +64,21 @@ namespace SynapLink.Zener.Net
                 // offset as-is could mean a CRLF is missed. By decrementing the
                 // offset, we won't miss any CRLFs that were split across stream
                 // reads.
-                if (offset > 0) --offset;
+                if (offset > 0)
+                {
+                    // Since it's likely we'll be iterating, and likely
+                    // that we'll be growing the buffer before the next
+                    // iteration, we'll use the (new) buffer size and the
+                    // offset to find out how many new bytes we need to
+                    // read in to the buffer.
+                    ms.Read(buf, offset + 1, buf.Length - offset - 1);
+
+                    --offset;
+                }
+                else
+                {
+                    ms.Read(buf, offset, buf.Length - offset);
+                }
 
                 // Since we're going through the buffer byte-by-byte,
                 // and since we're checking two bytes, we need to make
@@ -135,19 +150,128 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
+        /// Parses the HTTP Request Line and sets the appropriate properties
+        /// based on its values.
+        /// </summary>
+        /// <param name="reqestLine"></param>
+        private void SetPropertiesFromRequestLine(string requestLine)
+        {
+            // The sections of the request line can always be split using
+            // spaces. It's in the spec, not lazy parsing.
+            string[] rlArray = requestLine.Split(' ');
+
+            if (rlArray.Length != 3) throw new HttpRequestException
+            ("HTTP request line is malformed.");
+
+            var pathBuilder = new StringBuilder();
+            int strIndex = 0;
+            foreach (char c in rlArray[1])
+            {
+                if (c == '?') break;
+                pathBuilder.Append(c);
+                ++strIndex;
+            }
+            // Cut off any trailing forward-slashes.
+            if (pathBuilder[pathBuilder.Length - 1] == '/')
+            {
+                pathBuilder.Remove(pathBuilder.Length - 1, 1);
+            }
+            this.Path = pathBuilder.ToString();
+
+            // We increment the index so that we're ahead of any
+            // question mark indicating the start of the query string.
+            // If we're at the end of the string, this will evaluate
+            // to false.
+            if (++strIndex < requestLine.Length)
+            {
+                pathBuilder.Clear();
+                string qstring = rlArray[1].Substring(strIndex);
+                string section = String.Empty;
+                bool inVal = false;
+
+                foreach (char c in qstring)
+                {
+                    if (!inVal && c == '=')
+                    {
+                        inVal = true;
+                        section = pathBuilder.ToString();
+                        pathBuilder.Clear();
+                    }
+                    else if (inVal && c == '&')
+                    {
+                        this.GET.Add(section, pathBuilder.ToString());
+                        pathBuilder.Clear();
+                        inVal = false;
+                    }
+                    else
+                    {
+                        pathBuilder.Append(c);
+                    }
+                }
+
+                this.GET.Add(section, pathBuilder.ToString());
+            }
+
+            this.HttpVersion = rlArray[2];
+        }
+
+        /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
         /// request.
         /// </summary>
         /// <param name="requestStream">The stream of data containing the request.</param>
-        internal HttpRequest(MemoryStream requestStream) 
+        /// <param name="requestStatus">Set to true if request parsing failed.</param>
+        internal HttpRequest(MemoryStream requestStream, out bool requestFailed) 
         {
             _ascii = new ASCIIEncoding();
+            this.GET = new NameValueCollection();
+            this.POST = new NameValueCollection();
+            // If the request does fail, this will be overwritten anyway.
+            requestFailed = false;
+
+            // If any of this throws an HttpRequestException, we can be sure that
+            // the request is malformed (well, as long as the HTTP server is really
+            // compliant).
+            try
+            {
+                this.SetPropertiesFromRequestLine(
+                    _ascii
+                        .GetString(
+                            ReadNextLine(
+                                requestStream
+                )));
+            }
+            catch (HttpRequestException)
+            {
+                requestFailed = true;
+            }
         }
 
         /// <summary>
         /// The HTTP method/verb used with the request.
         /// </summary>
-        public HTTPRequestMethod Method { get; private set; }
+        public string Method
+        {
+            get;
+            private set;
+        }
+        /// <summary>
+        /// The path requested by the HTTP user agent, sans any query
+        /// string parameters.
+        /// </summary>
+        public string Path
+        {
+            get;
+            private set;
+        }
+        /// <summary>
+        /// The HTTP version requested by the user agent.
+        /// </summary>
+        public string HttpVersion
+        {
+            get;
+            private set;
+        }
         /// <summary>
         /// The HTTP headers sent with the request.
         /// </summary>
@@ -159,23 +283,23 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// All POST parameters sent with the request.
         /// </summary>
-        public List<string> POST
+        public NameValueCollection POST
         {
-            get { return new List<string>(_post); }
+            get { return _post; }
             private set { _post = value; }
         }
         /// <summary>
         /// All GET (query string) parameters send with the request.
         /// </summary>
-        public List<string> GET
+        public NameValueCollection GET
         {
-            get { return new List<string>(_get); }
+            get { return _get; }
             private set { _get = value; }
         }
         /// <summary>
         /// The raw request received from the client.
         /// </summary>
-        public string Raw
+        public byte[] Raw
         {
             get { return _raw; }
             private set { _raw = value; }
