@@ -10,7 +10,8 @@ using System.IO;
 
 namespace SynapLink.Zener.Net
 {
-    public delegate HttpResponse HTTPRequestHandler(HttpRequest request);
+    public delegate HttpResponse HttpRequestHandler(HttpRequest request);
+    public delegate HttpResponse HttpErrorHandler(int statusCode);
 
     /// <summary>
     /// A class implementing a basic HTTP server.
