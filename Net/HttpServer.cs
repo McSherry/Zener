@@ -74,9 +74,10 @@ namespace SynapLink.Zener.Net
 
             bool requestFailed;
 
+            HttpRequest req;
             using (StreamReader sr = new StreamReader(ms))
             {
-                var request = new HttpRequest(sr, out requestFailed);
+                req = new HttpRequest(sr, out requestFailed);
             }
 
             if (requestFailed && this.ErrorHandler != null)
@@ -103,7 +104,7 @@ namespace SynapLink.Zener.Net
             // and using 'localhost' seems to add 300ms or so to response times.
             _listener = new TcpListener(IPAddress.Loopback, this.Port);
             _listenThread = new Thread(TcpAcceptor);
-            ThreadPool.SetMinThreads(10, 10);
+            ThreadPool.SetMinThreads(30, 30);
         }
 
         /// <summary>
