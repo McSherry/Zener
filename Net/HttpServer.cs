@@ -52,8 +52,32 @@ namespace SynapLink.Zener.Net
             {
                 buf.Add((byte)ns.ReadByte());
             }
+
+            if (buf.Count == 0)
+            {
+                // We've been sent an empty request. Close the connection
+                // and stop handling it.
+                tcl.Close();
+                return;
+            }
+
             ms.Write(buf.ToArray(), 0, buf.Count);
-            ms.Seek(0, SeekOrigin.Begin);
+            ms.Position = 0;
+
+            bool requestFailed;
+
+            using (StreamReader sr = new StreamReader(ms))
+            {
+                var request = new HttpRequest(sr, out requestFailed);
+            }
+
+            if (requestFailed && this.ErrorHandler != null)
+            {
+                // requestFailed being true indicates that parsing the
+                // request failed. This means that the request was malformed,
+                // and so we can use our status code 400 (Bad Request) handler.
+                this.ErrorHandler(400);
+            }
 
             tcl.Close();
         }
@@ -100,8 +124,22 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// An event for when the server receives an HTTP request.
+        /// The method called when the server receives a request.
         /// </summary>
-        public event HTTPRequestHandler RequestReceived;
+        public HttpRequestHandler RequestHandler
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// The method called when there is an error related to the
+        /// server's HTTP functions (i.e. a request error). It is
+        /// passed the HTTP status code of the error.
+        /// </summary>
+        public HttpErrorHandler ErrorHandler
+        {
+            get;
+            set;
+        }
     }
 }

@@ -85,7 +85,7 @@ namespace SynapLink.Zener.Net
                 fieldBuilder.Append(headerText[i++]);
             }
 
-            return new BasicHttpHeader(fieldBuilder.ToString(), headerText.Substring(i));
+            return new BasicHttpHeader(fieldBuilder.ToString(), headerText.Substring(++i));
         }
     }
 }
