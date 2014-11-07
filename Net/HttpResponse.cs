@@ -363,6 +363,48 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
+        /// Sets a header from a string, overwriting any previous headers
+        /// with the same field name.
+        /// </summary>
+        /// <param name="header">The header to add to the response.</param>
+        /// <exception cref="System.ArgumentException"></exception>
+        public void SetHeader(string header)
+        {
+            this._CheckClosed();
+            if (_beginRespond) throw new InvalidOperationException
+            ("Cannot set headers after response body has been written to.");
+
+            this.SetHeader(BasicHttpHeader.Parse(header), true);
+        }
+        /// <summary>
+        /// Sets a header from a string, optionally overwriting
+        /// previous headers with the same field name.
+        /// </summary>
+        /// <param name="header">The header to add to the response.</param>
+        /// <param name="overwrite">Whether to overwrite headers with</param>
+        /// <exception cref="System.ArgumentException"></exception>
+        public void SetHeader(string header, bool overwrite)
+        {
+            this._CheckClosed();
+            if (_beginRespond) throw new InvalidOperationException
+            ("Cannot set headers after response body has been written to.");
+
+            this.SetHeader(BasicHttpHeader.Parse(header), overwrite);
+        }
+        /// <summary>
+        /// Sets a header from a BasicHttpHeader object, overwriting any
+        /// previous headers with the same field name.
+        /// </summary>
+        /// <param name="header">The header to add to the response.</param>
+        public void SetHeader(BasicHttpHeader header)
+        {
+            this._CheckClosed();
+            if (_beginRespond) throw new InvalidOperationException
+            ("Cannot set headers after response body has been written to.");
+
+            this.SetHeader(header, true);
+        }
+        /// <summary>
         /// Adds a header to the HTTP response.
         /// </summary>
         /// <param name="header">The header to add.</param>
