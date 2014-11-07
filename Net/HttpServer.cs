@@ -25,6 +25,8 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpServer
     {
+        internal const string HTTP_VERSION = "1.1";
+
         private TcpListener _listener;
         private Thread _listenThread;
         private int _port;
@@ -79,13 +81,14 @@ namespace SynapLink.Zener.Net
             {
                 req = new HttpRequest(sr, out requestFailed);
             }
+            HttpResponse res = new HttpResponse(tcl);
 
             if (requestFailed && this.ErrorHandler != null)
             {
                 // requestFailed being true indicates that parsing the
                 // request failed. This means that the request was malformed,
                 // and so we can use our status code 400 (Bad Request) handler.
-                this.ErrorHandler(400);
+                this.ErrorHandler(400, res);
             }
 
             tcl.Close();

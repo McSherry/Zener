@@ -15,9 +15,8 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// Implements a basic HTTP header.
     /// </summary>
-    public class BasicHttpHeader : IHttpHeader
+    public class BasicHttpHeader
     {
-
         /// <summary>
         /// Creates a new basic HTTP header.
         /// </summary>
@@ -60,11 +59,11 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The field or header name (e.g. Content-Type).
         /// </summary>
-        public virtual string Field { get; internal set; }
+        public virtual string Field { get; private set; }
         /// <summary>
         /// The value of the field/header, as a string.
         /// </summary>
-        public virtual string Value { get; internal set; }
+        public virtual string Value { get; private set; }
 
         public override string ToString()
         {
