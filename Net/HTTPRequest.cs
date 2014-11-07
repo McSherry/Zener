@@ -30,7 +30,7 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpRequest
     {
-        private List<IHttpHeader> _headers;
+        private List<BasicHttpHeader> _headers;
         private NameValueCollection _post, _get;
         private byte[] _raw;
         private ASCIIEncoding _ascii;
@@ -181,7 +181,7 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The HTTP headers sent with the request.
         /// </summary>
-        public List<IHttpHeader> Headers
+        public List<BasicHttpHeader> Headers
         {
             get { return new List<IHttpHeader>(_headers); }
             private set { _headers = value; }
