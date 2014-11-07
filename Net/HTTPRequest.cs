@@ -143,7 +143,7 @@ namespace SynapLink.Zener.Net
             }
             // BasicHttpHeader throws an argument exception when there's an
             // issue with parsing.
-            catch (ArgumentException ex)
+            catch (ArgumentException)
             {
                 requestFailed = true;
             }
