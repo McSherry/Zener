@@ -183,7 +183,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public List<BasicHttpHeader> Headers
         {
-            get { return new List<IHttpHeader>(_headers); }
+            get { return new List<BasicHttpHeader>(_headers); }
             private set { _headers = value; }
         }
         /// <summary>
