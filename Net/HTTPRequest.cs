@@ -117,7 +117,7 @@ namespace SynapLink.Zener.Net
             _ascii = new ASCIIEncoding();
             this.GET = new NameValueCollection();
             this.POST = new NameValueCollection();
-            this.Headers = new List<IHttpHeader>();
+            this.Headers = new List<BasicHttpHeader>();
             // If the request does fail, this will be overwritten anyway.
             requestFailed = false;
 

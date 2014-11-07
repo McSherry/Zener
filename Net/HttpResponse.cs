@@ -294,7 +294,44 @@ namespace SynapLink.Zener.Net
         // Set to true when the first write is made. When this is
         // true, it indicates that the response headers have been
         // sent to the client.
-        private bool _beginRespond;
+        private bool _beginRespond, _closed;
+
+        /// <summary>
+        /// Writes the headers to the StreamWriter if they have not
+        /// already been written.
+        /// </summary>
+        private void _ConditionalWriteHeaders()
+        {
+            if (!_beginRespond)
+            {
+                _beginRespond = true;
+
+                _nsw.WriteLine(
+                    "HTTP/{0} {1} {2}",
+                        HttpServer.HTTP_VERSION, (int)this.StatusCode,
+                        STAT_MSGS[this.StatusCode]
+                );
+
+                foreach (var header in this._headers)
+                {
+                    _nsw.WriteLine(header.ToString());
+                }
+
+                // The end of the header block is indicated by using two CRLFs,
+                // so we need to write an extra one to our stream before the
+                // body can be sent.
+                _nsw.WriteLine();
+            }
+        }
+        /// <summary>
+        /// Checks if the connection between client and server has
+        /// been closed, and throws an exception if it has.
+        /// </summary>
+        private void _CheckClosed()
+        {
+            if (_closed) throw new InvalidOperationException
+            ("Cannot modify the response after the connection has been closed.");
+        }
 
         internal HttpResponse(TcpClient tcl)
         {
@@ -302,6 +339,8 @@ namespace SynapLink.Zener.Net
             _tcl = tcl;
             _nsw = new StreamWriter(tcl.GetStream());
             _headers = new List<BasicHttpHeader>();
+            _beginRespond = false;
+            _closed = false;
         }
 
         /// <summary>
@@ -314,16 +353,10 @@ namespace SynapLink.Zener.Net
             get { return _httpStatus; }
             set
             {
+                this._CheckClosed();
+
                 if (_beginRespond) throw new InvalidOperationException
                 ("Cannot modify status code after the response body has been written to.");
-
-                if (value.Item1 > 0 && value.Item1 < 1000)
-                    throw new ArgumentException
-                    ("Invalid HTTP status code provided.");
-
-                if (value.Item2.Any(c => c == '\r' || c == '\n'))
-                    throw new ArgumentException
-                    ("HTTP status message cannot contain CRLF.");
 
                 _httpStatus = value;
             }
@@ -337,6 +370,8 @@ namespace SynapLink.Zener.Net
         /// <exception cref="System.InvalidOperationException"></exception>
         public void SetHeader(BasicHttpHeader header, bool overwrite)
         {
+            this._CheckClosed();
+
             if (_beginRespond) throw new InvalidOperationException
             ("Cannot set headers after response body has been written to.");
 
@@ -346,6 +381,88 @@ namespace SynapLink.Zener.Net
             }
 
             _headers.Add(header);
+        }
+        /// <summary>
+        /// Writes the provided strings to the response body.
+        /// </summary>
+        /// <param name="content">The strings to write.</param>
+        public void Write(params string[] content)
+        {
+            this._CheckClosed();
+
+            this._ConditionalWriteHeaders();
+
+            foreach (var s in content)
+            {
+                _nsw.Write(s);
+            }
+        }
+        /// <summary>
+        /// Writes the provided bytes to the response body.
+        /// </summary>
+        /// <param name="content">The bytes to write.</param>
+        public void Write(params byte[] content)
+        {
+            this._CheckClosed();
+            this._ConditionalWriteHeaders();
+
+            foreach (var b in content)
+            {
+                _nsw.Write(b);
+            }
+        }
+        /// <summary>
+        /// Writes the provided string with the inserts added.
+        /// </summary>
+        /// <param name="format">The format to write the string in.</param>
+        /// <param name="inserts">The content to insert in to the format.</param>
+        public void Write(string format, params object[] inserts)
+        {
+            this._CheckClosed();
+            this._ConditionalWriteHeaders();
+
+            _nsw.Write(format, inserts);
+        }
+        /// <summary>
+        /// Writes an empty line to the response body.
+        /// </summary>
+        public void WriteLine()
+        {
+            this._CheckClosed();
+            this._ConditionalWriteHeaders();
+
+            _nsw.WriteLine();
+        }
+        /// <summary>
+        /// Writes the provided line to the response body.
+        /// </summary>
+        /// <param name="line">The line to write.</param>
+        public void WriteLine(string line)
+        {
+            this._CheckClosed();
+            this._ConditionalWriteHeaders();
+
+            _nsw.WriteLine(line);
+        }
+        /// <summary>
+        /// Writes the line given in the format to the response body,
+        /// with inserts added where specified.
+        /// </summary>
+        /// <param name="format">The format to write to the response body.</param>
+        /// <param name="inserts">The items to insert in to the format.</param>
+        public void WriteLine(string format, params object[] inserts)
+        {
+            this._CheckClosed();
+            this._ConditionalWriteHeaders();
+
+            _nsw.WriteLine(format, inserts);
+        }
+        /// <summary>
+        /// Closes the connection between the server and the client.
+        /// </summary>
+        public void Close()
+        {
+            _tcl.Close();
         }
     }
 }
