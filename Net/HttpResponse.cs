@@ -287,10 +287,10 @@ namespace SynapLink.Zener.Net
                 { (HttpStatus)505, "HTTP Version not supported" }
             };
 
-        UTF8Encoding _utf;
-        private int _httpStatus;
-        private List<IHttpHeader> _headers;
+        private HttpStatus _httpStatus;
+        private List<BasicHttpHeader> _headers;
         private TcpClient _tcl;
+        private StreamWriter _nsw;
         // Set to true when the first write is made. When this is
         // true, it indicates that the response headers have been
         // sent to the client.
@@ -298,9 +298,10 @@ namespace SynapLink.Zener.Net
 
         internal HttpResponse(TcpClient tcl)
         {
-            this.StatusCode = new Tuple<int, string>(200, "OK");
+            this.StatusCode = HttpStatus.OK;
             _tcl = tcl;
-            _headers = new List<IHttpHeader>();
+            _nsw = new StreamWriter(tcl.GetStream());
+            _headers = new List<BasicHttpHeader>();
         }
 
         /// <summary>
@@ -308,7 +309,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <exception cref="System.ArgumentException"></exception>
         /// <exception cref="System.InvalidOperationException"></exception>
-        public Tuple<int, string> StatusCode
+        public HttpStatus StatusCode
         {
             get { return _httpStatus; }
             set
@@ -334,7 +335,7 @@ namespace SynapLink.Zener.Net
         /// <param name="header">The header to add.</param>
         /// <param name="overwrite">Whether to overwrite any previous headers with the same field name.</param>
         /// <exception cref="System.InvalidOperationException"></exception>
-        public void SetHeader(IHttpHeader header, bool overwrite)
+        public void SetHeader(BasicHttpHeader header, bool overwrite)
         {
             if (_beginRespond) throw new InvalidOperationException
             ("Cannot set headers after response body has been written to.");
