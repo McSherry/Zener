@@ -309,9 +309,11 @@ namespace SynapLink.Zener.Net
                 // to be serving?
                 if (!this.HasHeader("Content-Type"))
                 {
-                    this.SetHeader("Content-Type: text/html");
+                    this.SetHeader("Content-Type", "text/html");
                 }
 
+                // Response line
+                // e.g. "HTTP/1.1 404 Not Found"
                 _nsw.WriteLine(
                     "HTTP/{0} {1} {2}",
                         HttpServer.HTTP_VERSION, (int)this.StatusCode,

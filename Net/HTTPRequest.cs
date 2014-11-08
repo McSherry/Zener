@@ -205,7 +205,7 @@ namespace SynapLink.Zener.Net
             private set { _get = value; }
         }
         /// <summary>
-        /// The raw request received from the client.
+        /// The raw request body received from the client.
         /// </summary>
         public string Raw
         {
