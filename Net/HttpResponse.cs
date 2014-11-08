@@ -304,8 +304,6 @@ namespace SynapLink.Zener.Net
         {
             if (!_beginRespond)
             {
-                _beginRespond = true;
-
                 // Ensures that the content is transferred with a media type.
                 // Defaults to HTML, since what else is an HTTP server most likely
                 // to be serving?
@@ -325,10 +323,17 @@ namespace SynapLink.Zener.Net
                     _nsw.WriteLine(header.ToString());
                 }
 
+                if (!this.HasHeader("Server"))
+                {
+                    this.SetHeader("Server", "Zener/" + Zener.Version.ToString(3), true);
+                }
+
                 // The end of the header block is indicated by using two CRLFs,
                 // so we need to write an extra one to our stream before the
                 // body can be sent.
                 _nsw.WriteLine();
+
+                _beginRespond = true;
             }
         }
         /// <summary>
