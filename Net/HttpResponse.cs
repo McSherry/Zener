@@ -436,6 +436,27 @@ namespace SynapLink.Zener.Net
             _headers.Add(header);
         }
         /// <summary>
+        /// Determines whether at least one header with the specified field name
+        /// exists within this response.
+        /// </summary>
+        /// <param name="fieldName">The field name to check for.</param>
+        /// <returns>True if at least one header with the specified field name exists.</returns>
+        public bool HasHeader(string fieldName)
+        {
+            return _headers.Any(h => h.Field.ToLower() == fieldName.ToLower());
+        }
+        /// <summary>
+        /// Determines whether at least one header with the specified field name
+        /// exists within this response.
+        /// </summary>
+        /// <param name="fieldName">The field name to check for.</param>
+        /// <param name="count">The number of headers with this field present, if any.</param>
+        /// <returns>True if at least one header with the specified field name exists.</returns>
+        public bool HasHeader(string fieldName, out int count)
+        {
+            return (count = _headers.Count(h => h.Field.ToLower() == fieldName.ToLower())) > 0;
+        }
+        /// <summary>
         /// Writes the provided strings to the response body.
         /// </summary>
         /// <param name="content">The strings to write.</param>
