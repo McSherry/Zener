@@ -415,6 +415,30 @@ namespace SynapLink.Zener.Net
             this.SetHeader(BasicHttpHeader.Parse(header), overwrite);
         }
         /// <summary>
+        /// Sets a header from a field name and value, overwriting any
+        /// previous headers with the same field name.
+        /// </summary>
+        /// <param name="fieldName">The field name to write.</param>
+        /// <param name="value">The value to write.</param>
+        public void SetHeader(string fieldName, string value)
+        {
+            this.SetHeader(fieldName, value, true);
+        }
+        /// <summary>
+        /// Sets a header from a field name and value, optionally 
+        /// overwriting any previous headers with the same field name.
+        /// </summary>
+        /// <param name="fieldName">The field name to write.</param>
+        /// <param name="value">The value to write.</param>
+        public void SetHeader(string fieldName, string value, bool overwrite)
+        {
+            this._CheckClosed();
+            if (_beginRespond) throw new InvalidOperationException
+            ("Cannot set headers after response body has been written to.");
+
+            this.SetHeader(new BasicHttpHeader(fieldName, value), overwrite);
+        }
+        /// <summary>
         /// Sets a header from a BasicHttpHeader object, overwriting any
         /// previous headers with the same field name.
         /// </summary>
