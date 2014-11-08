@@ -90,8 +90,18 @@ namespace SynapLink.Zener.Net
                 // and so we can use our status code 400 (Bad Request) handler.
                 this.ErrorHandler(400, res);
             }
+            else if (this.RequestHandler != null)
+            {
+                this.RequestHandler(req, res);
+            }
 
+            // These calls shouldn't throw an exception, so we'll be fine to
+            // call them without checking to see if they've already been called.
+            ns.Close();
+            ns.Dispose();
             tcl.Close();
+            ms.Close();
+            ms.Dispose();
         }
 
         /// <summary>

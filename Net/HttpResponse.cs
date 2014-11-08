@@ -333,6 +333,17 @@ namespace SynapLink.Zener.Net
             ("Cannot modify the response after the connection has been closed.");
         }
 
+        /// <summary>
+        /// Retrieves the HTTP status message for the provided status
+        /// code.
+        /// </summary>
+        /// <param name="status">The status code to retrieve the message for.</param>
+        /// <returns>The status message associated with the status code (e.g. 200 = "OK").</returns>
+        public static string GetStatusMessage(HttpStatus status)
+        {
+            return STAT_MSGS[status];
+        }
+
         internal HttpResponse(TcpClient tcl)
         {
             this.StatusCode = HttpStatus.OK;
