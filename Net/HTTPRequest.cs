@@ -32,7 +32,7 @@ namespace SynapLink.Zener.Net
     {
         private List<BasicHttpHeader> _headers;
         private NameValueCollection _post, _get;
-        private byte[] _raw;
+        private string _raw;
         private ASCIIEncoding _ascii;
 
         /// <summary>
@@ -140,6 +140,8 @@ namespace SynapLink.Zener.Net
 
                     _headers.Add(BasicHttpHeader.Parse(line));
                 }
+
+                _raw = requestStream.ReadToEnd();
             }
             // BasicHttpHeader throws an argument exception when there's an
             // issue with parsing.
@@ -205,7 +207,7 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The raw request received from the client.
         /// </summary>
-        public byte[] Raw
+        public string Raw
         {
             get { return _raw; }
             private set { _raw = value; }

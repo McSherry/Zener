@@ -306,6 +306,14 @@ namespace SynapLink.Zener.Net
             {
                 _beginRespond = true;
 
+                // Ensures that the content is transferred with a media type.
+                // Defaults to HTML, since what else is an HTTP server most likely
+                // to be serving?
+                if (!this.HasHeader("Content-Type"))
+                {
+                    this.SetHeader("Content-Type: text/html");
+                }
+
                 _nsw.WriteLine(
                     "HTTP/{0} {1} {2}",
                         HttpServer.HTTP_VERSION, (int)this.StatusCode,
@@ -348,7 +356,11 @@ namespace SynapLink.Zener.Net
         {
             this.StatusCode = HttpStatus.OK;
             _tcl = tcl;
-            _nsw = new StreamWriter(tcl.GetStream());
+            _nsw = new StreamWriter(tcl.GetStream())
+            {
+                AutoFlush = true,
+                NewLine = "\r\n"
+            };
             _headers = new List<BasicHttpHeader>();
             _beginRespond = false;
             _closed = false;
