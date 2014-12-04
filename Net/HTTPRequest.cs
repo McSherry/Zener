@@ -17,7 +17,7 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// Thrown when there is an issue with a request.
     /// </summary>
-    sealed class HttpRequestException : Exception
+    public sealed class HttpRequestException : Exception
     {
         public HttpRequestException() : base() { }
         public HttpRequestException(string message) : base(message) { }
@@ -31,7 +31,8 @@ namespace SynapLink.Zener.Net
     public class HttpRequest
     {
         private List<BasicHttpHeader> _headers;
-        private NameValueCollection _post, _get;
+        private NameValueCollection _get;
+        private readonly Lazy<NameValueCollection> _post;
         private string _raw;
         private ASCIIEncoding _ascii;
 
@@ -105,6 +106,24 @@ namespace SynapLink.Zener.Net
 
             this.HttpVersion = rlArray[2];
         }
+        /// <summary>
+        /// Parses the HTTP request body, assuming that it is in the
+        /// application/x-www-formurlencoded format.
+        /// </summary>
+        /// <param name="requestBody">The HTTP request body.</param>
+        private void ParseFormUrlEncoded(string requestBody)
+        {
+
+        }
+        /// <summary>
+        /// Parses the HTTP request body, assuming that it is in the
+        /// multipart/form-data format.
+        /// </summary>
+        /// <param name="requestBody">The HTTP request body.</param>
+        private void ParseMultipartFormData(string requestBody)
+        {
+
+        }
 
         /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
@@ -116,7 +135,6 @@ namespace SynapLink.Zener.Net
         {
             _ascii = new ASCIIEncoding();
             this.GET = new NameValueCollection();
-            this.POST = new NameValueCollection();
             this.Headers = new List<BasicHttpHeader>();
             // If the request does fail, this will be overwritten anyway.
             requestFailed = false;
@@ -153,6 +171,8 @@ namespace SynapLink.Zener.Net
             {
                 requestFailed = true;
             }
+
+            
         }
 
         /// <summary>
@@ -193,8 +213,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public NameValueCollection POST
         {
-            get { return _post; }
-            private set { _post = value; }
+            get { return _post.Value; }
         }
         /// <summary>
         /// All GET (query string) parameters send with the request.
