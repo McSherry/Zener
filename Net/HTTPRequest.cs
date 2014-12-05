@@ -107,22 +107,71 @@ namespace SynapLink.Zener.Net
             this.HttpVersion = rlArray[2];
         }
         /// <summary>
-        /// Parses the HTTP request body, assuming that it is in the
+        /// Parses the provided string, assuming that it is in the
         /// application/x-www-formurlencoded format.
         /// </summary>
-        /// <param name="requestBody">The HTTP request body.</param>
-        private void ParseFormUrlEncoded(string requestBody)
+        /// <param name="formatBody">The string to parse.</param>
+        private static dynamic ParseFormUrlEncoded(string formatBody)
         {
+            var dynObj = new ExpandoObject() as IDictionary<string, object>;
 
+            var qBuilder = new StringBuilder();
+
+            string section = String.Empty;
+            bool inVal = false;
+
+            foreach (char c in formatBody)
+            {
+                if (!inVal && c == '=')
+                {
+                    inVal = true;
+                    section = _dynReplRegex.Replace(
+                        WebUtility.UrlDecode(qBuilder.ToString()),
+                        String.Empty
+                        );
+                    qBuilder.Clear();
+                }
+                else if (inVal && c == '&')
+                {
+                    dynObj[section] = WebUtility.UrlDecode(qBuilder.ToString());
+                    qBuilder.Clear();
+                    inVal = false;
+                }
+                else if (!inVal && c == '&')
+                {
+                    section = _dynReplRegex.Replace(
+                        WebUtility.UrlDecode(qBuilder.ToString()),
+                        String.Empty
+                        );
+                    dynObj[section] = String.Empty;
+                    qBuilder.Clear();
+                }
+                else
+                {
+                    qBuilder.Append(c);
+                }
+            }
+
+            if (!inVal)
+            {
+                section = _dynReplRegex.Replace(
+                    WebUtility.UrlDecode(qBuilder.ToString()),
+                    String.Empty
+                    );
+
+                dynObj[section] = String.Empty;
+            }
+            else dynObj[section] = WebUtility.UrlDecode(qBuilder.ToString());
+            
+            return dynObj;
         }
         /// <summary>
         /// Parses the HTTP request body, assuming that it is in the
         /// multipart/form-data format.
         /// </summary>
-        /// <param name="requestBody">The HTTP request body.</param>
-        private void ParseMultipartFormData(string requestBody)
+        private dynamic ParseMultipartFormData()
         {
-
+            throw new Exception();
         }
 
         /// <summary>
