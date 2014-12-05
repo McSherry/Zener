@@ -25,7 +25,6 @@ namespace SynapLink.Zener
         private const string WEBROOT_DEFAULT = "./www";
         private static Version _ver;
 
-        private int _port;
         private string _webroot;
         private FileSystem _filesystem;
         private HttpServer _http;
@@ -50,7 +49,7 @@ namespace SynapLink.Zener
         /// </summary>
         /// <exception cref="System.ArgumentException"></exception>
         public Zener()
-            : this(WEBROOT_DEFAULT, new Random().Next(1025, 65000), true)
+            : this(WEBROOT_DEFAULT, new Random().Next(49152, 65534))
         { }
         /// <summary>
         /// Creates a new ZenerCore with documents sourced from the specified webroot,
@@ -60,9 +59,10 @@ namespace SynapLink.Zener
         /// <param name="port">A TCP port to use for the web server.</param>
         /// <param name="precache">Whether all files in the webroot and children should be pre-cached.</param>
         /// <exception cref="System.ArgumentException"></exception>
-        public Zener(string webroot, int port, bool precache)
+        public Zener(string webroot, int port)
         {
             _webroot = webroot;
+
             _http = new HttpServer(port);
             _filesystem = new FileSystem(this.WebRoot);
         }
