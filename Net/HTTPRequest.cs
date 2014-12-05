@@ -6,11 +6,15 @@
  *      /LICENCE.txt, or online: http://opensource.org/licenses/BSD-3-Clause
  */
 using System;
+using System.Dynamic;
+using System.Runtime.CompilerServices;
 using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.IO;
+using System.Net;
 
 namespace SynapLink.Zener.Net
 {
