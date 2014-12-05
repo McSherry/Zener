@@ -24,17 +24,33 @@ namespace SynapLink.Zener.Net
         public HttpRequestException(string message, Exception innerException)
             : base(message, innerException) { }
     }
+    /// <summary>
+    /// Used to indicate when a dynamic property has no value.
+    /// </summary>
+    public enum Empty { }
 
     /// <summary>
     /// A class encapsulating an HTTP request from the client.
     /// </summary>
     public class HttpRequest
     {
-        private List<BasicHttpHeader> _headers;
-        private NameValueCollection _get;
-        private readonly Lazy<NameValueCollection> _post;
+        private static Regex _dynReplRegex;
+        private static ASCIIEncoding _ascii;
+
+        static HttpRequest()
+        {
+            _ascii = new ASCIIEncoding();
+            // Used to replace characters which might turn up
+            // in multipart/form-data names with a safe character,
+            // since we're using that name to create dynamic
+            // properties.
+            _dynReplRegex = new Regex("[- +]");
+        }
+
+        private HttpHeaderCollection _headers;
+        private dynamic _get;
+        private readonly Lazy<dynamic> _post;
         private string _raw;
-        private ASCIIEncoding _ascii;
 
         /// <summary>
         /// Parses the HTTP Request Line and sets the appropriate properties
@@ -76,32 +92,11 @@ namespace SynapLink.Zener.Net
             // to false.
             if (hasQueryString && ++strIndex < requestLine.Length)
             {
-                pathBuilder.Clear();
-                string qstring = rlArray[1].Substring(strIndex);
-                string section = String.Empty;
-                bool inVal = false;
-
-                foreach (char c in qstring)
-                {
-                    if (!inVal && c == '=')
-                    {
-                        inVal = true;
-                        section = pathBuilder.ToString();
-                        pathBuilder.Clear();
-                    }
-                    else if (inVal && c == '&')
-                    {
-                        this.GET.Add(section, pathBuilder.ToString());
-                        pathBuilder.Clear();
-                        inVal = false;
-                    }
-                    else
-                    {
-                        pathBuilder.Append(c);
-                    }
-                }
-
-                this.GET.Add(section, pathBuilder.ToString());
+                this.GET = ParseFormUrlEncoded(rlArray[1].Substring(strIndex));
+            }
+            else
+            {
+                this.GET = new Empty();
             }
 
             this.HttpVersion = rlArray[2];
@@ -182,9 +177,7 @@ namespace SynapLink.Zener.Net
         /// <param name="requestStatus">Set to true if request parsing failed.</param>
         internal HttpRequest(StreamReader requestStream, out bool requestFailed) 
         {
-            _ascii = new ASCIIEncoding();
-            this.GET = new NameValueCollection();
-            this.Headers = new List<BasicHttpHeader>();
+            this.Headers = new HttpHeaderCollection();
             // If the request does fail, this will be overwritten anyway.
             requestFailed = false;
 
@@ -252,22 +245,22 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The HTTP headers sent with the request.
         /// </summary>
-        public List<BasicHttpHeader> Headers
+        public HttpHeaderCollection Headers
         {
-            get { return new List<BasicHttpHeader>(_headers); }
+            get { return _headers; }
             private set { _headers = value; }
         }
         /// <summary>
         /// All POST parameters sent with the request.
         /// </summary>
-        public NameValueCollection POST
+        public dynamic POST
         {
             get { return _post.Value; }
         }
         /// <summary>
         /// All GET (query string) parameters send with the request.
         /// </summary>
-        public NameValueCollection GET
+        public dynamic GET
         {
             get { return _get; }
             private set { _get = value; }

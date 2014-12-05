@@ -142,6 +142,16 @@ namespace SynapLink.Zener.Net
 
             _headerList.Add(new BasicHttpHeader(fieldName, WebUtility.UrlEncode(fieldValue)));
         }
+        /// <summary>
+        /// Adds a header to the collection.
+        /// </summary>
+        /// <param name="header">The header to add to the collection.</param>
+        public void Add(BasicHttpHeader header)
+        {
+            _readOnlyCheck();
+
+            _headerList.Add(header);
+        }
 
         /// <summary>
         /// Removes all headers with the specified field name.
@@ -160,12 +170,6 @@ namespace SynapLink.Zener.Net
         int ICollection<BasicHttpHeader>.Count
         {
             get { return _headerList.Count; }
-        }
-        void ICollection<BasicHttpHeader>.Add(BasicHttpHeader header)
-        {
-            _readOnlyCheck();
-
-            _headerList.Add(header);
         }
         void ICollection<BasicHttpHeader>.Clear()
         {
