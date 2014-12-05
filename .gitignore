@@ -4,3 +4,4 @@ obj/
 *.suo
 bin/
 *.cd
+*.html
