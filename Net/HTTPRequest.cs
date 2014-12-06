@@ -38,6 +38,9 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpRequest
     {
+        private const string MT_FORMURLENCODED = "application/x-www-form-urlencoded";
+        private const string MT_FORMMULTIPART = "multipart/form-data";
+
         private static Regex _dynReplRegex;
         private static ASCIIEncoding _ascii;
 
@@ -168,7 +171,7 @@ namespace SynapLink.Zener.Net
         /// Parses the HTTP request body, assuming that it is in the
         /// multipart/form-data format.
         /// </summary>
-        private dynamic ParseMultipartFormData()
+        private static dynamic ParseMultipartFormData(string formatBody, string boundary)
         {
             throw new Exception();
         }
@@ -205,7 +208,33 @@ namespace SynapLink.Zener.Net
                     _headers.Add(BasicHttpHeader.Parse(line));
                 }
 
+                // Stops headers being added to the collection.
+                _headers.WriteProtect(true);
+
                 _raw = requestStream.ReadToEnd();
+
+                _post = new Lazy<dynamic>(() =>
+                {
+                    var contenttype = this.Headers["Content-Type"];
+
+                    if (contenttype.Count() == 0) return new Empty();
+                    else
+                    {
+                        string ctype = contenttype.Last();
+
+                        if (ctype.StartsWith(MT_FORMURLENCODED))
+                        {
+                            return ParseFormUrlEncoded(this.Raw);
+                        }
+                        else if (ctype.StartsWith(MT_FORMMULTIPART))
+                        {
+                            // TODO: Call ParseMultipartFormData
+                            throw new NotImplementedException();
+                        }
+                        else return new Empty();
+                    }
+                });
+
             }
             // BasicHttpHeader throws an argument exception when there's an
             // issue with parsing.
