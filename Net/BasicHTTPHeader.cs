@@ -59,11 +59,11 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The field or header name (e.g. Content-Type).
         /// </summary>
-        public virtual string Field { get; private set; }
+        public virtual string Field { get; protected set; }
         /// <summary>
         /// The value of the field/header, as a string.
         /// </summary>
-        public virtual string Value { get; private set; }
+        public virtual string Value { get; protected set; }
 
         public override string ToString()
         {
