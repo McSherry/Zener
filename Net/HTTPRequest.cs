@@ -54,7 +54,7 @@ namespace SynapLink.Zener.Net
             // in multipart/form-data names with a safe character,
             // since we're using that name to create dynamic
             // properties.
-            _dynReplRegex = new Regex("[- +]");
+            _dynReplRegex = new Regex("[- +/\\'\"][{}]=()*&^%$£!¬¦`€|?><~#;:@");
         }
 
         private HttpHeaderCollection _headers;
