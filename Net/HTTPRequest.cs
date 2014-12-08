@@ -227,7 +227,7 @@ namespace SynapLink.Zener.Net
                     else if (ctype.Field.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
                     {
                         var bdry = ctype.Pairs.Where(
-                            p => p.Key.Equals("boundaryx", StringComparison.OrdinalIgnoreCase)
+                            p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase)
                             ).ToList();
 
                         if (bdry.Count == 0)
