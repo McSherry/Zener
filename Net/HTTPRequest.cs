@@ -55,8 +55,7 @@ namespace SynapLink.Zener.Net
         }
 
         private HttpHeaderCollection _headers;
-        private dynamic _get;
-        private readonly Lazy<dynamic> _post;
+        private dynamic _get, _post;
         private string _raw;
 
         /// <summary>
@@ -173,7 +172,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         private static dynamic ParseMultipartFormData(string formatBody, string boundary)
         {
-            throw new Exception();
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -182,11 +181,10 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="requestStream">The stream of data containing the request.</param>
         /// <param name="requestStatus">Set to true if request parsing failed.</param>
-        internal HttpRequest(StreamReader requestStream, out bool requestFailed) 
+        /// <exception cref="SynapLink.Zener.Net.HttpRequestException"></exception>
+        internal HttpRequest(StreamReader requestStream) 
         {
             this.Headers = new HttpHeaderCollection();
-            // If the request does fail, this will be overwritten anyway.
-            requestFailed = false;
 
             // If any of this throws an HttpRequestException, we can be sure that
             // the request is malformed (well, as long as the HTTP server is really
@@ -213,41 +211,44 @@ namespace SynapLink.Zener.Net
 
                 _raw = requestStream.ReadToEnd();
 
-                _post = new Lazy<dynamic>(() =>
+                var contenttype = this.Headers.Where(
+                    h => h.Field.Equals("Content-Type", StringComparison.OrdinalIgnoreCase)
+                    );
+
+                if (contenttype.Count() == 0) _post = new Empty();
+                else
                 {
-                    var contenttype = this.Headers["Content-Type"];
+                    var ctype = new NameValueHttpHeader(contenttype.Last());
 
-                    if (contenttype.Count() == 0) return new Empty();
-                    else
+                    if (ctype.Field.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
                     {
-                        string ctype = contenttype.Last();
-
-                        if (ctype.StartsWith(MT_FORMURLENCODED))
-                        {
-                            return ParseFormUrlEncoded(this.Raw);
-                        }
-                        else if (ctype.StartsWith(MT_FORMMULTIPART))
-                        {
-                            // TODO: Call ParseMultipartFormData
-                            throw new NotImplementedException();
-                        }
-                        else return new Empty();
+                        _post = ParseFormUrlEncoded(this.Raw);
                     }
-                });
+                    else if (ctype.Field.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var bdry = ctype.Pairs.Where(
+                            p => p.Key.Equals("boundaryx", StringComparison.OrdinalIgnoreCase)
+                            ).ToList();
+
+                        if (bdry.Count == 0)
+                        {
+                            throw new HttpRequestException
+                            ("No boundary provided for multipart data.");
+                        }
+
+                        _post = ParseMultipartFormData(this.Raw, bdry[0].Value);
+                    }
+                    else _post = new Empty();
+                }
 
             }
             // BasicHttpHeader throws an argument exception when there's an
             // issue with parsing.
-            catch (ArgumentException)
+            catch (ArgumentException aex)
             {
-                requestFailed = true;
+                throw new HttpRequestException
+                ("User agent provided malformed headers.", aex);
             }
-            catch (HttpRequestException)
-            {
-                requestFailed = true;
-            }
-
-            
         }
 
         /// <summary>
@@ -288,7 +289,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public dynamic POST
         {
-            get { return _post.Value; }
+            get { return _post; }
         }
         /// <summary>
         /// All GET (query string) parameters send with the request.

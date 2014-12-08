@@ -74,15 +74,14 @@ namespace SynapLink.Zener.Net
         /// <param name="fieldName">The field name of the headers to retrieve.</param>
         /// <returns>The retrieved headers.</returns>
         /// <exception cref="System.InvalidOperationException"></exception>
-        public List<string> this[string fieldName]
+        public List<BasicHttpHeader> this[string fieldName]
         {
             get
             {
-                var header = _headerList.Where(
-                    h => h.Field.Equals(fieldName, StringComparison.OrdinalIgnoreCase)
-                    );
 
-                return header.Select(h => WebUtility.UrlDecode(h.Value)).ToList();
+                return _headerList.Where(
+                    h => h.Field.Equals(fieldName, StringComparison.OrdinalIgnoreCase)
+                    ).ToList();
             }
             set
             {
@@ -90,8 +89,7 @@ namespace SynapLink.Zener.Net
 
                 this.Remove(fieldName);
 
-                foreach (string val in value)
-                    this.Add(fieldName, val);
+                value.ForEach(this.Add);
             }
         }
 

@@ -80,7 +80,7 @@ namespace SynapLink.Zener.Net
                 else if (!str && value[i] == ';')
                 {
                     _nvPairs.Add(
-                        new KeyValuePair<string,string>(tStore, secb.ToString())
+                        new KeyValuePair<string,string>(tStore.Trim(), secb.ToString())
                         );
                     secb.Clear();
                     key = true;
@@ -94,13 +94,13 @@ namespace SynapLink.Zener.Net
             if (key && secb.Length > 0)
             {
                 _nvPairs.Add(
-                    new KeyValuePair<string, string>(secb.ToString(), String.Empty)
+                    new KeyValuePair<string, string>(secb.ToString().Trim(), String.Empty)
                     );
             }
             else
             {
                 _nvPairs.Add(
-                    new KeyValuePair<string, string>(tStore, secb.ToString())
+                    new KeyValuePair<string, string>(tStore.Trim(), secb.ToString())
                     );
             }
         }

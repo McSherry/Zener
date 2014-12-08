@@ -18,7 +18,7 @@ using System.IO;
 namespace SynapLink.Zener.Net
 {
     public delegate void HttpRequestHandler(HttpRequest request, HttpResponse response);
-    public delegate void HttpErrorHandler(int statusCode, HttpResponse response);
+    public delegate void HttpErrorHandler(HttpStatus statusCode, HttpResponse response);
 
     /// <summary>
     /// A class implementing a basic HTTP server.
@@ -26,6 +26,18 @@ namespace SynapLink.Zener.Net
     public class HttpServer
     {
         internal const string HTTP_VERSION = "1.1";
+
+        /// <summary>
+        /// The error handler called when no other handler exists.
+        /// </summary>
+        private static void DefaultErrorHandler(HttpStatus status, HttpResponse response)
+        {
+            response.SetHeader("Content-Type", "text/plain");
+            response.Write(
+                "{0} {1}",
+                (int)status, HttpResponse.GetStatusMessage(status)
+                );
+        }
 
         private TcpListener _listener;
         private Thread _listenThread;
@@ -74,25 +86,35 @@ namespace SynapLink.Zener.Net
             ms.Write(buf.ToArray(), 0, buf.Count);
             ms.Position = 0;
 
-            bool requestFailed;
+            bool requestFailed = false;
 
             HttpRequest req;
-            using (StreamReader sr = new StreamReader(ms))
-            {
-                req = new HttpRequest(sr, out requestFailed);
-            }
             HttpResponse res = new HttpResponse(tcl);
 
-            if (requestFailed && this.ErrorHandler != null)
+            using (StreamReader sr = new StreamReader(ms))
             {
-                // requestFailed being true indicates that parsing the
-                // request failed. This means that the request was malformed,
-                // and so we can use our status code 400 (Bad Request) handler.
-                this.ErrorHandler(400, res);
-            }
-            else if (this.RequestHandler != null)
-            {
-                this.RequestHandler(req, res);
+                try
+                {
+                    req = new HttpRequest(sr);
+
+                    if (this.RequestHandler != null)
+                    {
+                        this.RequestHandler(req, res);
+                    }
+                }
+                catch (HttpRequestException)
+                {
+                    requestFailed = true;
+
+                    if (this.ErrorHandler == null)
+                    {
+                        DefaultErrorHandler(HttpStatus.BadRequest, res);
+                    }
+                    else
+                    {
+                        this.ErrorHandler(HttpStatus.BadRequest, res);
+                    }
+                }
             }
 
             // These calls shouldn't throw an exception, so we'll be fine to
