@@ -86,8 +86,6 @@ namespace SynapLink.Zener.Net
             ms.Write(buf.ToArray(), 0, buf.Count);
             ms.Position = 0;
 
-            bool requestFailed = false;
-
             HttpRequest req;
             HttpResponse res = new HttpResponse(tcl);
 
@@ -104,7 +102,6 @@ namespace SynapLink.Zener.Net
                 }
                 catch (HttpRequestException)
                 {
-                    requestFailed = true;
 
                     if (this.ErrorHandler == null)
                     {

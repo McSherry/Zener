@@ -18,7 +18,7 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class NameValueHttpHeader : BasicHttpHeader
     {
-        private List<KeyValuePair<string, string>> _nvPairs;
+        private Dictionary<string, string> _nvPairs;
 
         /// <summary>
         /// Creates a NameValueHttpHeader from a header field name
@@ -29,7 +29,7 @@ namespace SynapLink.Zener.Net
         public NameValueHttpHeader(string field, string value)
             : base(field, value)
         {
-            _nvPairs = new List<KeyValuePair<string, string>>();
+            _nvPairs = new Dictionary<string, string>();
             StringBuilder secb = new StringBuilder();
             string tStore = String.Empty;
 
@@ -44,7 +44,7 @@ namespace SynapLink.Zener.Net
                 {                
                     if (value[i] == ';')
                     {
-                        base.Field = secb.ToString();
+                        base.Value = secb.ToString();
                         secb.Clear();
                         hdr = false;
                     }
@@ -79,9 +79,7 @@ namespace SynapLink.Zener.Net
                 }
                 else if (!str && value[i] == ';')
                 {
-                    _nvPairs.Add(
-                        new KeyValuePair<string,string>(tStore.Trim(), secb.ToString())
-                        );
+                    _nvPairs[tStore.Trim()] = secb.ToString();
                     secb.Clear();
                     key = true;
                 }
@@ -93,15 +91,12 @@ namespace SynapLink.Zener.Net
 
             if (key && secb.Length > 0)
             {
-                _nvPairs.Add(
-                    new KeyValuePair<string, string>(secb.ToString().Trim(), String.Empty)
-                    );
+                _nvPairs[secb.ToString().Trim()] = String.Empty;
             }
             else
             {
-                _nvPairs.Add(
-                    new KeyValuePair<string, string>(tStore.Trim(), secb.ToString())
-                    );
+                _nvPairs[tStore.Trim()] = secb.ToString();
+                    
             }
         }
         /// <summary>
@@ -132,7 +127,7 @@ namespace SynapLink.Zener.Net
         /// The name-value pairs associated with the header, in the
         /// order they appear.
         /// </summary>
-        public List<KeyValuePair<string, string>> Pairs
+        public Dictionary<string, string> Pairs
         {
             get { return _nvPairs; }
         }

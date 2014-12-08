@@ -40,6 +40,9 @@ namespace SynapLink.Zener.Net
     {
         private const string MT_FORMURLENCODED = "application/x-www-form-urlencoded";
         private const string MT_FORMMULTIPART = "multipart/form-data";
+        private const string HDR_CDISPOSITION = "Content-Disposition";
+        private const string CDIS_FORMDATA = "form-data";
+        private const string HDR_CTYPE = "Content-Type";
 
         private static Regex _dynReplRegex;
         private static ASCIIEncoding _ascii;
@@ -212,7 +215,7 @@ namespace SynapLink.Zener.Net
                 _raw = requestStream.ReadToEnd();
 
                 var contenttype = this.Headers.Where(
-                    h => h.Field.Equals("Content-Type", StringComparison.OrdinalIgnoreCase)
+                    h => h.Field.Equals(HDR_CTYPE, StringComparison.OrdinalIgnoreCase)
                     );
 
                 if (contenttype.Count() == 0) _post = new Empty();
@@ -220,11 +223,11 @@ namespace SynapLink.Zener.Net
                 {
                     var ctype = new NameValueHttpHeader(contenttype.Last());
 
-                    if (ctype.Field.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
+                    if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
                     {
                         _post = ParseFormUrlEncoded(this.Raw);
                     }
-                    else if (ctype.Field.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
+                    else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
                     {
                         var bdry = ctype.Pairs.Where(
                             p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase)
