@@ -173,9 +173,116 @@ namespace SynapLink.Zener.Net
         /// Parses the HTTP request body, assuming that it is in the
         /// multipart/form-data format.
         /// </summary>
+        /// <exception cref="SynapLink.Zener.Net.HttpRequestException"></exception>
         private static dynamic ParseMultipartFormData(string formatBody, string boundary)
         {
-            throw new NotImplementedException();
+            var dynObj = new ExpandoObject() as IDictionary<string, object>;
+            var parts = formatBody.Split(
+                new string[] { string.Format("--{0}", boundary) },
+                StringSplitOptions.None
+                )
+                .ToList();
+
+            parts.RemoveAll(p => string.IsNullOrWhiteSpace(p) || p.Equals("--\r\n"));
+            parts = parts.Select(p => p.Trim(' ', '\r', '\n')).ToList();
+
+            foreach (var part in parts)
+            {
+                // Each part has its own set of headers, and they're
+                // always the first thing in the part. We need to parse
+                // out the headers so we know how to handle the content.
+                bool inHeader = true;
+                HttpHeaderCollection partHeaders = new HttpHeaderCollection();
+                using (StringReader tr = new StringReader(part))
+                {
+                    while (inHeader)
+                    {
+                        string line = tr.ReadLine().Trim();
+
+                        // As with the main HTTP headers, the headers of a
+                        // part are separated from the part's body by two
+                        // CRLFs. The ReadLine method will remove the CRLFs,
+                        // so we're left with an empty line signifying the
+                        // separator.
+                        if (string.IsNullOrWhiteSpace(line))
+                        {
+                            inHeader = false;
+                            continue;
+                        }
+
+                        partHeaders.Add(BasicHttpHeader.Parse(line));
+                    }
+
+                    // We need the content disposition header to determine
+                    // how we should handle the part. Currently, we'll only
+                    // handle it if it's form data.
+                    if (!partHeaders.Contains(HDR_CDISPOSITION))
+                    {
+                        throw new HttpRequestException
+                        ("One or more parts do not contain content disposition data.");
+                    }
+
+                    var cdis = new NameValueHttpHeader(
+                        partHeaders["Content-Disposition"].Last()
+                        );
+
+                    // Checks to see whether the disposition indicates form
+                    // data.
+                    if (!cdis.Value.Equals(CDIS_FORMDATA, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // If it isn't form data, we don't care. Skip it and
+                        // move on to the next one.
+                        continue;
+                    }
+
+                    // If it is form data, make sure it has a name. If there's
+                    // no name, we can't identify it, and it can't be accessed.
+                    if (!cdis.Pairs.Any(
+                        p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase)
+                        ))
+                    {
+                        // If it has no name, skip it.
+                        continue;
+                    }
+
+                    // Extract the name of the part, URL-decode it,
+                    // and remove any characters which can't be used
+                    // in a name.
+                    string partName = _dynReplRegex.Replace(
+                        WebUtility.UrlDecode(
+                            cdis.Pairs.Where(
+                                p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase)
+                                )
+                            .Last()
+                            .Value
+                            ),
+                        String.Empty
+                        );
+
+
+                    NameValueHttpHeader ctype;
+                    if (partHeaders.Contains(HDR_CTYPE))
+                    {
+                        ctype = new NameValueHttpHeader(partHeaders[HDR_CTYPE].Last());
+                    }
+                    else
+                    {
+                        ctype = new NameValueHttpHeader(HDR_CTYPE, "text/plain");
+                    }
+
+                    // We're only handling text/* media types. If binary data
+                    // is required, use one of the APIs provided instead of
+                    // HTML forms.
+                    if (!ctype.Value.ToLower().StartsWith("text/"))
+                    {
+                        continue;
+                    }
+
+                    dynObj[partName] = tr.ReadToEnd();
+                }
+            }
+
+            return new Empty();
         }
 
         /// <summary>
