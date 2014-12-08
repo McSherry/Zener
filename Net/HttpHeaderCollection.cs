@@ -166,6 +166,26 @@ namespace SynapLink.Zener.Net
                 h => h.Field.Equals(fieldName, StringComparison.OrdinalIgnoreCase)
                 );
         }
+        /// <summary>
+        /// Determines whether the collection contains a header equivalent to the provided.
+        /// </summary>
+        /// <param name="header">The header to search for.</param>
+        /// <returns>True if an equivalent header exists.</returns>
+        public bool Contains(BasicHttpHeader header)
+        {
+            return _headerList.Contains(header);
+        }
+        /// <summary>
+        /// Determines whether the collection contains a header with the provided field name.
+        /// </summary>
+        /// <param name="fieldName">The field name to search for.</param>
+        /// <returns>True if a header with the provided field name exists.</returns>
+        public bool Contains(string fieldName)
+        {
+            return _headerList.Any(
+                h => h.Field.Equals(fieldName, StringComparison.OrdinalIgnoreCase)
+                );
+        }
 
         int ICollection<BasicHttpHeader>.Count
         {
@@ -186,10 +206,6 @@ namespace SynapLink.Zener.Net
             _readOnlyCheck();
 
             return _headerList.Remove(header);
-        }
-        bool ICollection<BasicHttpHeader>.Contains(BasicHttpHeader header)
-        {
-            return _headerList.Contains(header);
         }
         IEnumerator<BasicHttpHeader> IEnumerable<BasicHttpHeader>.GetEnumerator()
         {
