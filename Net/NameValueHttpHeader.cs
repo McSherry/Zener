@@ -113,6 +113,23 @@ namespace SynapLink.Zener.Net
         /// <param name="header">The header to create from.</param>
         public NameValueHttpHeader(BasicHttpHeader header)
             : this(header.Field, header.Value) { }
+        /// <summary>
+        /// Creates a NameValueHttpHeader from a raw header string.
+        /// </summary>
+        /// <param name="httpHeader">The header string to parse.</param>
+        public NameValueHttpHeader(string httpHeader)
+            : this(BasicHttpHeader.Parse(httpHeader)) { }
+
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendFormat("{0}: {1}; ", this.Field, this.Value);
+
+            foreach (var pair in this.Pairs)
+                sb.AppendFormat("{0}={1}; ", pair.Key, pair.Value);
+
+            return sb.ToString();
+        }
 
         /// <summary>
         /// The name-value pairs associated with the header, in the
