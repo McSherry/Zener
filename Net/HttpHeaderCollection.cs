@@ -74,7 +74,7 @@ namespace SynapLink.Zener.Net
         /// <param name="fieldName">The field name of the headers to retrieve.</param>
         /// <returns>The retrieved headers.</returns>
         /// <exception cref="System.InvalidOperationException"></exception>
-        public IEnumerable<string> this[string fieldName]
+        public List<string> this[string fieldName]
         {
             get
             {
@@ -82,7 +82,7 @@ namespace SynapLink.Zener.Net
                     h => h.Field.Equals(fieldName, StringComparison.OrdinalIgnoreCase)
                     );
 
-                return header.Select(h => WebUtility.UrlDecode(h.Value));
+                return header.Select(h => WebUtility.UrlDecode(h.Value)).ToList();
             }
             set
             {
