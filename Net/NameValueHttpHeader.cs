@@ -44,8 +44,6 @@ namespace SynapLink.Zener.Net
                 {                
                     if (value[i] == ';')
                     {
-                        // Extra increment so we skip the semi-colon.
-                        i++;
                         base.Field = secb.ToString();
                         secb.Clear();
                         hdr = false;
@@ -57,7 +55,6 @@ namespace SynapLink.Zener.Net
                 }
                 else if (key && !str && value[i] == '=')
                 {
-                    i++;
                     tStore = secb.ToString();
                     secb.Clear();
                     key = false;
