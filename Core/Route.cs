@@ -53,7 +53,15 @@ namespace SynapLink.Zener.Core
          * Parameter values must not contain forward-slashes.
          * Parameter names are converted to lowercase (for example,
          * "[USERname]" becomes "[username]").Parameter values
-         * retain their casing.
+         * retain their casing. Parameters should be separated
+         * from the rest of the format by a forward slash. For
+         * this reason, the below examples are not guaranteed to
+         * work.
+         * 
+         *      test/path[param]
+         *      [param]test/path
+         *      
+         * 
          */
 
         private RouteHandler _handler;
@@ -77,9 +85,104 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="path">The path to test.</param>
         /// <returns>True if the route matches the path.</returns>
-        public bool Matches(string path)
+        public bool TryGetMatch(string path, ref Dictionary<string, string> param)
         {
-            throw new NotImplementedException();
+            path = path.Trim(' ', '/');
+
+            // Indices within format and path
+            int fIndex = 0, pIndex = 0;
+            StringBuilder
+                formatBuilder = new StringBuilder(),
+                pathBuilder = new StringBuilder(),
+                paramNameBuilder = new StringBuilder(),
+                paramValBuilder = new StringBuilder();
+            string paramName = String.Empty;
+            Dictionary<string, string> paramDict = new Dictionary<string, string>();
+            bool inParam = false, loop = true;
+
+            while (loop)
+            {
+                while (fIndex < this.Format.Length)
+                {
+                    // Find start of a param wild-card
+                    if (!inParam && this.Format[fIndex] == '[')
+                    {
+                        inParam = true;
+                        fIndex++;
+                    }
+                    // Find end of a param wild-card
+                    else if (inParam && this.Format[fIndex] == ']')
+                    {
+                        inParam = false;
+                        fIndex++;
+                        break;
+                    }
+                    // General format text
+                    else if (!inParam)
+                    {
+                        formatBuilder.Append(this.Format[fIndex++]);
+                    }
+                    // Param name
+                    else
+                    {
+                        paramNameBuilder.Append(this.Format[fIndex++]);
+                    }
+                }
+
+                while (pIndex < path.Length)
+                {
+                    if (!inParam)
+                    {
+                        pathBuilder.Append(path[pIndex]);
+
+                        if (formatBuilder.ToString().StartsWith(
+                            pathBuilder.ToString(), true,
+                            System.Globalization.CultureInfo.InvariantCulture
+                            ))
+                        {
+                            pIndex++;
+                        }
+                        else
+                        {
+                            if (paramNameBuilder.Length == 0)
+                            {
+                                pIndex = int.MaxValue;
+                                break;
+                            }
+
+                            inParam = true;
+                            pathBuilder.Remove(pathBuilder.Length - 1, 1);
+                        }
+                    }
+                    else if (inParam && path[pIndex] == '/')
+                    {
+                        inParam = false;
+                        paramDict[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                        paramNameBuilder.Clear();
+                        paramValBuilder.Clear();
+                        break;
+                    }
+                    else if (inParam)
+                    {
+                        paramValBuilder.Append(path[pIndex++]);
+                    }
+                }
+
+                if (!(pIndex < path.Length))
+                {
+                    if (inParam) paramDict[paramName] = paramValBuilder.ToString();
+                    break;
+                }
+            }
+
+
+            bool ret = formatBuilder.ToString().Equals(
+                pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
+                );
+
+            if (ret) param = paramDict;
+
+            return ret;
         }
 
         /// <summary>

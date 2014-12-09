@@ -26,7 +26,6 @@ namespace SynapLink.Zener
         private static Version _ver;
 
         private string _webroot;
-        private FileSystem _filesystem;
         private HttpServer _http;
 
         /// <summary>
@@ -64,7 +63,6 @@ namespace SynapLink.Zener
             _webroot = webroot;
 
             _http = new HttpServer(port);
-            _filesystem = new FileSystem(this.WebRoot);
         }
 
         /// <summary>
