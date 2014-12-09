@@ -20,7 +20,8 @@ namespace SynapLink.Zener.Core
     /// </summary>
     /// <param name="urlParams">Any parameters included in the URL.</param>
     public delegate void RouteHandler(
-        HttpRequest request, HttpResponse response, string[] routeParams
+        HttpRequest request, HttpResponse response, 
+        Dictionary<string, string> routeParam
         );
 
     /// <summary>
@@ -47,7 +48,7 @@ namespace SynapLink.Zener.Core
         /// <param name="caseInsensitive">Whether the format should be case-insensitive.</param>
         public Route(string format, RouteHandler handler, bool caseInsensitive)
         {
-            _format = format.ToLower();
+            _format = format.ToLower().Trim(' ', '/');
             _handler = handler;
             _name = this.Format;
         }
