@@ -39,18 +39,10 @@ namespace SynapLink.Zener.Core
         /// <param name="format">The format to be associated with this route.</param>
         /// <param name="handler">The handler to be associated with this route.</param>
         public Route(string format, RouteHandler handler)
-            : this(format, handler, false) { }
-        /// <summary>
-        /// Creates a new route.
-        /// </summary>
-        /// <param name="format">The format to be associated with this route.</param>
-        /// <param name="handler">The handler to be associated with this route.</param>
-        /// <param name="caseInsensitive">Whether the format should be case-insensitive.</param>
-        public Route(string format, RouteHandler handler, bool caseInsensitive)
         {
             _format = format.ToLower().Trim(' ', '/');
             _handler = handler;
-            _name = this.Format;
+            this.Name = this.Format;
         }
 
         /// <summary>
@@ -59,7 +51,8 @@ namespace SynapLink.Zener.Core
         /// </summary>
         public string Name
         {
-            get { return _name; }
+            get;
+            set;
         }
         /// <summary>
         /// The format that should be associated with this route.
