@@ -31,7 +31,6 @@ namespace SynapLink.Zener.Core
         private RouteHandler _handler;
         private string _format;
         private string _name;
-        private bool _caseInsensitive;
 
         /// <summary>
         /// Creates a new route.
@@ -48,9 +47,8 @@ namespace SynapLink.Zener.Core
         /// <param name="caseInsensitive">Whether the format should be case-insensitive.</param>
         public Route(string format, RouteHandler handler, bool caseInsensitive)
         {
-            _format = format;
+            _format = format.ToLower();
             _handler = handler;
-            _caseInsensitive = caseInsensitive;
             _name = this.Format;
         }
 
@@ -61,13 +59,6 @@ namespace SynapLink.Zener.Core
         public string Name
         {
             get { return _name; }
-        }
-        /// <summary>
-        /// Whether the route's format is case-insensitive.
-        /// </summary>
-        public bool CaseInsensitive
-        {
-            get { return _caseInsensitive; }
         }
         /// <summary>
         /// The format that should be associated with this route.
