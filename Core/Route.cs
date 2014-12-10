@@ -68,6 +68,88 @@ namespace SynapLink.Zener.Core
         private string _format;
         private string _name;
 
+#if DEBUG
+        static Route()
+        {
+            RouteHandler rh = (rs, rq, p) => { };
+            Dictionary<string, string> result = new Dictionary<string, string>();
+
+            var trues = new[] 
+            {
+                new { route = new Route("a/b", rh), str = "/a/b/", pnum = 0 },
+                new { route = new Route("a/b", rh), str = "/a/b", pnum = 0 },
+                new { route = new Route("a/b", rh), str = "a/b/", pnum = 0 },
+                new { route = new Route("a/b", rh), str = "a/b", pnum = 0 },
+                new { route = new Route("a/b", rh), str = "a/B", pnum = 0 },
+
+                new { route = new Route("a/[p]", rh), str = "/a/v/", pnum = 1 },
+                new { route = new Route("a/[p]", rh), str = "/a/v", pnum = 1 },
+                new { route = new Route("a/[p]", rh), str = "a/v/", pnum = 1 },
+                new { route = new Route("a/[p]", rh), str = "a/v", pnum = 1 },
+
+                new { route = new Route("a/[p0]/b", rh), str = "/a/v0/b/", pnum = 1 },
+                new { route = new Route("a/[p0]/b", rh), str = "/a/v0/b", pnum = 1 },
+                new { route = new Route("a/[p0]/b", rh), str = "a/v0/b/", pnum = 1 },
+                new { route = new Route("a/[p0]/b", rh), str = "a/v0/b", pnum = 1 },
+
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "/a/v0/b/v1/", pnum = 2 },
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "/a/v0/b/v1", pnum = 2 },
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b/v1/", pnum = 2 },
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b/v1", pnum = 2 },
+            };
+            var falses = new[]
+            {
+                new { route = new Route("a/b", rh), str = "/a/b/c/" },
+                new { route = new Route("a/b", rh), str = "/a/b/c" },
+                new { route = new Route("a/b", rh), str = "a/b/c/" },
+                new { route = new Route("a/b", rh), str = "a/b/c" },
+                
+                new { route = new Route("a/[p]", rh), str = "/a/v0/b/" },
+                new { route = new Route("a/[p]", rh), str = "/a/v0/b" },
+                new { route = new Route("a/[p]", rh), str = "a/v0/b/" },
+                new { route = new Route("a/[p]", rh), str = "a/v0/b" },
+                
+                new { route = new Route("a/[p]", rh), str = "/a/" },
+                new { route = new Route("a/[p]", rh), str = "/a" },
+                new { route = new Route("a/[p]", rh), str = "a/" },
+                new { route = new Route("a/[p]", rh), str = "a" },
+                
+                new { route = new Route("a/[p]/b", rh), str = "/a/v0/" },
+                new { route = new Route("a/[p]/b", rh), str = "/a/v0" },
+                new { route = new Route("a/[p]/b", rh), str = "a/v0/" },
+                new { route = new Route("a/[p]/b", rh), str = "a/v0" },
+            };
+
+            foreach (var test in trues)
+            {
+                bool succeed = test.route.TryGetMatch(test.str, ref result);
+                bool paramCorrect = result.Count == test.pnum;
+
+                if (!succeed || !paramCorrect)
+                    throw new Exception(
+                        String.Format(
+                            "Test failed (True Tests): {0}, {1}, {2}/{3}",
+                            test.route.Format, test.str, test.pnum,
+                            result.Count   
+                        ));
+
+                result.Clear();
+            }
+            foreach (var test in falses)
+            {
+                bool succeed = !test.route.TryGetMatch(test.str, ref result);
+
+                if (!succeed)
+                    throw new Exception(
+                        String.Format(
+                            "Test failed (False Tests): {0}, {1}",
+                            test.route.Format, test.str,
+                            result.Count
+                        ));
+            }
+        }
+#endif
+
         /// <summary>
         /// Creates a new route.
         /// </summary>
@@ -168,10 +250,14 @@ namespace SynapLink.Zener.Core
                     }
                 }
 
-                if (!(pIndex < path.Length))
+                if (!(pIndex < path.Length) && !(fIndex < this.Format.Length))
                 {
-                    if (inParam) paramDict[paramName] = paramValBuilder.ToString();
+                    if (inParam) paramDict[paramNameBuilder.ToString()] = paramValBuilder.ToString();
                     break;
+                }
+                else
+                {
+                    inParam = false;
                 }
             }
 
