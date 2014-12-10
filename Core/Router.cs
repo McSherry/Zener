@@ -27,7 +27,7 @@ namespace SynapLink.Zener.Core
             _routes = new List<Route>();
         }
 
-        public HttpRequestHandler Find(string path)
+        public bool TryFind(string path, out HttpRequestHandler handler)
         {
             /*
              * It should be possible to have routes with
@@ -46,17 +46,19 @@ namespace SynapLink.Zener.Core
             List<Dictionary<string, string>> validParams
                 = new List<Dictionary<string, string>>();
 
-            var handler = _routes
+            var rhandler = _routes
                 .Where(r => r.TryMatch(path, validParams.Add))
                 .ToList()
                 .Zip(validParams, (r, pr) => new { Route = r, Params = pr })
                 .OrderBy(hwp => hwp.Params.Count > 0)
-                .First()
+                .FirstOrDefault()
                 ;
 
-            return new HttpRequestHandler(
-                (req, res) => handler.Route.Handler(req, res, handler.Params)
+            handler = new HttpRequestHandler(
+                (req, res) => rhandler.Route.Handler(req, res, rhandler.Params)
                 );
+
+            return rhandler != default(object);
         }
 
         /// <summary>
