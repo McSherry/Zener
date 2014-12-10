@@ -271,6 +271,22 @@ namespace SynapLink.Zener.Core
                 pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
                 );
         }
+        /// <summary>
+        /// Determines whether the route matches a path, and passes
+        /// any parameters in the path to a callback method.
+        /// </summary>
+        /// <param name="path">The path to test.</param>
+        /// <param name="callback">The callback to pass parameters to.</param>
+        /// <returns>True if the route matches the path.</returns>
+        public bool TryMatch(string path, Action<Dictionary<string, string>> callback)
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            bool success = this.TryMatch(path, result);
+
+            if (success) callback(result);
+
+            return success;
+        }
 
         /// <summary>
         /// The name of the route. If no name is specified, defaults
@@ -282,11 +298,18 @@ namespace SynapLink.Zener.Core
             set;
         }
         /// <summary>
-        /// The format that should be associated with this route.
+        /// The format that is associated with this route.
         /// </summary>
         public string Format
         {
             get { return _format; }
+        }
+        /// <summary>
+        /// The handler delegate associated with this route.
+        /// </summary>
+        public RouteHandler Handler
+        {
+            get { return _handler; }
         }
     }
 }
