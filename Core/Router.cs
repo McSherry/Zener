@@ -27,6 +27,12 @@ namespace SynapLink.Zener.Core
             _routes = new List<Route>();
         }
 
+        /// <summary>
+        /// Attempts retrieve the handler for the specified path.
+        /// </summary>
+        /// <param name="path">The path to find a handler for.</param>
+        /// <param name="handler">The handler for the path.</param>
+        /// <returns>True if retrieval was successful.</returns>
         public bool TryFind(string path, out HttpRequestHandler handler)
         {
             /*
@@ -46,9 +52,17 @@ namespace SynapLink.Zener.Core
             List<Dictionary<string, string>> validParams
                 = new List<Dictionary<string, string>>();
 
-            var rhandler = _routes
+            var validHandlers = _routes
                 .Where(r => r.TryMatch(path, validParams.Add))
-                .ToList()
+                .ToList();
+
+            if (validHandlers.Count == 0)
+            {
+                handler = null;
+                return false;
+            }
+
+            var rhandler = validHandlers
                 .Zip(validParams, (r, pr) => new { Route = r, Params = pr })
                 .OrderBy(hwp => hwp.Params.Count > 0)
                 .FirstOrDefault()
