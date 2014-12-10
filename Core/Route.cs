@@ -118,11 +118,16 @@ namespace SynapLink.Zener.Core
                 new { route = new Route("a/[p]/b", rh), str = "/a/v0" },
                 new { route = new Route("a/[p]/b", rh), str = "a/v0/" },
                 new { route = new Route("a/[p]/b", rh), str = "a/v0" },
+                
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "/a/v0/b/" },
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "/a/v0/b" },
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b/" },
+                new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b" },
             };
 
             foreach (var test in trues)
             {
-                bool succeed = test.route.TryGetMatch(test.str, ref result);
+                bool succeed = test.route.TryMatch(test.str, result);
                 bool paramCorrect = result.Count == test.pnum;
 
                 if (!succeed || !paramCorrect)
@@ -137,7 +142,7 @@ namespace SynapLink.Zener.Core
             }
             foreach (var test in falses)
             {
-                bool succeed = !test.route.TryGetMatch(test.str, ref result);
+                bool succeed = !test.route.TryMatch(test.str, result);
 
                 if (!succeed)
                     throw new Exception(
@@ -166,8 +171,9 @@ namespace SynapLink.Zener.Core
         /// Determines whether the route matches a path.
         /// </summary>
         /// <param name="path">The path to test.</param>
+        /// <param name="param">If the path matches, where any parameters are stored.</param>
         /// <returns>True if the route matches the path.</returns>
-        public bool TryGetMatch(string path, ref Dictionary<string, string> param)
+        public bool TryMatch(string path, Dictionary<string, string> param)
         {
             path = path.Trim(' ', '/');
 
@@ -179,7 +185,6 @@ namespace SynapLink.Zener.Core
                 paramNameBuilder = new StringBuilder(),
                 paramValBuilder = new StringBuilder();
             string paramName = String.Empty;
-            Dictionary<string, string> paramDict = new Dictionary<string, string>();
             bool inParam = false, loop = true;
 
             while (loop)
@@ -239,7 +244,7 @@ namespace SynapLink.Zener.Core
                     else if (inParam && path[pIndex] == '/')
                     {
                         inParam = false;
-                        paramDict[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                        param[paramNameBuilder.ToString()] = paramValBuilder.ToString();
                         paramNameBuilder.Clear();
                         paramValBuilder.Clear();
                         break;
@@ -252,7 +257,7 @@ namespace SynapLink.Zener.Core
 
                 if (!(pIndex < path.Length) && !(fIndex < this.Format.Length))
                 {
-                    if (inParam) paramDict[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                    if (inParam) param[paramNameBuilder.ToString()] = paramValBuilder.ToString();
                     break;
                 }
                 else
@@ -262,13 +267,9 @@ namespace SynapLink.Zener.Core
             }
 
 
-            bool ret = formatBuilder.ToString().Equals(
+            return formatBuilder.ToString().Equals(
                 pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
                 );
-
-            if (ret) param = paramDict;
-
-            return ret;
         }
 
         /// <summary>
