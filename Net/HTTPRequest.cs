@@ -19,14 +19,57 @@ using System.Net;
 namespace SynapLink.Zener.Net
 {
     /// <summary>
-    /// Thrown when there is an issue with a request.
+    /// The exception thrown when there is an error related to
+    /// the HTTP server or client.
     /// </summary>
-    public sealed class HttpRequestException : Exception
+    public class HttpException : Exception
     {
-        public HttpRequestException() : base() { }
-        public HttpRequestException(string message) : base(message) { }
+        public HttpException(HttpStatus status) 
+            : base() 
+        { 
+            this.StatusCode = status;
+        }
+        public HttpException(HttpStatus status, string message)
+            : base(message)
+        {
+            this.StatusCode = status;
+        }
+        public HttpException(HttpStatus status, string message, Exception innerException)
+            : base(message, innerException)
+        {
+            this.StatusCode = status;
+        }
+
+        /// <summary>
+        /// The status code associated with this exception.
+        /// </summary>
+        public HttpStatus StatusCode
+        {
+            get;
+            private set;
+        }
+    }
+    /// <summary>
+    /// The exception thrown when there is an error with an HTTP
+    /// request.
+    /// </summary>
+    public sealed class HttpRequestException : HttpException
+    {
+        public HttpRequestException()
+            : base(HttpStatus.BadRequest) 
+        { 
+
+        }
+        public HttpRequestException(string message)
+            : base(HttpStatus.BadRequest, message) 
+        { 
+
+        }
         public HttpRequestException(string message, Exception innerException)
-            : base(message, innerException) { }
+            : base(HttpStatus.BadRequest, message, innerException)
+        {
+
+        }
     }
     /// <summary>
     /// Used to indicate when a dynamic property has no value.

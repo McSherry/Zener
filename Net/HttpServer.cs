@@ -100,16 +100,16 @@ namespace SynapLink.Zener.Net
                         this.RequestHandler(req, res);
                     }
                 }
-                catch (HttpRequestException)
+                catch (HttpException hex)
                 {
 
                     if (this.ErrorHandler == null)
                     {
-                        DefaultErrorHandler(HttpStatus.BadRequest, res);
+                        DefaultErrorHandler(hex.StatusCode, res);
                     }
                     else
                     {
-                        this.ErrorHandler(HttpStatus.BadRequest, res);
+                        this.ErrorHandler(hex.StatusCode, res);
                     }
                 }
             }
