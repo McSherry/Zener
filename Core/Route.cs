@@ -151,6 +151,8 @@ namespace SynapLink.Zener.Core
         }
 #endif
 
+        private Lazy<IReadOnlyList<string>> _paramNames;
+
         /// <summary>
         /// Creates a new route.
         /// </summary>
@@ -161,6 +163,37 @@ namespace SynapLink.Zener.Core
             this.Format = format.ToLower().Trim(' ', '/');
             this.Handler = handler;
             this.Name = this.Format;
+
+            #region Get param names
+            _paramNames = new Lazy<IReadOnlyList<string>>(() =>
+            {
+                List<string> @params = new List<string>();
+
+                bool inParam = false;
+                StringBuilder nameBuilder = new StringBuilder();
+                foreach (char c in this.Format)
+                {
+                    if (!inParam && c == '[')
+                    {
+                        inParam = true;
+                        continue;
+                    }
+                    else if (inParam && c == ']')
+                    {
+                        inParam = false;
+                        @params.Add(nameBuilder.ToString());
+                        nameBuilder.Clear();
+                    }
+                    else if (inParam)
+                    {
+                        nameBuilder.Append(c);
+                    }
+                    else continue;
+                }
+
+                return @params.AsReadOnly();
+            });
+            #endregion
         }
 
         /// <summary>
@@ -308,6 +341,14 @@ namespace SynapLink.Zener.Core
         {
             get;
             private set;
+        }
+        /// <summary>
+        /// The names of all parameters within the route's
+        /// format string.
+        /// </summary>
+        public IReadOnlyList<string> Parameters
+        {
+            get { return _paramNames.Value; }
         }
     }
 }
