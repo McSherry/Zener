@@ -64,10 +64,6 @@ namespace SynapLink.Zener.Core
          * 
          */
 
-        private RouteHandler _handler;
-        private string _format;
-        private string _name;
-
 #if DEBUG
         static Route()
         {
@@ -162,8 +158,8 @@ namespace SynapLink.Zener.Core
         /// <param name="handler">The handler to be associated with this route.</param>
         public Route(string format, RouteHandler handler)
         {
-            _format = format.ToLower().Trim(' ', '/');
-            _handler = handler;
+            this.Format = format.ToLower().Trim(' ', '/');
+            this.Handler = handler;
             this.Name = this.Format;
         }
 
@@ -302,14 +298,16 @@ namespace SynapLink.Zener.Core
         /// </summary>
         public string Format
         {
-            get { return _format; }
+            get;
+            private set;
         }
         /// <summary>
         /// The handler delegate associated with this route.
         /// </summary>
         public RouteHandler Handler
         {
-            get { return _handler; }
+            get;
+            private set;
         }
     }
 }
