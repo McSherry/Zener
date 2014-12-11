@@ -71,7 +71,7 @@ namespace SynapLink.Zener.Core
         static Route()
         {
             RouteHandler rh = (rs, rq, p) => { };
-            Dictionary<string, string> result = new Dictionary<string, string>();
+            dynamic result;
 
             var trues = new[] 
             {
@@ -126,7 +126,7 @@ namespace SynapLink.Zener.Core
 
             foreach (var test in trues)
             {
-                bool succeed = test.route.TryMatch(test.str, result);
+                bool succeed = test.route.TryMatch(test.str, out result);
                 bool paramCorrect = result.Count == test.pnum;
 
                 if (!succeed || !paramCorrect)
@@ -141,7 +141,7 @@ namespace SynapLink.Zener.Core
             }
             foreach (var test in falses)
             {
-                bool succeed = !test.route.TryMatch(test.str, result);
+                bool succeed = !test.route.TryMatch(test.str, out result);
 
                 if (!succeed)
                     throw new Exception(

@@ -18,6 +18,11 @@ using SynapLink.Zener.Core;
 namespace SynapLink.Zener
 {
     /// <summary>
+    /// Used to indicate when a dynamic property has no value.
+    /// </summary>
+    public enum Empty { }
+
+    /// <summary>
     /// A class implementing the Zener interface between web server and application.
     /// </summary>
     public class Zener

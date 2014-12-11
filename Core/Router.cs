@@ -49,8 +49,7 @@ namespace SynapLink.Zener.Core
              * inaccessible.
              */
 
-            List<Dictionary<string, string>> validParams
-                = new List<Dictionary<string, string>>();
+            List<dynamic> validParams = new List<dynamic>();
 
             var validHandlers = _routes
                 .Where(r => r.TryMatch(path, validParams.Add))
