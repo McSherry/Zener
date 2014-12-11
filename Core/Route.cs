@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Dynamic;
 
 using SynapLink.Zener.Net;
 
@@ -18,10 +19,12 @@ namespace SynapLink.Zener.Core
     /// <summary>
     /// The delegate used with handler functions for routes.
     /// </summary>
-    /// <param name="urlParams">Any parameters included in the URL.</param>
+    /// <param name="request">The HTTP request for this route.</param>
+    /// <param name="response">The HTTP response this route will generate.</param>
+    /// <param name="routeParameters">The parameters provided to this route.</param>
     public delegate void RouteHandler(
         HttpRequest request, HttpResponse response, 
-        Dictionary<string, string> routeParam
+        dynamic routeParameters
         );
 
     /// <summary>
@@ -202,8 +205,9 @@ namespace SynapLink.Zener.Core
         /// <param name="path">The path to test.</param>
         /// <param name="param">If the path matches, where any parameters are stored.</param>
         /// <returns>True if the route matches the path.</returns>
-        public bool TryMatch(string path, Dictionary<string, string> param)
+        public bool TryMatch(string path, out dynamic param)
         {
+            var dynObj = new ExpandoObject() as IDictionary<string, object>;
             path = path.Trim(' ', '/');
 
             // Indices within format and path
@@ -273,7 +277,7 @@ namespace SynapLink.Zener.Core
                     else if (inParam && path[pIndex] == '/')
                     {
                         inParam = false;
-                        param[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                        dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
                         paramNameBuilder.Clear();
                         paramValBuilder.Clear();
                         break;
@@ -286,7 +290,7 @@ namespace SynapLink.Zener.Core
 
                 if (!(pIndex < path.Length) && !(fIndex < this.Format.Length))
                 {
-                    if (inParam) param[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                    if (inParam) dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
                     break;
                 }
                 else
@@ -295,7 +299,7 @@ namespace SynapLink.Zener.Core
                 }
             }
 
-
+            param = dynObj;
             return formatBuilder.ToString().Equals(
                 pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
                 );
@@ -307,9 +311,9 @@ namespace SynapLink.Zener.Core
         /// <param name="path">The path to test.</param>
         /// <param name="callback">The callback to pass parameters to.</param>
         /// <returns>True if the route matches the path.</returns>
-        public bool TryMatch(string path, Action<Dictionary<string, string>> callback)
+        public bool TryMatch(string path, Action<dynamic> callback)
         {
-            Dictionary<string, string> result = new Dictionary<string, string>();
+            dynamic result = null;
             bool success = this.TryMatch(path, result);
 
             if (success) callback(result);
