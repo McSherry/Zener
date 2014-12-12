@@ -127,17 +127,17 @@ namespace SynapLink.Zener.Core
             foreach (var test in trues)
             {
                 bool succeed = test.route.TryMatch(test.str, out result);
-                bool paramCorrect = result.Count == test.pnum;
+                bool paramCorrect = (result as IDictionary<string, object>).Count == test.pnum;
 
                 if (!succeed || !paramCorrect)
                     throw new Exception(
                         String.Format(
                             "Test failed (True Tests): {0}, {1}, {2}/{3}",
                             test.route.Format, test.str, test.pnum,
-                            result.Count   
+                            (result as IDictionary<string, object>).Count   
                         ));
 
-                result.Clear();
+                (result as IDictionary<string, object>).Clear();
             }
             foreach (var test in falses)
             {
@@ -148,7 +148,7 @@ namespace SynapLink.Zener.Core
                         String.Format(
                             "Test failed (False Tests): {0}, {1}",
                             test.route.Format, test.str,
-                            result.Count
+                            (result as IDictionary<string, object>).Count
                         ));
             }
         }
@@ -314,7 +314,7 @@ namespace SynapLink.Zener.Core
         public bool TryMatch(string path, Action<dynamic> callback)
         {
             dynamic result = null;
-            bool success = this.TryMatch(path, result);
+            bool success = this.TryMatch(path, out result);
 
             if (success) callback(result);
 
