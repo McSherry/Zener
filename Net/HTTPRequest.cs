@@ -106,7 +106,7 @@ namespace SynapLink.Zener.Net
         /// application/x-www-formurlencoded format.
         /// </summary>
         /// <param name="formatBody">The string to parse.</param>
-        public static dynamic ParseFormUrlEncoded(string formatBody)
+        private static dynamic ParseFormUrlEncoded(string formatBody)
         {
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
 
