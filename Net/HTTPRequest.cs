@@ -12,7 +12,6 @@ using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.IO;
 using System.Net;
 
@@ -28,18 +27,25 @@ namespace SynapLink.Zener.Net
         private const string HDR_CDISPOSITION = "Content-Disposition";
         private const string CDIS_FORMDATA = "form-data";
         private const string HDR_CTYPE = "Content-Type";
+        private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-        private static Regex _dynReplRegex;
+        /// <summary>
+        /// Filters disallowed characters from a string.
+        /// </summary>
+        /// <param name="str">The string to filter.</param>
+        /// <returns>The provided string, filtered to remove disallowed characters.</returns>
+        private static string _filterInvChars(string str)
+        {
+            return str
+                .Where(c => VAR_WHITELIST.Contains(c))
+                .Aggregate(new StringBuilder(), (sb, c) => sb.Append(c))
+                .ToString();
+        }
         private static ASCIIEncoding _ascii;
 
         static HttpRequest()
         {
             _ascii = new ASCIIEncoding();
-            // Used to replace characters which might turn up
-            // in multipart/form-data names with a safe character,
-            // since we're using that name to create dynamic
-            // properties.
-            _dynReplRegex = new Regex("[- +/\\'\"][{}]=()*&^%$£!¬¦`€|?><~#;:@");
         }
 
         private HttpHeaderCollection _headers;
@@ -100,7 +106,7 @@ namespace SynapLink.Zener.Net
         /// application/x-www-formurlencoded format.
         /// </summary>
         /// <param name="formatBody">The string to parse.</param>
-        private static dynamic ParseFormUrlEncoded(string formatBody)
+        public static dynamic ParseFormUrlEncoded(string formatBody)
         {
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
 
@@ -114,9 +120,8 @@ namespace SynapLink.Zener.Net
                 if (!inVal && c == '=')
                 {
                     inVal = true;
-                    section = _dynReplRegex.Replace(
-                        WebUtility.UrlDecode(qBuilder.ToString()),
-                        String.Empty
+                    section = _filterInvChars(
+                        WebUtility.UrlDecode(qBuilder.ToString())
                         );
                     qBuilder.Clear();
                 }
@@ -128,9 +133,8 @@ namespace SynapLink.Zener.Net
                 }
                 else if (!inVal && c == '&')
                 {
-                    section = _dynReplRegex.Replace(
-                        WebUtility.UrlDecode(qBuilder.ToString()),
-                        String.Empty
+                    section = _filterInvChars(
+                        WebUtility.UrlDecode(qBuilder.ToString())
                         );
                     dynObj[section] = String.Empty;
                     qBuilder.Clear();
@@ -143,9 +147,8 @@ namespace SynapLink.Zener.Net
 
             if (!inVal)
             {
-                section = _dynReplRegex.Replace(
-                    WebUtility.UrlDecode(qBuilder.ToString()),
-                    String.Empty
+                section = _filterInvChars(
+                    WebUtility.UrlDecode(qBuilder.ToString())
                     );
 
                 dynObj[section] = String.Empty;
@@ -233,15 +236,14 @@ namespace SynapLink.Zener.Net
                     // Extract the name of the part, URL-decode it,
                     // and remove any characters which can't be used
                     // in a name.
-                    string partName = _dynReplRegex.Replace(
+                    string partName = _filterInvChars(
                         WebUtility.UrlDecode(
                             cdis.Pairs.Where(
                                 p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase)
                                 )
                             .Last()
                             .Value
-                            ),
-                        String.Empty
+                            )
                         );
 
 
