@@ -523,10 +523,7 @@ namespace SynapLink.Zener.Net
             this._CheckClosed();
             this._ConditionalWriteHeaders();
 
-            foreach (var b in content)
-            {
-                _nsw.Write(b);
-            }
+            _nsw.BaseStream.Write(content, 0, content.Length);
         }
         /// <summary>
         /// Writes the provided string with the inserts added.
