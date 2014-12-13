@@ -167,36 +167,9 @@ namespace SynapLink.Zener.Core
             this.Handler = handler;
             this.Name = this.Format;
 
-            #region Get param names
-            _paramNames = new Lazy<IReadOnlyList<string>>(() =>
-            {
-                List<string> @params = new List<string>();
-
-                bool inParam = false;
-                StringBuilder nameBuilder = new StringBuilder();
-                foreach (char c in this.Format)
-                {
-                    if (!inParam && c == '[')
-                    {
-                        inParam = true;
-                        continue;
-                    }
-                    else if (inParam && c == ']')
-                    {
-                        inParam = false;
-                        @params.Add(nameBuilder.ToString());
-                        nameBuilder.Clear();
-                    }
-                    else if (inParam)
-                    {
-                        nameBuilder.Append(c);
-                    }
-                    else continue;
-                }
-
-                return @params.AsReadOnly();
-            });
-            #endregion
+            _paramNames = new Lazy<IReadOnlyList<string>>(
+                () => Routing.GetParameters(this.Format)
+                );
         }
 
         /// <summary>
