@@ -288,7 +288,7 @@ namespace SynapLink.Zener.Net
             };
 
         private HttpStatus _httpStatus;
-        private List<BasicHttpHeader> _headers;
+        private HttpHeaderCollection _headers;
         private TcpClient _tcl;
         private StreamWriter _nsw;
         // Set to true when the first write is made. When this is
@@ -307,9 +307,9 @@ namespace SynapLink.Zener.Net
                 // Ensures that the content is transferred with a media type.
                 // Defaults to HTML, since what else is an HTTP server most likely
                 // to be serving?
-                if (!this.HasHeader("Content-Type"))
+                if (!this.Headers.Contains("Content-Type"))
                 {
-                    this.SetHeader("Content-Type", "text/html");
+                    this.Headers.Add("Content-Type", "text/html");
                 }
 
                 // Response line
@@ -320,16 +320,12 @@ namespace SynapLink.Zener.Net
                         STAT_MSGS[this.StatusCode]
                 );
 
-                foreach (var header in this._headers)
+                if (!this.Headers.Contains("Server"))
                 {
-                    _nsw.WriteLine(header.ToString());
+                    this.Headers.Add("Server", "Zener/" + Zener.Version.ToString(3), true);
                 }
 
-                if (!this.HasHeader("Server"))
-                {
-                    this.SetHeader("Server", "Zener/" + Zener.Version.ToString(3), true);
-                }
-
+                _nsw.Write(this.Headers.ToString());
                 // The end of the header block is indicated by using two CRLFs,
                 // so we need to write an extra one to our stream before the
                 // body can be sent.
@@ -368,7 +364,7 @@ namespace SynapLink.Zener.Net
                 AutoFlush = true,
                 NewLine = "\r\n"
             };
-            _headers = new List<BasicHttpHeader>();
+            _headers = new HttpHeaderCollection();
             _beginRespond = false;
             _closed = false;
         }
@@ -391,114 +387,14 @@ namespace SynapLink.Zener.Net
                 _httpStatus = value;
             }
         }
-
         /// <summary>
-        /// Sets a header from a string, overwriting any previous headers
-        /// with the same field name.
+        /// The headers to be sent with the response.
         /// </summary>
-        /// <param name="header">The header to add to the response.</param>
-        /// <exception cref="System.ArgumentException"></exception>
-        public void SetHeader(string header)
+        public HttpHeaderCollection Headers
         {
-            this._CheckClosed();
-            if (_beginRespond) throw new InvalidOperationException
-            ("Cannot set headers after response body has been written to.");
+            get { return _headers; }
+        }
 
-            this.SetHeader(BasicHttpHeader.Parse(header), true);
-        }
-        /// <summary>
-        /// Sets a header from a string, optionally overwriting
-        /// previous headers with the same field name.
-        /// </summary>
-        /// <param name="header">The header to add to the response.</param>
-        /// <param name="overwrite">Whether to overwrite headers with</param>
-        /// <exception cref="System.ArgumentException"></exception>
-        public void SetHeader(string header, bool overwrite)
-        {
-            this._CheckClosed();
-            if (_beginRespond) throw new InvalidOperationException
-            ("Cannot set headers after response body has been written to.");
-
-            this.SetHeader(BasicHttpHeader.Parse(header), overwrite);
-        }
-        /// <summary>
-        /// Sets a header from a field name and value, overwriting any
-        /// previous headers with the same field name.
-        /// </summary>
-        /// <param name="fieldName">The field name to write.</param>
-        /// <param name="value">The value to write.</param>
-        public void SetHeader(string fieldName, string value)
-        {
-            this.SetHeader(fieldName, value, true);
-        }
-        /// <summary>
-        /// Sets a header from a field name and value, optionally 
-        /// overwriting any previous headers with the same field name.
-        /// </summary>
-        /// <param name="fieldName">The field name to write.</param>
-        /// <param name="value">The value to write.</param>
-        public void SetHeader(string fieldName, string value, bool overwrite)
-        {
-            this._CheckClosed();
-            if (_beginRespond) throw new InvalidOperationException
-            ("Cannot set headers after response body has been written to.");
-
-            this.SetHeader(new BasicHttpHeader(fieldName, value), overwrite);
-        }
-        /// <summary>
-        /// Sets a header from a BasicHttpHeader object, overwriting any
-        /// previous headers with the same field name.
-        /// </summary>
-        /// <param name="header">The header to add to the response.</param>
-        public void SetHeader(BasicHttpHeader header)
-        {
-            this._CheckClosed();
-            if (_beginRespond) throw new InvalidOperationException
-            ("Cannot set headers after response body has been written to.");
-
-            this.SetHeader(header, true);
-        }
-        /// <summary>
-        /// Adds a header to the HTTP response.
-        /// </summary>
-        /// <param name="header">The header to add.</param>
-        /// <param name="overwrite">Whether to overwrite any previous headers with the same field name.</param>
-        /// <exception cref="System.InvalidOperationException"></exception>
-        public void SetHeader(BasicHttpHeader header, bool overwrite)
-        {
-            this._CheckClosed();
-
-            if (_beginRespond) throw new InvalidOperationException
-            ("Cannot set headers after response body has been written to.");
-
-            if (overwrite)
-            {
-                _headers.RemoveAll(h => h.Field == header.Field);
-            }
-
-            _headers.Add(header);
-        }
-        /// <summary>
-        /// Determines whether at least one header with the specified field name
-        /// exists within this response.
-        /// </summary>
-        /// <param name="fieldName">The field name to check for.</param>
-        /// <returns>True if at least one header with the specified field name exists.</returns>
-        public bool HasHeader(string fieldName)
-        {
-            return _headers.Any(h => h.Field.ToLower() == fieldName.ToLower());
-        }
-        /// <summary>
-        /// Determines whether at least one header with the specified field name
-        /// exists within this response.
-        /// </summary>
-        /// <param name="fieldName">The field name to check for.</param>
-        /// <param name="count">The number of headers with this field present, if any.</param>
-        /// <returns>True if at least one header with the specified field name exists.</returns>
-        public bool HasHeader(string fieldName, out int count)
-        {
-            return (count = _headers.Count(h => h.Field.ToLower() == fieldName.ToLower())) > 0;
-        }
         /// <summary>
         /// Writes the provided strings to the response body.
         /// </summary>

@@ -107,12 +107,12 @@ namespace SynapLink.Zener.Net
         /// <returns>The headers as they would be formatted in an HTTP request/response.</returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
-
-            foreach (var header in _headerList)
-                sb.AppendFormat("{0}: {1}\r\n", header.Field, header.Value);
-
-            return sb.ToString();
+            return _headerList
+                .Aggregate(
+                    new StringBuilder(),
+                    (sb, h) => sb.AppendFormat("{0}\n", h.ToString())
+                    )
+                .ToString();
         }
 
         /// <summary>
@@ -138,7 +138,7 @@ namespace SynapLink.Zener.Net
 
             if (overwrite) this.Remove(fieldName);
 
-            _headerList.Add(new BasicHttpHeader(fieldName, WebUtility.UrlEncode(fieldValue)));
+            _headerList.Add(new BasicHttpHeader(fieldName, fieldValue));
         }
         /// <summary>
         /// Adds a header to the collection.

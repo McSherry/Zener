@@ -97,12 +97,12 @@ namespace SynapLink.Zener.Core
                 {
                     if (!Path.HasExtension(filePath))
                     {
-                        rs.SetHeader("Content-Type", "text/plain");
+                        rs.Headers.Add("Content-Type", "text/plain");
                     }
                     else
                     {
                         string ext = Path.GetExtension(filePath);
-                        rs.SetHeader("Content-Type", MediaTypeMap.Find(ext));
+                        rs.Headers.Add("Content-Type", MediaTypeMap.Find(ext));
                     }
 
                     byte[] response = new byte[fs.Length];

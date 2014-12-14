@@ -86,7 +86,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         internal static void DefaultErrorHandler(HttpStatus status, HttpResponse response)
         {
-            response.SetHeader("Content-Type", "text/plain");
+            response.Headers.Add("Content-Type", "text/plain");
             response.Write(
                 "{0} {1}",
                 (int)status, HttpResponse.GetStatusMessage(status)
