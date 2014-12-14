@@ -112,6 +112,43 @@ namespace SynapLink.Zener.Core
                 }
             });
         }
+        /// <summary>
+        /// Adds a handler which will serve the provided bytes when called.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="content">The content to serve.</param>
+        /// <param name="mediaType">The media type of the content (e.g. text/plain).</param>
+        public static void AddResource(
+            this Router router,
+            string format, byte[] content, string mediaType
+            )
+        {
+            router.AddHandler(format, (rq, rs, prm) =>
+            {
+                rs.Headers.Add("Content-Type", mediaType);
+
+                rs.Write(content);
+            });
+        }
+        /// <summary>
+        /// Adds a handler which will serve the provided string as UTF-8
+        /// HTML when called.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="html">The HTML to be served.</param>
+        public static void AddResource(
+            this Router router,
+            string format, string html
+            )
+        {
+            router.AddResource(
+                format,
+                Encoding.UTF8.GetBytes(html),
+                "text/html"
+            );
+        }
 
         /// <summary>
         /// A map of media types and file extensions used to determine the media type of files.
