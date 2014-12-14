@@ -27,10 +27,9 @@ namespace SynapLink.Zener
     /// </summary>
     public class Zener
     {
-        private const string WEBROOT_DEFAULT = "./www";
+        private const string INTERNAL_PREFIX = ":";
         private static Version _ver;
 
-        private string _webroot;
         private HttpServer _http;
 
         /// <summary>
@@ -39,6 +38,30 @@ namespace SynapLink.Zener
         public static Version Version
         {
             get { return _ver; }
+        }
+
+        private void HandleHttpRequestSuccessful(HttpRequest req, HttpResponse res)
+        {
+            HttpRequestHandler hrh;
+            bool found = this.Routes.TryFind(req.Path, out hrh);
+
+            if (!found) throw new HttpException(HttpStatus.NotFound);
+
+            hrh(req, res);
+        }
+        private void HandleHttpRequestError(HttpStatus status, HttpResponse res)
+        {
+            HttpRequestHandler hrh;
+            bool found = this.Routes.TryFind(
+                String.Format("{0}{1}", INTERNAL_PREFIX, (int)status),
+                out hrh
+                );
+
+            if (!found) HttpServer.DefaultErrorHandler(status, res);
+            else
+            {
+                hrh(null, res);
+            }
         }
 
         static Zener()
@@ -53,7 +76,7 @@ namespace SynapLink.Zener
         /// </summary>
         /// <exception cref="System.ArgumentException"></exception>
         public Zener()
-            : this(WEBROOT_DEFAULT, new Random().Next(49152, 65534))
+            : this(new Random().Next(49152, 65534))
         { }
         /// <summary>
         /// Creates a new ZenerCore with documents sourced from the specified webroot,
@@ -63,26 +86,30 @@ namespace SynapLink.Zener
         /// <param name="port">A TCP port to use for the web server.</param>
         /// <param name="precache">Whether all files in the webroot and children should be pre-cached.</param>
         /// <exception cref="System.ArgumentException"></exception>
-        public Zener(string webroot, int port)
+        public Zener(int port)
         {
-            _webroot = webroot;
-
-            _http = new HttpServer(port);
+            _http = new HttpServer(port)
+            {
+                RequestHandler = HandleHttpRequestSuccessful,
+                ErrorHandler = HandleHttpRequestError
+            };
+            this.Routes = new Router();
         }
 
-        /// <summary>
-        /// The directory the server will attempt to source files from.
-        /// </summary>
-        public string WebRoot 
-        {
-            get { return _webroot; }
-        }
         /// <summary>
         /// The TCP port the server is listening on.
         /// </summary>
         public int Port
         {
             get { return _http.Port; }
+        }
+        /// <summary>
+        /// The routes that will be used to serve 
+        /// </summary>
+        public Router Routes
+        {
+            get;
+            set;
         }
     }
 }

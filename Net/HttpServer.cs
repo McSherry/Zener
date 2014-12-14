@@ -84,7 +84,7 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The error handler called when no other handler exists.
         /// </summary>
-        private static void DefaultErrorHandler(HttpStatus status, HttpResponse response)
+        internal static void DefaultErrorHandler(HttpStatus status, HttpResponse response)
         {
             response.SetHeader("Content-Type", "text/plain");
             response.Write(
