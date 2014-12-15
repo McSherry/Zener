@@ -122,6 +122,11 @@ namespace SynapLink.Zener.Core
                 new { route = new Route("a/[p0]/b/[p1]", rh), str = "/a/v0/b" },
                 new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b/" },
                 new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b" },
+
+                new { route = new Route("a/[p0]/b", rh), str = "/a//b/" },
+                new { route = new Route("a/[p0]/b", rh), str = "/a//b" },
+                new { route = new Route("a/[p0]/b", rh), str = "a//b/" },
+                new { route = new Route("a/[p0]/b", rh), str = "a//b" },
             };
 
             foreach (var test in trues)
