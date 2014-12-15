@@ -254,6 +254,14 @@ namespace SynapLink.Zener.Core
                     }
                     else if (inParam && path[pIndex] == '/')
                     {
+                        // Zero-length parameters should be rejected.
+                        // See GitHub issue #7.
+                        if (paramValBuilder.Length == 0)
+                        {
+                            pIndex++;
+                            continue;
+                        }
+
                         inParam = false;
                         dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
                         paramNameBuilder.Clear();
