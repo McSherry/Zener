@@ -104,7 +104,8 @@ namespace SynapLink.Zener
             get { return _http.Port; }
         }
         /// <summary>
-        /// The routes that will be used to serve 
+        /// The routes that will be used to call handlers and
+        /// serve content to the user agent.
         /// </summary>
         public Router Routes
         {
