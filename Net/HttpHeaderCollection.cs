@@ -92,6 +92,16 @@ namespace SynapLink.Zener.Net
                 value.ForEach(this.Add);
             }
         }
+        /// <summary>
+        /// Retrieves the header at the specified index in the collection.
+        /// </summary>
+        /// <param name="index">The index of the header.</param>
+        /// <returns>The header at the specified index.</returns>
+        internal BasicHttpHeader this[int index]
+        {
+            get { return _headerList[index]; }
+            set { _headerList[index] = value; }
+        }
 
         /// <summary>
         /// Whether the collection can be modified.
