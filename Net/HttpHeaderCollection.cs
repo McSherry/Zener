@@ -52,6 +52,19 @@ namespace SynapLink.Zener.Net
             _readOnly = false;
         }
         /// <summary>
+        /// Creates a collection of HTTP headers from the provided enumerable.
+        /// </summary>
+        /// <param name="enumerable">The enumerable to create from.</param>
+        public HttpHeaderCollection(IEnumerable<BasicHttpHeader> enumerable)
+            : this(enumerable.ToList()) { }
+        /// <summary>
+        /// Creates a collection of HTTP headers from the provided enumerable.
+        /// </summary>
+        /// <param name="enumerable">The enumerable to create from.</param>
+        /// <param name="readOnly">Whether the collection should be read-only.</param>
+        public HttpHeaderCollection(IEnumerable<BasicHttpHeader> enumerable, bool readOnly)
+            : this(enumerable.ToList(), readOnly) { }
+        /// <summary>
         /// Creates a collection of HTTP headers from the provided collection.
         /// </summary>
         /// <param name="collection">The collection to create the header collection from.</param>
