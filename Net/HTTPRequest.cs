@@ -271,49 +271,6 @@ namespace SynapLink.Zener.Net
 
             return new Empty();
         }
-        /// <summary>
-        /// Parses HTTP headers from a stream.
-        /// </summary>
-        /// <param name="requestStream">The stream to parse from.</param>
-        /// <returns>An enumerable containing the parsed headers.</returns>
-        public static IEnumerable<BasicHttpHeader> ParseHeaders(StreamReader requestStream)
-        {
-            int headerIndex = 0;
-            while (true)
-            {
-                string line = requestStream.ReadLine();
-                // If the line is null, we've reached the end of the
-                // stream. If its length is zero, we've reached an empty
-                // line. An empty line means we've hit the separator between
-                // the headers and the request body, so we will want to stop
-                // parsing headers.
-                if (line == null || line.Length == 0) break;
-
-                // Per RFC2612 s.4.2, multi-line HTTP headers are
-                // indicated by preceding the lines following the
-                // start of the header with SP (1 or more " ") or
-                // HT (1 or more "\t").
-                //
-                // Implemented for issue #1.
-                if (line[0] == ' ' || line[0] == '\t')
-                {
-                    line.TrimStart(' ', '\t');
-
-                    _headers[headerIndex - 1] = new BasicHttpHeader(
-                        _headers[headerIndex - 1].Field,
-                        String.Format(
-                            "{0} {1}",
-                            _headers[headerIndex - 1].Value,
-                            line
-                        ));
-                }
-                else
-                {
-                    yield return BasicHttpHeader.Parse(line);
-                    ++headerIndex;
-                }
-            }
-        }
 
         /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
@@ -334,7 +291,7 @@ namespace SynapLink.Zener.Net
                 this.SetPropertiesFromRequestLine(requestStream.ReadLine());
 
                 _headers = new HttpHeaderCollection(
-                    ParseHeaders(requestStream),
+                    BasicHttpHeader.ParseMany(requestStream),
                     true
                     );
 
