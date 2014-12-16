@@ -79,7 +79,7 @@ namespace SynapLink.Zener.Net
                 }
                 else if (!str && value[i] == ';')
                 {
-                    _nvPairs[tStore.Trim()] = secb.ToString();
+                    _nvPairs[tStore.Trim(BasicHttpHeader.TRIM_CHARS)] = secb.ToString();
                     secb.Clear();
                     key = true;
                 }
@@ -91,11 +91,11 @@ namespace SynapLink.Zener.Net
 
             if (key && secb.Length > 0)
             {
-                _nvPairs[secb.ToString().Trim()] = String.Empty;
+                _nvPairs[secb.ToString().Trim(BasicHttpHeader.TRIM_CHARS)] = String.Empty;
             }
             else
             {
-                _nvPairs[tStore.Trim()] = secb.ToString();
+                _nvPairs[tStore.Trim(BasicHttpHeader.TRIM_CHARS)] = secb.ToString();
                     
             }
         }
