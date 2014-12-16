@@ -27,7 +27,7 @@ namespace SynapLink.Zener.Net
         private const string HDR_CDISPOSITION = "Content-Disposition";
         private const string CDIS_FORMDATA = "form-data";
         private const string HDR_CTYPE = "Content-Type";
-        private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
 
         /// <summary>
         /// Filters disallowed characters from a string.
