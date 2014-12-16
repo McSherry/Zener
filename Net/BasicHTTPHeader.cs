@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace SynapLink.Zener.Net
 {
@@ -82,14 +83,14 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// Converts a string to a BasicHTTPHeader.
+        /// Converts a string to a BasicHttpHeader.
         /// </summary>
-        /// <param name="headerText">The full text of the header.</param>
-        /// <returns>A BasicHTTPHeader equivalent to the provided string.</returns>
+        /// <param name="headerLine">A single line containing the header text.</param>
+        /// <returns>A BasicHttpHeader equivalent to the provided string.</returns>
         /// <exception cref="System.ArgumentException"></exception>
-        public static BasicHttpHeader Parse(string headerText)
+        public static BasicHttpHeader Parse(string headerLine)
         {
-            headerText = headerText.Trim(
+            headerLine = headerLine.Trim(
                 TRIM_CHARS
                     .Concat(new[] { ' ', '\r', '\n' })
                     .ToArray()
@@ -98,13 +99,55 @@ namespace SynapLink.Zener.Net
             StringBuilder fieldBuilder = new StringBuilder();
 
             int i = 0;
-            for (; i < headerText.Length;)
+            for (; i < headerLine.Length;)
             {
-                if (headerText[i] == ':') break;
-                fieldBuilder.Append(headerText[i++]);
+                if (headerLine[i] == ':') break;
+                fieldBuilder.Append(headerLine[i++]);
             }
 
-            return new BasicHttpHeader(fieldBuilder.ToString(), headerText.Substring(++i));
+            return new BasicHttpHeader(fieldBuilder.ToString(), headerLine.Substring(++i));
+        }
+        /// <summary>
+        /// Converts a sequence of characters to a set of BasicHttpHeaders.
+        /// </summary>
+        /// <param name="text">The text containing the headers.</param>
+        /// <returns>An enumerable containing parsed headers.</returns>
+        /// <exception cref="System.ArgumentException"></exception>
+        public static IEnumerable<BasicHttpHeader> ParseMany(TextReader text)
+        {
+            List<string> lines = new List<string>();
+
+            while (true)
+            {
+                string line = text.ReadLine();
+
+                if (String.IsNullOrWhiteSpace(line)) break;
+
+                lines.Add(line);
+            }
+
+            int initialCount = lines.Count;
+            var linesToMerge = Enumerable
+                .Range(0, lines.Count)
+                .Zip(lines, (i, l) => new { i, l })
+                .Where(ao => TRIM_CHARS.Contains(ao.l[0]))
+                .ToList();
+
+            foreach (var ml in linesToMerge)
+            {
+                int lengDiff = (initialCount - lines.Count);
+
+                lines[ml.i - lengDiff - 1] = String.Format(
+                    "{0}{1}",
+                    lines[ml.i - lengDiff - 1],
+                    ml.l.TrimStart(TRIM_CHARS)
+                    );
+
+                lines.RemoveAt(ml.i - lengDiff);
+            }
+
+            foreach (string line in lines)
+                yield return BasicHttpHeader.Parse(line);
         }
     }
 }
