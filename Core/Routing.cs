@@ -112,7 +112,13 @@ namespace SynapLink.Zener.Core
                 }
             });
         }
-
+        /// <summary>
+        /// Adds a file handler to the router. A file handler is used to
+        /// serve a single file.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="filePath">The file to serve.</param>
         public static void AddFile(
             this Router router,
             string format, string filePath
