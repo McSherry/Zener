@@ -112,6 +112,76 @@ namespace SynapLink.Zener.Core
                 }
             });
         }
+
+        public static void AddFile(
+            this Router router,
+            string format, string filePath
+            )
+        {
+            router.AddHandler(format, (rq, rs, prm) =>
+            {
+                string mediaType = MediaTypeMap.FallbackType;
+                if (Path.HasExtension(filePath))
+                {
+                    mediaType = MediaTypeMap.Find(
+                        Path.GetExtension(mediaType)
+                        );
+                }
+                rs.Headers.Add("Content-Type", mediaType);
+
+                try
+                {
+                    using (FileStream fs = File.OpenRead(filePath))
+                    {
+                        byte[] content = new byte[fs.Length];
+
+                        fs.Read(content, 0, content.Length);
+
+                        rs.Write(content);
+                    }
+                }
+                catch (DirectoryNotFoundException dnfex)
+                {
+                    throw new HttpException(
+                        HttpStatus.NotFound,
+                        "The specified directory could not be found.",
+                        dnfex
+                        );
+                }
+                catch (FileNotFoundException fnfex)
+                {
+                    throw new HttpException(
+                        HttpStatus.NotFound,
+                        "The specified file could not be found.",
+                        fnfex
+                        );
+                }
+                catch (UnauthorizedAccessException uaex)
+                {
+                    throw new HttpException(
+                        HttpStatus.Forbidden,
+                        "You do not have permission to access this file.",
+                        uaex
+                        );
+                }
+                catch (PathTooLongException ptlex)
+                {
+                    throw new HttpException(
+                        HttpStatus.RequestUriTooLarge,
+                        "The specified file path was too long.",
+                        ptlex
+                        );
+                }
+                catch (IOException ioex)
+                {
+                    throw new HttpException(
+                        HttpStatus.InternalServerError,
+                        "An unspecified I/O error occured.",
+                        ioex
+                        );
+                }
+            });
+        }
         /// <summary>
         /// Adds a handler which will serve the provided bytes when called.
         /// </summary>
