@@ -124,7 +124,7 @@ namespace SynapLink.Zener.Core
                 if (Path.HasExtension(filePath))
                 {
                     mediaType = MediaTypeMap.Find(
-                        Path.GetExtension(mediaType)
+                        Path.GetExtension(filePath)
                         );
                 }
                 rs.Headers.Add("Content-Type", mediaType);
