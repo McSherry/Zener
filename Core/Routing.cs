@@ -83,32 +83,68 @@ namespace SynapLink.Zener.Core
                         RTR_ADDDIR_PARAM
                     ));
 
-            if (!Directory.Exists(dirPath))
-                throw new DirectoryNotFoundException
-                ("The specified directory could not be found.");
-
             router.AddHandler(format, (rq, rs, pr) => {
                 string filePath = String.Format(@"{0}\{1}", dirPath, pr.file);
 
-                if (!File.Exists(filePath))
-                    throw new HttpException(HttpStatus.NotFound);
-
-                using (FileStream fs = new FileStream(filePath, FileMode.Open))
+                try
                 {
-                    if (!Path.HasExtension(filePath))
+                    using (FileStream fs = File.OpenRead(filePath))
                     {
-                        rs.Headers.Add("Content-Type", "text/plain");
-                    }
-                    else
-                    {
-                        string ext = Path.GetExtension(filePath);
-                        rs.Headers.Add("Content-Type", MediaTypeMap.Find(ext));
-                    }
+                        if (!Path.HasExtension(filePath))
+                        {
+                            rs.Headers.Add("Content-Type", "text/plain");
+                        }
+                        else
+                        {
+                            string ext = Path.GetExtension(filePath);
+                            rs.Headers.Add("Content-Type", MediaTypeMap.Find(ext));
+                        }
 
-                    byte[] response = new byte[fs.Length];
-                    fs.Read(response, 0, response.Length);
+                        byte[] response = new byte[fs.Length];
+                        fs.Read(response, 0, response.Length);
 
-                    rs.Write(response);
+                        rs.Write(response);
+                    }
+                }
+                catch (DirectoryNotFoundException dnfex)
+                {
+                    throw new HttpException(
+                        HttpStatus.NotFound,
+                        "The specified directory could not be found.",
+                        dnfex
+                        );
+                }
+                catch (FileNotFoundException fnfex)
+                {
+                    throw new HttpException(
+                        HttpStatus.NotFound,
+                        "The specified file could not be found.",
+                        fnfex
+                        );
+                }
+                catch (UnauthorizedAccessException uaex)
+                {
+                    throw new HttpException(
+                        HttpStatus.Forbidden,
+                        "You do not have permission to access this file.",
+                        uaex
+                        );
+                }
+                catch (PathTooLongException ptlex)
+                {
+                    throw new HttpException(
+                        HttpStatus.RequestUriTooLarge,
+                        "The specified file path was too long.",
+                        ptlex
+                        );
+                }
+                catch (IOException ioex)
+                {
+                    throw new HttpException(
+                        HttpStatus.InternalServerError,
+                        "An unspecified I/O error occured.",
+                        ioex
+                        );
                 }
             });
         }
