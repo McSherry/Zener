@@ -28,6 +28,7 @@ namespace SynapLink.Zener.Net
         private const string CDIS_FORMDATA = "form-data";
         private const string HDR_CTYPE = "Content-Type";
         private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+        private const string VAR_NOSTART = "0123456789";
 
         /// <summary>
         /// Filters disallowed characters from a string.
@@ -37,6 +38,7 @@ namespace SynapLink.Zener.Net
         private static string _filterInvChars(string str)
         {
             return str
+                .TrimStart(VAR_NOSTART.ToCharArray())
                 .Where(c => VAR_WHITELIST.Contains(c))
                 .Aggregate(new StringBuilder(), (sb, c) => sb.Append(c))
                 .ToString();
