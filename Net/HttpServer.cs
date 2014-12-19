@@ -143,30 +143,29 @@ namespace SynapLink.Zener.Net
             HttpRequest req;
             HttpResponse res = new HttpResponse(tcl);
 
-            using (StreamReader sr = new StreamReader(ms))
+
+            try
             {
-                try
-                {
-                    req = new HttpRequest(sr);
+                req = new HttpRequest(ms);
 
-                    if (this.RequestHandler != null)
-                    {
-                        this.RequestHandler(req, res);
-                    }
-                }
-                catch (HttpException hex)
+                if (this.RequestHandler != null)
                 {
-
-                    if (this.ErrorHandler == null)
-                    {
-                        DefaultErrorHandler(hex.StatusCode, res);
-                    }
-                    else
-                    {
-                        this.ErrorHandler(hex.StatusCode, res);
-                    }
+                    this.RequestHandler(req, res);
                 }
             }
+            catch (HttpException hex)
+            {
+
+                if (this.ErrorHandler == null)
+                {
+                    DefaultErrorHandler(hex.StatusCode, res);
+                }
+                else
+                {
+                    this.ErrorHandler(hex.StatusCode, res);
+                }
+            }
+            
 
             // These calls shouldn't throw an exception, so we'll be fine to
             // call them without checking to see if they've already been called.
