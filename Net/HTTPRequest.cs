@@ -27,8 +27,20 @@ namespace SynapLink.Zener.Net
         private const string HDR_CDISPOSITION = "Content-Disposition";
         private const string CDIS_FORMDATA = "form-data";
         private const string HDR_CTYPE = "Content-Type";
+        private const string HDR_CTYPE_KCHAR = "charset";
         private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
         private const string VAR_NOSTART = "0123456789";
+
+        private static ASCIIEncoding _ascii;
+        private static UTF8Encoding _utf8;
+        private static Dictionary<string, Encoding> _encodersByName
+            = new Dictionary<string, Encoding>()
+            {
+                { "ascii", _ascii },
+                { "us-ascii", _ascii },
+                { "utf-8", _utf8 },
+                { "utf8", _utf8 }
+            };
 
         /// <summary>
         /// Filters disallowed characters from a string.
@@ -43,11 +55,11 @@ namespace SynapLink.Zener.Net
                 .Aggregate(new StringBuilder(), (sb, c) => sb.Append(c))
                 .ToString();
         }
-        private static ASCIIEncoding _ascii;
 
         static HttpRequest()
         {
             _ascii = new ASCIIEncoding();
+            _utf8 = new UTF8Encoding();
         }
 
         private HttpHeaderCollection _headers;
