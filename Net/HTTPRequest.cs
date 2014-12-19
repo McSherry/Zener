@@ -164,7 +164,7 @@ namespace SynapLink.Zener.Net
         /// multipart/form-data format.
         /// </summary>
         /// <exception cref="SynapLink.Zener.Net.HttpRequestException"></exception>
-        private static dynamic ParseMultipartFormData(string formatBody, string boundary)
+        private static dynamic ParseMultipartFormData(Stream formatBody, string boundary)
         {
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
             var parts = formatBody.Split(
@@ -281,7 +281,7 @@ namespace SynapLink.Zener.Net
         /// <param name="requestStream">The stream of data containing the request.</param>
         /// <param name="requestStatus">Set to true if request parsing failed.</param>
         /// <exception cref="SynapLink.Zener.Net.HttpRequestException"></exception>
-        internal HttpRequest(StreamReader requestStream) 
+        internal HttpRequest(Stream requestStream) 
         {
             this.Headers = new HttpHeaderCollection();
 
@@ -290,43 +290,44 @@ namespace SynapLink.Zener.Net
             // compliant).
             try
             {
-                this.SetPropertiesFromRequestLine(requestStream.ReadLine());
-
-                _headers = new HttpHeaderCollection(
-                    BasicHttpHeader.ParseMany(requestStream),
-                    true
-                    );
-
-                _raw = requestStream.ReadToEnd();
-
-                var contenttype = this.Headers.Where(
-                    h => h.Field.Equals(HDR_CTYPE, StringComparison.OrdinalIgnoreCase)
-                    );
-
-                if (contenttype.Count() == 0) _post = new Empty();
-                else
+                using (var rStrReader = new StreamReader(requestStream))
                 {
-                    var ctype = new NameValueHttpHeader(contenttype.Last());
+                    this.SetPropertiesFromRequestLine(rStrReader.ReadLine());
 
-                    if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
-                    {
-                        _post = ParseFormUrlEncoded(this.Raw);
-                    }
-                    else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var bdry = ctype.Pairs.Where(
-                            p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase)
-                            ).ToList();
+                    _headers = new HttpHeaderCollection(
+                        BasicHttpHeader.ParseMany(rStrReader),
+                        true
+                        );
 
-                        if (bdry.Count == 0)
+                    var contenttype = this.Headers.Where(
+                        h => h.Field.Equals(HDR_CTYPE, StringComparison.OrdinalIgnoreCase)
+                        );
+
+                    if (contenttype.Count() == 0) _post = new Empty();
+                    else
+                    {
+                        var ctype = new NameValueHttpHeader(contenttype.Last());
+
+                        if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
                         {
-                            throw new HttpRequestException
-                            ("No boundary provided for multipart data.");
+                            _post = ParseFormUrlEncoded(rStrReader.ReadToEnd());
                         }
+                        else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var bdry = ctype.Pairs.Where(
+                                p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase)
+                                ).ToList();
 
-                        _post = ParseMultipartFormData(this.Raw, bdry[0].Value);
+                            if (bdry.Count == 0)
+                            {
+                                throw new HttpRequestException
+                                ("No boundary provided for multipart data.");
+                            }
+
+                            _post = ParseMultipartFormData(requestStream, bdry[0].Value);
+                        }
+                        else _post = new Empty();
                     }
-                    else _post = new Empty();
                 }
 
             }
@@ -386,14 +387,6 @@ namespace SynapLink.Zener.Net
         {
             get { return _get; }
             private set { _get = value; }
-        }
-        /// <summary>
-        /// The raw request body received from the client.
-        /// </summary>
-        public string Raw
-        {
-            get { return _raw; }
-            private set { _raw = value; }
         }
     }
 }
