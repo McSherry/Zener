@@ -431,6 +431,49 @@ namespace SynapLink.Zener.Net
 
             //return new Empty();
         }
+        /// <summary>
+        /// Reads a single line from a stream and returns the ASCII-encoded string.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <returns>A single line from the stream, ASCII-encoded.</returns>
+        private static string ReadAsciiLine(Stream stream)
+        {
+            if (!stream.CanRead)
+                throw new ArgumentException
+                ("Provided stream cannot be read from.");
+            if (stream.Length - stream.Position < 2)
+            {
+                byte[] buffer = new byte[stream.Length - stream.Position];
+                stream.Read(buffer, 0, buffer.Length);
+
+                return _ascii.GetString(buffer);
+            }
+
+            byte[] crlf = _ascii.GetBytes("\r\n");
+            byte[] checkBuffer = new byte[2];
+            List<byte> retBuffer = new List<byte>();
+            int bufCtr = 0;
+            int next = 0;
+
+            stream.Read(checkBuffer, 0, checkBuffer.Length);
+
+            while (true)
+            {
+                if (checkBuffer.SequenceEqual(crlf)) break;
+
+                next = stream.ReadByte();
+                if (next == -1) break;
+
+                // Add the byte we're about to remove to the return
+                // buffer.
+                retBuffer.Add(checkBuffer[0]);
+                // Shift the array down one.
+                checkBuffer[0] = checkBuffer[1];
+                checkBuffer[1] = (byte)next;
+            }
+
+            return _ascii.GetString(retBuffer.ToArray());
+        }
 
         /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
