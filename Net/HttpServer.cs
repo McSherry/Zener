@@ -79,6 +79,7 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpServer
     {
+        private const string HTTP_MTD_HEAD = "HEAD";
         internal const string HTTP_VERSION = "1.1";
 
         /// <summary>
@@ -144,13 +145,48 @@ namespace SynapLink.Zener.Net
             ms.Write(buf.ToArray(), 0, buf.Count);
             ms.Position = 0;
 
+            var netStream = tcl.GetStream();
             HttpRequest req;
-            HttpResponse res = new HttpResponse(tcl);
-
+            HttpResponse res = new HttpResponse(netStream, () => 
+            {
+                netStream.Close();
+                netStream.Dispose();
+                tcl.Close();
+            });
 
             try
             {
                 req = new HttpRequest(ms);
+
+                // If we've received a HEAD request, we are
+                // to send only the headers, and not the
+                // response body.
+                //
+                // To do this, we pass the HttpResponse a
+                // MemoryStream instead of a NetworkStream.
+                if (req.Method.Equals(HTTP_MTD_HEAD))
+                {
+                    MemoryStream resMS = new MemoryStream();
+
+                    res = new HttpResponse(resMS, () =>
+                    {
+                        byte[] resBytes = Encoding.ASCII
+                            .GetBytes(
+                                String.Format(
+                                    "{0}\r\n",
+                                    res.Headers.ToString()
+                                    )
+                                );
+                        // When Close() is called, we know that the response
+                        // is over. Since we know that no new data will be
+                        // written, we can take the headers and write them
+                        // to the network stream.
+                        //
+                        // We can discard the body, as it shouldn't be sent
+                        // with a HEAD request.
+                        netStream.Write(resBytes, 0, resBytes.Length);
+                    });
+                }
 
                 if (this.RequestHandler != null)
                 {
@@ -159,7 +195,6 @@ namespace SynapLink.Zener.Net
             }
             catch (HttpException hex)
             {
-
                 if (this.ErrorHandler == null)
                 {
                     DefaultErrorHandler(hex, res);
@@ -173,6 +208,7 @@ namespace SynapLink.Zener.Net
 
             // These calls shouldn't throw an exception, so we'll be fine to
             // call them without checking to see if they've already been called.
+            res.Close();
             ns.Close();
             ns.Dispose();
             tcl.Close();
