@@ -358,7 +358,6 @@ namespace SynapLink.Zener.Net
         internal HttpResponse(Stream responseStream, Action closeCallback)
         {
             if (
-                !responseStream.CanSeek ||
                 !responseStream.CanRead ||
                 !responseStream.CanWrite)
             {
