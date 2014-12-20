@@ -114,6 +114,7 @@ namespace SynapLink.Zener.Net
             }
 
             this.HttpVersion = rlArray[2];
+            this.Method = rlArray[0].ToUpper();
         }
         /// <summary>
         /// Parses the provided string, assuming that it is in the
