@@ -357,6 +357,15 @@ namespace SynapLink.Zener.Net
 
         internal HttpResponse(Stream responseStream, Action closeCallback)
         {
+            if (
+                !responseStream.CanSeek ||
+                !responseStream.CanRead ||
+                !responseStream.CanWrite)
+            {
+                throw new ArgumentException
+                ("Provided stream must support reading, seeking, and writing.");
+            }
+
             this.StatusCode = HttpStatus.OK;
             _closeCallback = closeCallback;
             _nsw = new StreamWriter(responseStream)

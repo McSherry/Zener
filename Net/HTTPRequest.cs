@@ -391,6 +391,10 @@ namespace SynapLink.Zener.Net
         /// <exception cref="SynapLink.Zener.Net.HttpRequestException"></exception>
         internal HttpRequest(Stream requestStream) 
         {
+            if (!requestStream.CanRead || !requestStream.CanSeek)
+                throw new ArgumentException
+                ("Provided stream must support reading and seeking.");
+
             this.Headers = new HttpHeaderCollection();
 
             // If any of this throws an HttpRequestException, we can be sure that
