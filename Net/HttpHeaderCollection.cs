@@ -133,7 +133,7 @@ namespace SynapLink.Zener.Net
             return _headerList
                 .Aggregate(
                     new StringBuilder(),
-                    (sb, h) => sb.AppendFormat("{0}\n", h.ToString())
+                    (sb, h) => sb.AppendFormat("{0}\r\n", h.ToString())
                     )
                 .ToString();
         }
