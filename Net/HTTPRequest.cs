@@ -183,27 +183,27 @@ namespace SynapLink.Zener.Net
                 ("The provided stream must support reading and seeking.", "formatBody");
 
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
-            byte[] boundaryBytes = _ascii.GetBytes(String.Format("--{0}", boundary));
+            boundary = String.Format("--{0}", boundary);
+            byte[] boundaryBytes = _ascii.GetBytes(boundary);
 
             while (formatBody.Position != formatBody.Length)
             {
                 // We know headers are going to be ASCII, so we can read lines
                 // with our ASCIIEncoding until we hit an empty line.
                 StringBuilder partHdrBuilder = new StringBuilder();
-                using (StreamReader sr = new StreamReader(formatBody, _ascii))
+                while (true)
                 {
-                    while (true)
-                    {
-                        string line = sr.ReadLine();
-                        // An empty line indicates the break between the part
-                        // headers and the part body. If we get one when reading
-                        // headers, we can safely assume that no more headers are
-                        // associated with this part.
-                        if (String.IsNullOrEmpty(line)) break;
+                    string line = ReadAsciiLine(formatBody);
+                    // An empty line indicates the break between the part
+                    // headers and the part body. If we get one when reading
+                    // headers, we can safely assume that no more headers are
+                    // associated with this part.
+                    if (String.IsNullOrEmpty(line)) break;
 
+                    if (!line.Equals(boundary))
                         partHdrBuilder.AppendLine(line);
-                    }
                 }
+                
                 HttpHeaderCollection partHeaders = new HttpHeaderCollection(
                     BasicHttpHeader.ParseMany(new StringReader(partHdrBuilder.ToString()))
                     );
@@ -222,7 +222,7 @@ namespace SynapLink.Zener.Net
                     throw new HttpRequestException
                     ("Multipart form data is malformed; no name.");
 
-                long remLeng = formatBody.Position - formatBody.Length;
+                long remLeng = formatBody.Length - formatBody.Position;
                 List<byte> buffer = new List<byte>();
                 byte[] window = new byte[boundaryBytes.Length];
 
@@ -241,7 +241,13 @@ namespace SynapLink.Zener.Net
                     // If this evaluates to true, we've reached a
                     // boundary within the request body. The boundary
                     // indicates the end of the part body.
-                    if (window.SequenceEqual(boundaryBytes)) break;
+                    if (window.SequenceEqual(boundaryBytes))
+                    {
+                        // Boundaries have after them a CRLF.
+                        // We seek past it, since it's not relevant.
+                        formatBody.Seek(2, SeekOrigin.Current);
+                        break;
+                    }
 
                     int next = formatBody.ReadByte();
                     // We haven't reached a boundary, but we have
@@ -256,6 +262,12 @@ namespace SynapLink.Zener.Net
                     Buffer.BlockCopy(window, 1, window, 0, window.Length - 1);
                     window[window.Length - 1] = (byte)next;
                 }
+
+                // The buffer will end up with a CRLF at the end.
+                // Since this isn't actually part of the data, and
+                // is due to the use of multipart/* data, we can remove the
+                // two bytes that make up the CRLF.
+                buffer.RemoveRange(buffer.Count - 2, 2);
 
                 Encoding encoding = null;
                 if (partHeaders.Contains(HDR_CTYPE))
@@ -310,7 +322,8 @@ namespace SynapLink.Zener.Net
                 // bytes of the body to a string.
                 else
                 {
-                    dynObj[name] = encoding.GetString(buffer.ToArray());
+                    dynObj[name] = encoding
+                        .GetString(buffer.ToArray());
                 }
 
                 // The end of the multipart form data is indicated by
@@ -324,112 +337,6 @@ namespace SynapLink.Zener.Net
             // If we added anything to dynObj, return it. Else,
             // return an Empty to indicate that there is no data.
             return dynObj.Count == 0 ? (dynamic)new Empty() : (dynamic)dynObj;
-
-            //var parts = formatBody.Split(
-            //    new string[] { string.Format("--{0}", boundary) },
-            //    StringSplitOptions.None
-            //    )
-            //    .ToList();
-
-            //parts.RemoveAll(p => string.IsNullOrWhiteSpace(p) || p.Equals("--\r\n"));
-            //parts = parts.Select(p => p.Trim(' ', '\r', '\n')).ToList();
-
-            //foreach (var part in parts)
-            //{
-            //    // Each part has its own set of headers, and they're
-            //    // always the first thing in the part. We need to parse
-            //    // out the headers so we know how to handle the content.
-            //    bool inHeader = true;
-            //    HttpHeaderCollection partHeaders = new HttpHeaderCollection();
-            //    using (StringReader tr = new StringReader(part))
-            //    {
-            //        while (inHeader)
-            //        {
-            //            string line = tr.ReadLine().Trim();
-
-            //            // As with the main HTTP headers, the headers of a
-            //            // part are separated from the part's body by two
-            //            // CRLFs. The ReadLine method will remove the CRLFs,
-            //            // so we're left with an empty line signifying the
-            //            // separator.
-            //            if (string.IsNullOrWhiteSpace(line))
-            //            {
-            //                inHeader = false;
-            //                continue;
-            //            }
-
-            //            partHeaders.Add(BasicHttpHeader.Parse(line));
-            //        }
-
-            //        // We need the content disposition header to determine
-            //        // how we should handle the part. Currently, we'll only
-            //        // handle it if it's form data.
-            //        if (!partHeaders.Contains(HDR_CDISPOSITION))
-            //        {
-            //            throw new HttpRequestException
-            //            ("One or more parts do not contain content disposition data.");
-            //        }
-
-            //        var cdis = new NameValueHttpHeader(
-            //            partHeaders["Content-Disposition"].Last()
-            //            );
-
-            //        // Checks to see whether the disposition indicates form
-            //        // data.
-            //        if (!cdis.Value.Equals(CDIS_FORMDATA, StringComparison.OrdinalIgnoreCase))
-            //        {
-            //            // If it isn't form data, we don't care. Skip it and
-            //            // move on to the next one.
-            //            continue;
-            //        }
-
-            //        // If it is form data, make sure it has a name. If there's
-            //        // no name, we can't identify it, and it can't be accessed.
-            //        if (!cdis.Pairs.Any(
-            //            p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase)
-            //            ))
-            //        {
-            //            // If it has no name, skip it.
-            //            continue;
-            //        }
-
-            //        // Extract the name of the part, URL-decode it,
-            //        // and remove any characters which can't be used
-            //        // in a name.
-            //        string partName = _filterInvChars(
-            //            WebUtility.UrlDecode(
-            //                cdis.Pairs.Where(
-            //                    p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase)
-            //                    )
-            //                .Last()
-            //                .Value
-            //                )
-            //            );
-
-
-            //        NameValueHttpHeader ctype;
-            //        if (partHeaders.Contains(HDR_CTYPE))
-            //        {
-            //            ctype = new NameValueHttpHeader(partHeaders[HDR_CTYPE].Last());
-            //        }
-            //        else
-            //        {
-            //            ctype = new NameValueHttpHeader(HDR_CTYPE, "text/plain");
-            //        }
-
-            //        // We're only handling text/* media types. If binary data
-            //        // is required, use one of the APIs provided instead of
-            //        // HTML forms.
-            //        if (!ctype.Value.ToLower().StartsWith("text/"))
-            //        {
-            //            continue;
-            //        }
-
-            //        dynObj[partName] = tr.ReadToEnd();
-            //    }
-            //}
-
-            //return new Empty();
         }
         /// <summary>
         /// Reads a single line from a stream and returns the ASCII-encoded string.
@@ -491,46 +398,52 @@ namespace SynapLink.Zener.Net
             // compliant).
             try
             {
-                using (var rStrReader = new StreamReader(requestStream))
+
+                this.SetPropertiesFromRequestLine(ReadAsciiLine(requestStream));
+
+                string line = ReadAsciiLine(requestStream);
+                StringBuilder headerTxtBuilder = new StringBuilder();
+
+                while (!String.IsNullOrEmpty(line))
                 {
-                    this.SetPropertiesFromRequestLine(rStrReader.ReadLine());
-
-                    _headers = new HttpHeaderCollection(
-                        BasicHttpHeader.ParseMany(rStrReader),
-                        true
-                        );
-
-                    var contenttype = this.Headers.Where(
-                        h => h.Field.Equals(HDR_CTYPE, StringComparison.OrdinalIgnoreCase)
-                        );
-
-                    if (contenttype.Count() == 0) _post = new Empty();
-                    else
-                    {
-                        var ctype = new NameValueHttpHeader(contenttype.Last());
-
-                        if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
-                        {
-                            _post = ParseFormUrlEncoded(rStrReader.ReadToEnd());
-                        }
-                        else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
-                        {
-                            var bdry = ctype.Pairs.Where(
-                                p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase)
-                                ).ToList();
-
-                            if (bdry.Count == 0)
-                            {
-                                throw new HttpRequestException
-                                ("No boundary provided for multipart data.");
-                            }
-
-                            _post = ParseMultipartFormData(requestStream, bdry[0].Value);
-                        }
-                        else _post = new Empty();
-                    }
+                    headerTxtBuilder.AppendLine(line);
+                    line = ReadAsciiLine(requestStream);
                 }
+                _headers = new HttpHeaderCollection(
+                    BasicHttpHeader.ParseMany(new StringReader(headerTxtBuilder.ToString())),
+                    true
+                    );
 
+                var contenttype = this.Headers.Where(
+                    h => h.Field.Equals(HDR_CTYPE, StringComparison.OrdinalIgnoreCase)
+                    );
+
+                if (contenttype.Count() == 0) _post = new Empty();
+                else
+                {
+                    var ctype = new NameValueHttpHeader(contenttype.Last());
+
+                    if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // TODO: Replace
+                        //_post = ParseFormUrlEncoded(rStrReader.ReadToEnd());
+                    }
+                    else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var bdry = ctype.Pairs.Where(
+                            p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase)
+                            ).ToList();
+
+                        if (bdry.Count == 0)
+                        {
+                            throw new HttpRequestException
+                            ("No boundary provided for multipart data.");
+                        }
+
+                        _post = ParseMultipartFormData(requestStream, bdry[0].Value);
+                    }
+                    else _post = new Empty();
+                }
             }
             // BasicHttpHeader throws an argument exception when there's an
             // issue with parsing.
