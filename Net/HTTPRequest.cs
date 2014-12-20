@@ -322,8 +322,7 @@ namespace SynapLink.Zener.Net
                 // bytes of the body to a string.
                 else
                 {
-                    dynObj[name] = encoding
-                        .GetString(buffer.ToArray());
+                    dynObj[name] = encoding.GetString(buffer.ToArray());
                 }
 
                 // The end of the multipart form data is indicated by
