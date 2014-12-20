@@ -304,14 +304,6 @@ namespace SynapLink.Zener.Net
         {
             if (!_beginRespond)
             {
-                // Ensures that the content is transferred with a media type.
-                // Defaults to HTML, since what else is an HTTP server most likely
-                // to be serving?
-                if (!this.Headers.Contains("Content-Type"))
-                {
-                    this.Headers.Add("Content-Type", "text/html");
-                }
-
                 // Response line
                 // e.g. "HTTP/1.1 404 Not Found"
                 _nsw.WriteLine(
@@ -319,6 +311,14 @@ namespace SynapLink.Zener.Net
                         HttpServer.HTTP_VERSION, (int)this.StatusCode,
                         STAT_MSGS[this.StatusCode]
                 );
+
+                // Ensures that the content is transferred with a media type.
+                // Defaults to HTML, since what else is an HTTP server most likely
+                // to be serving?
+                if (!this.Headers.Contains("Content-Type"))
+                {
+                    this.Headers.Add("Content-Type", "text/html");
+                }
 
                 if (!this.Headers.Contains("Server"))
                 {
