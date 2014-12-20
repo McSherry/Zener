@@ -472,7 +472,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public void Close()
         {
-            if (_closed) _closeCallback();
+            if (!_closed) _closeCallback();
         }
     }
 }
