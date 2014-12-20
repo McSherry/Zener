@@ -289,7 +289,7 @@ namespace SynapLink.Zener.Net
 
         private HttpStatus _httpStatus;
         private HttpHeaderCollection _headers;
-        private TcpClient _tcl;
+        private Action _closeCallback;
         private StreamWriter _nsw;
         // Set to true when the first write is made. When this is
         // true, it indicates that the response headers have been
@@ -355,11 +355,11 @@ namespace SynapLink.Zener.Net
             return STAT_MSGS[status];
         }
 
-        internal HttpResponse(TcpClient tcl)
+        internal HttpResponse(Stream responseStream, Action closeCallback)
         {
             this.StatusCode = HttpStatus.OK;
-            _tcl = tcl;
-            _nsw = new StreamWriter(tcl.GetStream())
+            _closeCallback = closeCallback;
+            _nsw = new StreamWriter(responseStream)
             {
                 AutoFlush = true,
                 NewLine = "\r\n"
@@ -472,7 +472,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public void Close()
         {
-            _tcl.Close();
+            if (_closed) _closeCallback();
         }
     }
 }
