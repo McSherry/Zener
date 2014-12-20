@@ -342,7 +342,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="stream">The stream to read from.</param>
         /// <returns>A single line from the stream, ASCII-encoded.</returns>
-        private static string ReadAsciiLine(Stream stream)
+        internal static string ReadAsciiLine(Stream stream)
         {
             if (!stream.CanRead)
                 throw new ArgumentException
