@@ -72,7 +72,7 @@ namespace SynapLink.Zener.Net
     }
 
     public delegate void HttpRequestHandler(HttpRequest request, HttpResponse response);
-    public delegate void HttpErrorHandler(HttpStatus statusCode, HttpResponse response);
+    public delegate void HttpErrorHandler(HttpException exception, HttpResponse response);
 
     /// <summary>
     /// A class implementing a basic HTTP server.
@@ -84,13 +84,17 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The error handler called when no other handler exists.
         /// </summary>
-        internal static void DefaultErrorHandler(HttpStatus status, HttpResponse response)
+        internal static void DefaultErrorHandler(HttpException exception, HttpResponse response)
         {
             response.Headers.Add("Content-Type", "text/plain");
             response.Write(
-                "{0} {1}",
-                (int)status, HttpResponse.GetStatusMessage(status)
+                "{0} {1}\n\n",
+                (int)exception.StatusCode,
+                HttpResponse.GetStatusMessage(exception.StatusCode)
                 );
+
+            response.WriteLine("{0}\n", exception.Message);
+            response.WriteLine(exception.StackTrace);
         }
 
         private TcpListener _listener;
@@ -158,11 +162,11 @@ namespace SynapLink.Zener.Net
 
                 if (this.ErrorHandler == null)
                 {
-                    DefaultErrorHandler(hex.StatusCode, res);
+                    DefaultErrorHandler(hex, res);
                 }
                 else
                 {
-                    this.ErrorHandler(hex.StatusCode, res);
+                    this.ErrorHandler(hex, res);
                 }
             }
             

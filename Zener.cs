@@ -49,15 +49,15 @@ namespace SynapLink.Zener
 
             hrh(req, res);
         }
-        private void HandleHttpRequestError(HttpStatus status, HttpResponse res)
+        private void HandleHttpRequestError(HttpException exception, HttpResponse res)
         {
             HttpRequestHandler hrh;
             bool found = this.Routes.TryFind(
-                String.Format("{0}{1}", INTERNAL_PREFIX, (int)status),
+                String.Format("{0}{1}", INTERNAL_PREFIX, (int)exception.StatusCode),
                 out hrh
                 );
 
-            if (!found) HttpServer.DefaultErrorHandler(status, res);
+            if (!found) HttpServer.DefaultErrorHandler(exception, res);
             else
             {
                 hrh(null, res);
