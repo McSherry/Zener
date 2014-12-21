@@ -64,7 +64,7 @@ namespace SynapLink.Zener.Net
 
         private HttpHeaderCollection _headers;
         private dynamic _get, _post;
-        private string _raw;
+        private byte[] _raw;
 
         /// <summary>
         /// Parses the HTTP Request Line and sets the appropriate properties
@@ -333,7 +333,6 @@ namespace SynapLink.Zener.Net
             byte[] crlf = _ascii.GetBytes("\r\n");
             byte[] checkBuffer = new byte[2];
             List<byte> retBuffer = new List<byte>();
-            int bufCtr = 0;
             int next = 0;
 
             stream.Read(checkBuffer, 0, checkBuffer.Length);
@@ -456,6 +455,10 @@ namespace SynapLink.Zener.Net
                     }
                     else _post = new Empty();
                 }
+
+                requestStream.Seek(0, SeekOrigin.Begin);
+                _raw = new byte[requestStream.Length];
+                requestStream.Read(_raw, 0, _raw.Length);
             }
             // BasicHttpHeader throws an argument exception when there's an
             // issue with parsing.
@@ -513,6 +516,13 @@ namespace SynapLink.Zener.Net
         {
             get { return _get; }
             private set { _get = value; }
+        }
+        /// <summary>
+        /// The raw bytes of the client's request.
+        /// </summary>
+        public byte[] Raw
+        {
+            get { return _raw; }
         }
     }
 }
