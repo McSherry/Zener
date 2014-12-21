@@ -330,29 +330,10 @@ namespace SynapLink.Zener.Net
                 return _ascii.GetString(buffer);
             }
 
-            byte[] crlf = _ascii.GetBytes("\r\n");
-            byte[] checkBuffer = new byte[2];
-            List<byte> retBuffer = new List<byte>();
-            int next = 0;
+            List<byte> buf = new List<byte>();
+            ReadUntilFound(stream, "\r\n", _ascii, buf.Add);
 
-            stream.Read(checkBuffer, 0, checkBuffer.Length);
-
-            while (true)
-            {
-                if (checkBuffer.SequenceEqual(crlf)) break;
-
-                next = stream.ReadByte();
-                if (next == -1) break;
-
-                // Add the byte we're about to remove to the return
-                // buffer.
-                retBuffer.Add(checkBuffer[0]);
-                // Shift the array down one.
-                checkBuffer[0] = checkBuffer[1];
-                checkBuffer[1] = (byte)next;
-            }
-
-            return _ascii.GetString(retBuffer.ToArray());
+            return _ascii.GetString(buf.ToArray());
         }
         /// <summary>
         /// Reads bytes until the specified boundary is found.
