@@ -184,8 +184,13 @@ namespace SynapLink.Zener.Net
                 ("The provided stream must support reading and seeking.", "formatBody");
 
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
-            boundary = String.Format("--{0}", boundary);
             byte[] boundaryBytes = _ascii.GetBytes(boundary);
+
+            // We should ignore data before the first boundary.
+            ReadUntilFound(formatBody, boundary, _ascii, b => { });
+            // Seek past CRLF
+            formatBody.Seek(2, SeekOrigin.Current);
+            boundary = String.Format("\r\n--{0}", boundary);
 
             while (formatBody.Position != formatBody.Length)
             {
@@ -224,8 +229,6 @@ namespace SynapLink.Zener.Net
                     ("Multipart form data is malformed; no name.");
 
                 long remLeng = formatBody.Length - formatBody.Position;
-                List<byte> buffer = new List<byte>();
-                byte[] window = new byte[boundaryBytes.Length];
 
                 // If the remaining number of bytes is less than the length of the
                 // boundary (plus 2, for the trailing --), then the body is malformed.
@@ -235,40 +238,11 @@ namespace SynapLink.Zener.Net
                     ("Multi-part form data is malformed.");
                 }
 
-                formatBody.Read(window, 0, window.Length);
-
-                for (int i = 0; i < remLeng; i++)
-                {
-                    // If this evaluates to true, we've reached a
-                    // boundary within the request body. The boundary
-                    // indicates the end of the part body.
-                    if (window.SequenceEqual(boundaryBytes))
-                    {
-                        // Boundaries have after them a CRLF.
-                        // We seek past it, since it's not relevant.
-                        formatBody.Seek(2, SeekOrigin.Current);
-                        break;
-                    }
-
-                    int next = formatBody.ReadByte();
-                    // We haven't reached a boundary, but we have
-                    // reached the end of the data we were sent.
-                    if (next == -1) break;
-
-                    // Add the byte we're about to drop from the window
-                    // to the buffer.
-                    buffer.Add(window[0]);
-                    // Shift the array by one item. The item in [0] is dropped,
-                    // and the next byte in the data stream is placed at the end.
-                    Buffer.BlockCopy(window, 1, window, 0, window.Length - 1);
-                    window[window.Length - 1] = (byte)next;
-                }
-
-                // The buffer will end up with a CRLF at the end.
-                // Since this isn't actually part of the data, and
-                // is due to the use of multipart/* data, we can remove the
-                // two bytes that make up the CRLF.
-                buffer.RemoveRange(buffer.Count - 2, 2);
+                // Read the contents of this part.
+                List<byte> buffer = new List<byte>();
+                ReadUntilFound(formatBody, boundary, _ascii, buffer.Add);
+                // Seek past CRLF
+                formatBody.Seek(2, SeekOrigin.Current);
 
                 Encoding encoding = null;
                 if (partHeaders.Contains(HDR_CTYPE))
@@ -381,6 +355,41 @@ namespace SynapLink.Zener.Net
 
             return _ascii.GetString(retBuffer.ToArray());
         }
+        /// <summary>
+        /// Reads bytes until the specified boundary is found.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="boundary">The boundary to read to.</param>
+        /// <param name="encoding">The encoding of the data and boundary.</param>
+        private static void ReadUntilFound(Stream stream, string boundary, Encoding encoding, Action<byte> readCall)
+        {
+            byte[] boundaryBytes = encoding.GetBytes(boundary);
+            byte[] window = new byte[boundaryBytes.Length];
+
+            if (stream.Length - stream.Position < boundaryBytes.Length)
+                throw new InvalidOperationException
+                ("Too few bytes left in stream to find boundary.");
+
+            stream.Read(window, 0, window.Length);
+
+            while (true)
+            {
+                // We've reached the boundary!
+                if (window.SequenceEqual(boundaryBytes)) break;
+
+                int next = stream.ReadByte();
+                // Looks like we've hit the end of the stream.
+                // Nothing more to read.
+                if (next == -1) break;
+
+                // Return the byte we're about to discard so
+                // it can be used by the caller.
+                readCall(window[0]);
+                // Shift the window ahead by a single byte.
+                Buffer.BlockCopy(window, 1, window, 0, window.Length - 1);
+                window[window.Length - 1] = (byte)next;
+            }
+        }
 
         /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
@@ -402,7 +411,6 @@ namespace SynapLink.Zener.Net
             // compliant).
             try
             {
-
                 this.SetPropertiesFromRequestLine(ReadAsciiLine(requestStream));
 
                 string line = ReadAsciiLine(requestStream);
