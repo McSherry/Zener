@@ -95,6 +95,15 @@ namespace SynapLink.Zener.Core
                 new { route = new Route("a/[p0]/b/[p1]", rh), str = "/a/v0/b/v1", pnum = 2 },
                 new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b/v1/", pnum = 2 },
                 new { route = new Route("a/[p0]/b/[p1]", rh), str = "a/v0/b/v1", pnum = 2 },
+
+                new { route = new Route("a/[*up]", rh), str = "/a/v0/", pnum = 1 },
+                new { route = new Route("a/[*up]", rh), str = "/a/v0", pnum = 1 },
+                new { route = new Route("a/[*up]", rh), str = "a/v0/", pnum = 1 },
+                new { route = new Route("a/[*up]", rh), str = "a/v0", pnum = 1 },
+                new { route = new Route("a/[*up]", rh), str = "/a/v0/v0/", pnum = 1 },
+                new { route = new Route("a/[*up]", rh), str = "/a/v0/v0", pnum = 1 },
+                new { route = new Route("a/[*up]", rh), str = "a/v0/v0/", pnum = 1 },
+                new { route = new Route("a/[*up]", rh), str = "a/v0/v0", pnum = 1 },
             };
             var falses = new[]
             {
