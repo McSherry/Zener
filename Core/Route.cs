@@ -206,6 +206,7 @@ namespace SynapLink.Zener.Core
                 paramValBuilder = new StringBuilder();
             string paramName = String.Empty;
             bool inParam = false, loop = true;
+            bool paramIsUnbounded = false;
 
             while (loop)
             {
@@ -214,6 +215,19 @@ namespace SynapLink.Zener.Core
                     // Find start of a param wild-card
                     if (!inParam && this.Format[fIndex] == '[')
                     {
+                        // If the next character after the opening
+                        // square bracket is an asterisk, the
+                        // variable is unbounded (i.e. its value
+                        // can contain any characters).
+                        if (this.Format[fIndex + 1] == '*')
+                        {
+                            paramIsUnbounded = true;
+                            // The asterisk isn't part of the
+                            // variable's name, so we can skip
+                            // past it.
+                            fIndex++;
+                        }
+
                         inParam = true;
                         fIndex++;
                     }
@@ -261,7 +275,7 @@ namespace SynapLink.Zener.Core
                             pathBuilder.Remove(pathBuilder.Length - 1, 1);
                         }
                     }
-                    else if (inParam && path[pIndex] == '/')
+                    else if (inParam && !paramIsUnbounded && path[pIndex] == '/')
                     {
                         // Zero-length parameters should be rejected.
                         // See GitHub issue #7.
