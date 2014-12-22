@@ -176,14 +176,14 @@ namespace SynapLink.Zener.Net
                         // the start.
                         resMS.Position = 0;
                         string headerSection = String.Format(
-                                    "{0}\r\n{1}\r\n",
-                                    // Gets the first line of the response,
-                                    // or the "response line" (analogous to
-                                    // the client's request line)
-                                    HttpRequest.ReadAsciiLine(resMS),
-                                    // The headers, correctly formatted
-                                    res.Headers.ToString()
-                                    );
+                            "{0}\r\n{1}\r\n",
+                            // Gets the first line of the response,
+                            // or the "response line" (analogous to
+                            // the client's request line)
+                            HttpRequest.ReadAsciiLine(resMS),
+                            // The headers, correctly formatted
+                            res.Headers.ToString()
+                            );
                         byte[] resBytes = Encoding.ASCII
                             .GetBytes(headerSection);
                         // When Close() is called, we know that the response
