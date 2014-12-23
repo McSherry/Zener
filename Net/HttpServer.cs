@@ -138,12 +138,11 @@ namespace SynapLink.Zener.Net
             ms.Write(buf.ToArray(), 0, buf.Count);
             ms.Position = 0;
 
-            var netStream = tcl.GetStream();
             HttpRequest req;
-            HttpResponse res = new HttpResponse(netStream, () => 
+            HttpResponse res = new HttpResponse(ns, () => 
             {
-                netStream.Close();
-                netStream.Dispose();
+                ns.Close();
+                ns.Dispose();
                 tcl.Close();
             });
 
