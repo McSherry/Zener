@@ -322,13 +322,6 @@ namespace SynapLink.Zener.Net
             if (!stream.CanRead)
                 throw new ArgumentException
                 ("Provided stream cannot be read from.");
-            if (stream.Length - stream.Position < 2)
-            {
-                byte[] buffer = new byte[stream.Length - stream.Position];
-                stream.Read(buffer, 0, buffer.Length);
-
-                return _ascii.GetString(buffer);
-            }
 
             List<byte> buf = new List<byte>();
             ReadUntilFound(stream, "\r\n", _ascii, buf.Add);
@@ -346,9 +339,9 @@ namespace SynapLink.Zener.Net
             byte[] boundaryBytes = encoding.GetBytes(boundary);
             byte[] window = new byte[boundaryBytes.Length];
 
-            if (stream.Length - stream.Position < boundaryBytes.Length)
-                throw new InvalidOperationException
-                ("Too few bytes left in stream to find boundary.");
+            //if (stream.Length - stream.Position < boundaryBytes.Length)
+            //    throw new InvalidOperationException
+            //    ("Too few bytes left in stream to find boundary.");
 
             stream.Read(window, 0, window.Length);
 
@@ -371,6 +364,11 @@ namespace SynapLink.Zener.Net
             }
         }
 
+
+        internal HttpRequest(string requestLine, HttpHeaderCollection headers, Stream body)
+        {
+            
+        }
         /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
         /// request.

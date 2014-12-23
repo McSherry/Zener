@@ -80,6 +80,10 @@ namespace SynapLink.Zener.Net
     public class HttpServer
     {
         private const string HTTP_MTD_HEAD = "HEAD";
+        private const string HTTP_HDR_CTNLEN = "Content-Length";
+        private const string CRLF = "\r\n";
+        private const int REQ_READTIMEOUT = 60000; // 60s
+        private const int MAX_REQUEST_BODY = (1024 * 1024) * 16; // 16 MiB
         internal const string HTTP_VERSION = "1.1";
 
         /// <summary>
@@ -119,23 +123,145 @@ namespace SynapLink.Zener.Net
 
             NetworkStream ns = tcl.GetStream();
             MemoryStream ms = new MemoryStream();
-            
-            List<byte> buf = new List<byte>();
-            while (ns.DataAvailable)
-            {
-                buf.Add((byte)ns.ReadByte());
-            }
 
-            if (buf.Count == 0)
+            // NetworkStream/TcpSocket/etc's timeout methods all
+            // close the socket when a timeout occurs. We want to
+            // be able to send a response to the client notifying
+            // them of the timeout (specifically, an HTTP 408).
+            //
+            // To do this, we need our own separate timer, and to
+            // run the read on a separate thread that we can kill
+            // if a timeout occurs.
+            //var timeoutTimer = new System.Timers.Timer(REQ_READTIMEOUT);
+            Exception threadException = null;
+            string requestLine = null;
+            HttpHeaderCollection headers = null;
+            //bool timedOut = false;
+            var readThread = new Thread(() =>
             {
-                // We've been sent an empty request. Close the connection
-                // and stop handling it.
-                tcl.Close();
-                return;
-            }
+                #region Request Handler Thread #2
+                string line;
+                // Lines before the request line can be blank.
+                // We want to skip these since there's nothing
+                // to parse.
+                do { line = HttpRequest.ReadAsciiLine(ns); }
+                while (String.IsNullOrEmpty(line));
+                // We've now hit the first line with content. In
+                // a compliant HTTP request, this is the request
+                // line.
+                requestLine = line;
+                // Move past the request line in to what is likely
+                // to be the first HTTP header in the request.
+                line = HttpRequest.ReadAsciiLine(ns);
 
-            ms.Write(buf.ToArray(), 0, buf.Count);
-            ms.Position = 0;
+                StringBuilder headerBuilder = new StringBuilder();
+                // Now that we have the start of the header section,
+                // we need to keep reading lines until we find a blank
+                // one, which indicates the end of the header section.
+                while (!String.IsNullOrEmpty(line))
+                {
+                    headerBuilder.AppendLine(line);
+                    line = HttpRequest.ReadAsciiLine(ns);
+                }
+
+                // We now have all the HTTP headers in the request.
+                // To determine the content length, which we need for
+                // reading the rest of the request, we need to parse
+                // the headers.
+                try
+                {
+                    using (StringReader sr = new StringReader(headerBuilder.ToString()))
+                    {
+                        headers = new HttpHeaderCollection(BasicHttpHeader.ParseMany(sr));
+                    }
+                }
+                catch (ArgumentException aex)
+                {
+                    threadException = new HttpRequestException(
+                        "Could not parse HTTP headers.", aex
+                        );
+
+                    return;
+                }
+
+                // If there isn't a Content-Length header, we can't
+                // know how much data we have to wait for. This means
+                // we need to respond to the client with HTTP 411.
+                if (!headers.Contains(HTTP_HDR_CTNLEN))
+                {
+                    threadException = new HttpException(
+                        HttpStatus.LengthRequired,
+                        "No Content-Length header provided."
+                        );
+
+                    return;
+                }
+
+                var cLen = headers[HTTP_HDR_CTNLEN].Last();
+
+                Int32 cLenOctets;
+                // Make sure that the value of the Content-Length
+                // header is a valid integer.
+                if (!Int32.TryParse(cLen.Value, out cLenOctets))
+                {
+                    threadException = new HttpRequestException(
+                        "Invalid Content-Length header."
+                        );
+
+                    return;
+                }
+
+                // The Content-Length cannot be negative.
+                if (cLenOctets < 0)
+                {
+                    threadException = new HttpRequestException(
+                        "Invalid Content-Length header."
+                        );
+
+                    return;
+                }
+
+                // Make sure the Content-Length isn't longer
+                // than our maximum length.
+                if (cLenOctets > MAX_REQUEST_BODY)
+                {
+                    threadException = new HttpException(
+                        HttpStatus.RequestEntityTooLarge,
+                        "The request body was too large."
+                        );
+
+                    return;
+                }
+
+                // Read the bytes from the network.
+                byte[] bodyBytes = new byte[cLenOctets];
+                ns.Read(bodyBytes, 0, bodyBytes.Length);
+
+                // We've finished reading from the network,
+                // so we can stop our timer.
+                //timeoutTimer.Stop();
+                //timeoutTimer.Dispose();
+
+                // Write the bytes back to our memory stream.
+                ms.Write(bodyBytes, 0, bodyBytes.Length);
+                #endregion
+            });
+            //timeoutTimer.Elapsed += (s, e) =>
+            //{
+            //    timedOut = true;
+            //    readThread.Abort();
+            //    timeoutTimer.Stop();
+            //    timeoutTimer.Dispose();
+            //};
+
+            readThread.Start();
+            readThread.Join(REQ_READTIMEOUT);
+
+            if (requestLine == null || headers == null)
+                threadException = new HttpException(
+                    HttpStatus.RequestTimeout,
+                    "Client request timed out."
+                    );
 
             HttpRequest req;
             HttpResponse res = new HttpResponse(ns, () => 
@@ -147,7 +273,14 @@ namespace SynapLink.Zener.Net
 
             try
             {
-                req = new HttpRequest(ms);
+                // If this variable isn't null, it means our reading thread
+                // "threw" an exception that it wants propagated back to this
+                // thread.
+                if (threadException != null) throw threadException;
+
+                req = new HttpRequest(
+                    requestLine, headers, ms
+                    );
 
                 // If we've received a HEAD request, we are
                 // to send only the headers, and not the
@@ -184,7 +317,7 @@ namespace SynapLink.Zener.Net
                         //
                         // We can discard the body, as it shouldn't be sent
                         // with a HEAD request.
-                        netStream.Write(resBytes, 0, resBytes.Length);
+                        ns.Write(resBytes, 0, resBytes.Length);
                     });
                 }
 
