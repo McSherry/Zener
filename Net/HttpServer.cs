@@ -186,16 +186,16 @@ namespace SynapLink.Zener.Net
 
                 // If there isn't a Content-Length header, we can't
                 // know how much data we have to wait for. This means
-                // we need to respond to the client with HTTP 411.
-                if (!headers.Contains(HTTP_HDR_CTNLEN))
-                {
-                    threadException = new HttpException(
-                        HttpStatus.LengthRequired,
-                        "No Content-Length header provided."
-                        );
-
-                    return;
-                }
+                // that we can't know if there is a request body or
+                // not.
+                //
+                // To ensure maximum functionality (some browsers
+                // don't send Content-Length when there is no body),
+                // we will assume that, when no Content-Length header
+                // is present, there is no request body. Only the
+                // request line and headers will be passed to the
+                // request handler.
+                if (!headers.Contains(HTTP_HDR_CTNLEN)) return;
 
                 var cLen = headers[HTTP_HDR_CTNLEN].Last();
 
