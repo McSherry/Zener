@@ -94,8 +94,7 @@ namespace SynapLink.Zener.Net
                 HttpResponse.GetStatusMessage(exception.StatusCode)
                 );
 
-            response.WriteLine("{0}\n", exception.Message);
-            response.WriteLine(exception.StackTrace);
+            response.WriteLine("{0}\n", exception.ToString());
         }
 
         private TcpListener _listener;
