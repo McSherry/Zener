@@ -341,7 +341,7 @@ namespace SynapLink.Zener.Net
         /// <param name="stream">The stream to read from.</param>
         /// <param name="boundary">The boundary to read to.</param>
         /// <param name="encoding">The encoding of the data and boundary.</param>
-        private static void ReadUntilFound(Stream stream, string boundary, Encoding encoding, Action<byte> readCall)
+        internal static void ReadUntilFound(Stream stream, string boundary, Encoding encoding, Action<byte> readCall)
         {
             byte[] boundaryBytes = encoding.GetBytes(boundary);
             byte[] window = new byte[boundaryBytes.Length];
