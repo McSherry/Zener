@@ -113,13 +113,6 @@ namespace SynapLink.Zener.Net
         }
         private void HttpRequestHandler(object tclo)
         {
-            // Apparently, some browsers don't like servers responding
-            // in a few milliseconds. This should stop any issues.
-            // Tested against Chrome 38, Firefox 31, and IE 11. Chrome
-            // was fine with a 1ms delay, Firefox and IE were okay with
-            // 2ms. Set to 5ms for a bit of a safe zone.
-            Thread.Sleep(5);
-
             var tcl = (TcpClient)tclo;
    
             tcl.NoDelay = true;
