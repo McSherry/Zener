@@ -31,15 +31,13 @@ namespace SynapLink.Zener.Net
         private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
         private const string VAR_NOSTART = "0123456789";
 
-        private static ASCIIEncoding _ascii;
-        private static UTF8Encoding _utf8;
         private static Dictionary<string, Encoding> _encodersByName
             = new Dictionary<string, Encoding>()
             {
-                { "ascii", _ascii },
-                { "us-ascii", _ascii },
-                { "utf-8", _utf8 },
-                { "utf8", _utf8 }
+                { "ascii", Encoding.ASCII },
+                { "us-ascii", Encoding.ASCII },
+                { "utf-8", Encoding.UTF8 },
+                { "utf8", Encoding.UTF8 }
             };
 
         /// <summary>
@@ -54,12 +52,6 @@ namespace SynapLink.Zener.Net
                 .Where(c => VAR_WHITELIST.Contains(c))
                 .Aggregate(new StringBuilder(), (sb, c) => sb.Append(c))
                 .ToString();
-        }
-
-        static HttpRequest()
-        {
-            _ascii = new ASCIIEncoding();
-            _utf8 = new UTF8Encoding();
         }
 
         private HttpHeaderCollection _headers;
@@ -184,11 +176,11 @@ namespace SynapLink.Zener.Net
                 ("The provided stream must support reading and seeking.", "formatBody");
 
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
-            byte[] boundaryBytes = _ascii.GetBytes(boundary);
-            byte[] doubleDash = _ascii.GetBytes("--");
+            byte[] boundaryBytes = Encoding.ASCII.GetBytes(boundary);
+            byte[] doubleDash = Encoding.ASCII.GetBytes("--");
 
             // We should ignore data before the first boundary.
-            ReadUntilFound(formatBody, boundary, _ascii, b => { });
+            ReadUntilFound(formatBody, boundary, Encoding.ASCII, b => { });
             // Seek past CRLF
             formatBody.Seek(2, SeekOrigin.Current);
             boundary = String.Format("\r\n--{0}", boundary);
@@ -241,7 +233,7 @@ namespace SynapLink.Zener.Net
 
                 // Read the contents of this part.
                 List<byte> buffer = new List<byte>();
-                ReadUntilFound(formatBody, boundary, _ascii, buffer.Add);
+                ReadUntilFound(formatBody, boundary, Encoding.ASCII, buffer.Add);
                 // Seek past CRLF
                 formatBody.Seek(2, SeekOrigin.Current);
 
@@ -271,18 +263,18 @@ namespace SynapLink.Zener.Net
                             }
                             else
                             {
-                                encoding = _ascii;
+                                encoding = Encoding.ASCII;
                             }
                         }
                         else
                         {
-                            encoding = _ascii;
+                            encoding = Encoding.ASCII;
                         }
                     }
                 }
                 else
                 {
-                    encoding = _ascii;
+                    encoding = Encoding.ASCII;
                 }
 
                 // If encoding is null, we know that the
@@ -329,9 +321,9 @@ namespace SynapLink.Zener.Net
                 ("Provided stream cannot be read from.");
 
             List<byte> buf = new List<byte>();
-            ReadUntilFound(stream, "\r\n", _ascii, buf.Add);
+            ReadUntilFound(stream, "\r\n", Encoding.ASCII, buf.Add);
 
-            return _ascii.GetString(buf.ToArray());
+            return Encoding.ASCII.GetString(buf.ToArray());
         }
         /// <summary>
         /// Reads bytes until the specified boundary is found.
