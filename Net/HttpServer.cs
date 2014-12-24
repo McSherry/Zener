@@ -117,7 +117,7 @@ namespace SynapLink.Zener.Net
         private void HttpRequestHandler(object tclo)
         {
             var tcl = (TcpClient)tclo;
-   
+
             tcl.NoDelay = true;
             tcl.Client.NoDelay = true;
 
@@ -136,7 +136,7 @@ namespace SynapLink.Zener.Net
             Exception threadException = null;
             string requestLine = null;
             HttpHeaderCollection headers = null;
-            //bool timedOut = false;
+            bool timedOut = true;
             var readThread = new Thread(() =>
             {
                 #region Request Handler Thread #2
@@ -244,20 +244,15 @@ namespace SynapLink.Zener.Net
 
                 // Write the bytes back to our memory stream.
                 ms.Write(bodyBytes, 0, bodyBytes.Length);
+                timedOut = false;
                 #endregion
+                
             });
-            //timeoutTimer.Elapsed += (s, e) =>
-            //{
-            //    timedOut = true;
-            //    readThread.Abort();
-            //    timeoutTimer.Stop();
-            //    timeoutTimer.Dispose();
-            //};
 
             readThread.Start();
             readThread.Join(REQ_READTIMEOUT);
 
-            if (requestLine == null || headers == null)
+            if (timedOut)
                 threadException = new HttpException(
                     HttpStatus.RequestTimeout,
                     "Client request timed out."
@@ -269,6 +264,8 @@ namespace SynapLink.Zener.Net
                 ns.Close();
                 ns.Dispose();
                 tcl.Close();
+                ms.Close();
+                ms.Dispose();
             });
 
             try
@@ -338,15 +335,7 @@ namespace SynapLink.Zener.Net
                 }
             }
             
-
-            // These calls shouldn't throw an exception, so we'll be fine to
-            // call them without checking to see if they've already been called.
             res.Close();
-            ns.Close();
-            ns.Dispose();
-            tcl.Close();
-            ms.Close();
-            ms.Dispose();
         }
 
         /// <summary>

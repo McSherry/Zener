@@ -185,6 +185,7 @@ namespace SynapLink.Zener.Net
 
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
             byte[] boundaryBytes = _ascii.GetBytes(boundary);
+            byte[] doubleDash = _ascii.GetBytes("--");
 
             // We should ignore data before the first boundary.
             ReadUntilFound(formatBody, boundary, _ascii, b => { });
@@ -304,8 +305,12 @@ namespace SynapLink.Zener.Net
                 // the boundary, followed by two dashes (--). If there
                 // are only two remaining bytes, we can assume it will
                 // be the dashes.
-                if (formatBody.Length - formatBody.Position == 2)
-                    break;
+                byte[] next = new byte[2];
+                int res = formatBody.Read(next, 0, next.Length);
+                if ( res == 0 ||
+                    formatBody.Length <= formatBody.Position ||
+                    next.SequenceEqual(doubleDash)) break;
+                else formatBody.Seek(-2, SeekOrigin.Current);
             }
 
             // If we added anything to dynObj, return it. Else,
@@ -367,7 +372,49 @@ namespace SynapLink.Zener.Net
 
         internal HttpRequest(string requestLine, HttpHeaderCollection headers, Stream body)
         {
-            
+            this.SetPropertiesFromRequestLine(requestLine);
+            _headers = headers;
+
+            if (body.CanSeek && body.Length > 0)
+            {
+                _raw = new byte[body.Length];
+                body.Position = 0;
+                body.Read(_raw, 0, _raw.Length);
+                body.Position = 0;
+            }
+            else
+            {
+                _raw = new byte[0];
+            }
+
+            if (this.Headers.Contains(HDR_CTYPE) && _raw.Length > 0)
+            {
+                var ctype = new NameValueHttpHeader(this.Headers[HDR_CTYPE].Last());
+
+                if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
+                {
+                    using (StreamReader sr = new StreamReader(body, Encoding.ASCII))
+                    {
+                        _post = ParseFormUrlEncoded(sr.ReadToEnd());
+                    }
+                }
+                else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
+                {
+                    var bdry = ctype.Pairs
+                        .Where(p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase))
+                        .Select(p => p.Value)
+                        .DefaultIfEmpty(null)
+                        .First();
+
+                    if (bdry == null)
+                    {
+                        throw new HttpRequestException
+                        ("No boundary provided for multipart data.");
+                    }
+
+                    _post = ParseMultipartFormData(body, bdry);
+                }
+            }
         }
         /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
