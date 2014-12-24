@@ -195,9 +195,8 @@ namespace SynapLink.Zener.Net
                 // is present, there is no request body. Only the
                 // request line and headers will be passed to the
                 // request handler.
-                if (!headers.Contains(HTTP_HDR_CTNLEN))
+                if (headers.Contains(HTTP_HDR_CTNLEN))
                 {
-
                     var cLen = headers[HTTP_HDR_CTNLEN].Last();
 
                     Int32 cLenOctets;
