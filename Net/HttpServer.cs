@@ -248,7 +248,6 @@ namespace SynapLink.Zener.Net
                 }
                 timedOut = false;
                 #endregion
-                
             });
 
             readThread.Start();

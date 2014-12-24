@@ -202,10 +202,14 @@ namespace SynapLink.Zener.Net
                     if (!line.Equals(boundary))
                         partHdrBuilder.AppendLine(line);
                 }
-                
-                HttpHeaderCollection partHeaders = new HttpHeaderCollection(
-                    BasicHttpHeader.ParseMany(new StringReader(partHdrBuilder.ToString()))
-                    );
+
+                HttpHeaderCollection partHeaders;
+                using (StringReader sr = new StringReader(partHdrBuilder.ToString()))
+                {
+                    partHeaders = new HttpHeaderCollection(
+                        BasicHttpHeader.ParseMany(sr)
+                        );
+                }
 
                 if (!partHeaders.Contains(HDR_CDISPOSITION))
                     throw new HttpRequestException
@@ -438,10 +442,14 @@ namespace SynapLink.Zener.Net
                     headerTxtBuilder.AppendLine(line);
                     line = ReadAsciiLine(requestStream);
                 }
-                _headers = new HttpHeaderCollection(
-                    BasicHttpHeader.ParseMany(new StringReader(headerTxtBuilder.ToString())),
-                    true
-                    );
+
+                using (StringReader sr = new StringReader(headerTxtBuilder.ToString()))
+                {
+                    _headers = new HttpHeaderCollection(
+                        BasicHttpHeader.ParseMany(sr),
+                        true
+                        );
+                }
 
                 var contenttype = this.Headers.Where(
                     h => h.Field.Equals(HDR_CTYPE, StringComparison.OrdinalIgnoreCase)
