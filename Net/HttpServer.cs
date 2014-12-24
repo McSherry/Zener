@@ -195,55 +195,57 @@ namespace SynapLink.Zener.Net
                 // is present, there is no request body. Only the
                 // request line and headers will be passed to the
                 // request handler.
-                if (!headers.Contains(HTTP_HDR_CTNLEN)) return;
-
-                var cLen = headers[HTTP_HDR_CTNLEN].Last();
-
-                Int32 cLenOctets;
-                // Make sure that the value of the Content-Length
-                // header is a valid integer.
-                if (!Int32.TryParse(cLen.Value, out cLenOctets))
+                if (!headers.Contains(HTTP_HDR_CTNLEN))
                 {
-                    threadException = new HttpRequestException(
-                        "Invalid Content-Length header."
-                        );
 
-                    return;
+                    var cLen = headers[HTTP_HDR_CTNLEN].Last();
+
+                    Int32 cLenOctets;
+                    // Make sure that the value of the Content-Length
+                    // header is a valid integer.
+                    if (!Int32.TryParse(cLen.Value, out cLenOctets))
+                    {
+                        threadException = new HttpRequestException(
+                            "Invalid Content-Length header."
+                            );
+
+                        return;
+                    }
+
+                    // The Content-Length cannot be negative.
+                    if (cLenOctets < 0)
+                    {
+                        threadException = new HttpRequestException(
+                            "Invalid Content-Length header."
+                            );
+
+                        return;
+                    }
+
+                    // Make sure the Content-Length isn't longer
+                    // than our maximum length.
+                    if (cLenOctets > MAX_REQUEST_BODY)
+                    {
+                        threadException = new HttpException(
+                            HttpStatus.RequestEntityTooLarge,
+                            "The request body was too large."
+                            );
+
+                        return;
+                    }
+
+                    // Read the bytes from the network.
+                    byte[] bodyBytes = new byte[cLenOctets];
+                    ns.Read(bodyBytes, 0, bodyBytes.Length);
+
+                    // We've finished reading from the network,
+                    // so we can stop our timer.
+                    //timeoutTimer.Stop();
+                    //timeoutTimer.Dispose();
+
+                    // Write the bytes back to our memory stream.
+                    ms.Write(bodyBytes, 0, bodyBytes.Length);
                 }
-
-                // The Content-Length cannot be negative.
-                if (cLenOctets < 0)
-                {
-                    threadException = new HttpRequestException(
-                        "Invalid Content-Length header."
-                        );
-
-                    return;
-                }
-
-                // Make sure the Content-Length isn't longer
-                // than our maximum length.
-                if (cLenOctets > MAX_REQUEST_BODY)
-                {
-                    threadException = new HttpException(
-                        HttpStatus.RequestEntityTooLarge,
-                        "The request body was too large."
-                        );
-
-                    return;
-                }
-
-                // Read the bytes from the network.
-                byte[] bodyBytes = new byte[cLenOctets];
-                ns.Read(bodyBytes, 0, bodyBytes.Length);
-
-                // We've finished reading from the network,
-                // so we can stop our timer.
-                //timeoutTimer.Stop();
-                //timeoutTimer.Dispose();
-
-                // Write the bytes back to our memory stream.
-                ms.Write(bodyBytes, 0, bodyBytes.Length);
                 timedOut = false;
                 #endregion
                 
