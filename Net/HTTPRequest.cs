@@ -410,7 +410,9 @@ namespace SynapLink.Zener.Net
 
                     _post = ParseMultipartFormData(body, bdry);
                 }
+                else _post = new Empty();
             }
+            else _post = new Empty();
         }
         /// <summary>
         /// Creates a new HTTPRequest class using the raw contents of the
