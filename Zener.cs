@@ -70,30 +70,31 @@ namespace SynapLink.Zener
         }
 
         /// <summary>
-        /// Initialises the ZenerCore with the server on a random port, and attempts
-        /// to source files from the default webroot directory. All files found are
-        /// automatically cached in to memory.
+        /// Creates a new instance, bound to the specified port.
         /// </summary>
-        /// <exception cref="System.ArgumentException"></exception>
-        public Zener()
-            : this(new Random().Next(49152, 65534))
-        { }
-        /// <summary>
-        /// Creates a new ZenerCore with documents sourced from the specified webroot,
-        /// and with the server listening on the specified port.
-        /// </summary>
-        /// <param name="webroot">An accessible directory to be used as the webroot.</param>
         /// <param name="port">A TCP port to use for the web server.</param>
-        /// <param name="precache">Whether all files in the webroot and children should be pre-cached.</param>
         /// <exception cref="System.ArgumentException"></exception>
-        public Zener(int port)
+        public Zener(ushort port)
+            : this(System.Net.IPAddress.Loopback, port)
         {
-            _http = new HttpServer(port)
+
+        }
+        /// <summary>
+        /// Creates a new instance, bound to the specified address and port.
+        /// </summary>
+        /// <param name="address">The IP address to bind to.</param>
+        /// <param name="port">The port to bind to.</param>
+        /// <exception cref="System.ArgumentException"></exception>
+        public Zener(System.Net.IPAddress address, ushort port)
+        {
+            _http = new HttpServer(address, port)
             {
                 RequestHandler = HandleHttpRequestSuccessful,
                 ErrorHandler = HandleHttpRequestError
             };
             this.Routes = new Router();
+
+            _http.Start();
         }
 
         /// <summary>

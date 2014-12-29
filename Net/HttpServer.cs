@@ -338,17 +338,28 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// Creates a new instance of the HTTP server on the specified port.
+        /// Creates a new instance of the HTTP server, listening on the specified
+        /// port and the IPv4 loopback.
         /// </summary>
         /// <param name="port">The TCP port to listen on (1025-65535).</param>
-        /// <param name="timeout">The maximum time, in milliseconds, the server will wait for requests to be received.</param>
-        public HttpServer(int port)
+        public HttpServer(ushort port)
+            : this(IPAddress.Loopback, port)
+        {
+
+        }
+        /// <summary>
+        /// Creates an instance of the HTTP server, listening on the specified
+        /// address and port.
+        /// </summary>
+        /// <param name="address">The IP address to listen on.</param>
+        /// <param name="port">The port to listen on.</param>
+        public HttpServer(IPAddress address, ushort port)
         {
             _port = port;
             // Recommendation: Go directly to 127.0.0.1 and avoid the use of
             // 'localhost'. Windows seems to have a rather slow DNS resolver,
             // and using 'localhost' seems to add 300ms or so to response times.
-            _listener = new TcpListener(IPAddress.Loopback, this.Port);
+            _listener = new TcpListener(address, this.Port);
             _listenThread = new Thread(TcpAcceptor);
             ThreadPool.SetMinThreads(30, 30);
         }
