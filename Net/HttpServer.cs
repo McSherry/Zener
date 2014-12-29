@@ -104,10 +104,11 @@ namespace SynapLink.Zener.Net
         private TcpListener _listener;
         private Thread _listenThread;
         private int _port;
+        private bool _acceptConnections = true;
 
         private void TcpAcceptor()
         {
-            while (true)
+            while (_acceptConnections)
             {
                 var tcl = _listener.AcceptTcpClient();
 
@@ -385,7 +386,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public void Stop()
         {
-            _listenThread.Abort();
+            _acceptConnections = false;
             _listener.Stop();
         }
 
