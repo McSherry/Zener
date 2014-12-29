@@ -128,11 +128,6 @@ namespace SynapLink.Zener.Net
             // close the socket when a timeout occurs. We want to
             // be able to send a response to the client notifying
             // them of the timeout (specifically, an HTTP 408).
-            //
-            // To do this, we need our own separate timer, and to
-            // run the read on a separate thread that we can kill
-            // if a timeout occurs.
-            //var timeoutTimer = new System.Timers.Timer(REQ_READTIMEOUT);
             Exception threadException = null;
             string requestLine = null;
             HttpHeaderCollection headers = null;
@@ -235,16 +230,20 @@ namespace SynapLink.Zener.Net
 
                     // Read the bytes from the network.
                     byte[] bodyBytes = new byte[cLenOctets];
-                    ns.Read(bodyBytes, 0, bodyBytes.Length);
+                    int index = 0;
 
-                    // We've finished reading from the network,
-                    // so we can stop our timer.
-                    //timeoutTimer.Stop();
-                    //timeoutTimer.Dispose();
+                    while (index < bodyBytes.Length)
+                    {
+                        if (ns.DataAvailable)
+                        {
+                            bodyBytes[index++] = (byte)ns.ReadByte();
+                        }
+                    }
 
                     // Write the bytes back to our memory stream.
                     ms.Write(bodyBytes, 0, bodyBytes.Length);
                 }
+
                 timedOut = false;
                 #endregion
             });
