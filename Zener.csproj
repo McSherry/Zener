@@ -55,6 +55,7 @@
     <Compile Include="Net\HttpHeaderCollection.cs" />
     <Compile Include="Net\HttpRequest.cs" />
     <Compile Include="Net\HttpResponse.cs" />
+    <Compile Include="Net\NamedParametersHttpHeader.cs" />
     <Compile Include="Net\NameValueHttpHeader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Net\HttpServer.cs" />
