@@ -214,7 +214,7 @@ namespace SynapLink.Zener.Net
                 if (!partHeaders.Contains(HDR_CDISPOSITION))
                     throw new HttpRequestException
                     ("Multipart data is malformed; no Content-Disposition.");
-                var cdis = new NameValueHttpHeader(partHeaders[HDR_CDISPOSITION].Last());
+                var cdis = new NamedParametersHttpHeader(partHeaders[HDR_CDISPOSITION].Last());
 
                 string name = cdis.Pairs
                     .Where(p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase))
@@ -255,7 +255,7 @@ namespace SynapLink.Zener.Net
                         // If there's a Content-Type header, it may contain
                         // encoding information. To retrieve it, we'll need
                         // to treat it as a name-value header.
-                        var nvCtype = new NameValueHttpHeader(cType);
+                        var nvCtype = new NamedParametersHttpHeader(cType);
 
                         if (nvCtype.Pairs.ContainsKey(HDR_CTYPE_KCHAR))
                         {
@@ -385,7 +385,7 @@ namespace SynapLink.Zener.Net
 
             if (this.Headers.Contains(HDR_CTYPE) && _raw.Length > 0)
             {
-                var ctype = new NameValueHttpHeader(this.Headers[HDR_CTYPE].Last());
+                var ctype = new NamedParametersHttpHeader(this.Headers[HDR_CTYPE].Last());
 
                 if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
                 {

@@ -14,19 +14,20 @@ using System.Threading.Tasks;
 namespace SynapLink.Zener.Net
 {
     /// <summary>
-    /// Represents an HTTP header with a set of associated name-value pairs.
+    /// Represents an HTTP header where the value has a set of associated
+    /// name-value parameters.
     /// </summary>
-    public class NameValueHttpHeader : BasicHttpHeader
+    public class NamedParametersHttpHeader : BasicHttpHeader
     {
         private Dictionary<string, string> _nvPairs;
 
         /// <summary>
-        /// Creates a NameValueHttpHeader from a header field name
+        /// Creates a NamedParametersHttpHeader from a header field name
         /// and header value.
         /// </summary>
         /// <param name="field">The header field name.</param>
         /// <param name="value">The header value.</param>
-        public NameValueHttpHeader(string field, string value)
+        public NamedParametersHttpHeader(string field, string value)
             : base(field, value)
         {
             _nvPairs = new Dictionary<string, string>();
@@ -100,16 +101,16 @@ namespace SynapLink.Zener.Net
             }
         }
         /// <summary>
-        /// Creates a new NameValueHttpHeader from a BasicHttpHeader.
+        /// Creates a new NamedParametersHttpHeader from a BasicHttpHeader.
         /// </summary>
         /// <param name="header">The header to create from.</param>
-        public NameValueHttpHeader(BasicHttpHeader header)
+        public NamedParametersHttpHeader(BasicHttpHeader header)
             : this(header.Field, header.Value) { }
         /// <summary>
-        /// Creates a NameValueHttpHeader from a raw header string.
+        /// Creates a NamedParametersHttpHeader from a raw header string.
         /// </summary>
         /// <param name="httpHeader">The header string to parse.</param>
-        public NameValueHttpHeader(string httpHeader)
+        public NamedParametersHttpHeader(string httpHeader)
             : this(BasicHttpHeader.Parse(httpHeader)) { }
 
         public override string ToString()
@@ -124,8 +125,7 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// The name-value pairs associated with the header, in the
-        /// order they appear.
+        /// The name-value pairs associated with the header.
         /// </summary>
         public Dictionary<string, string> Pairs
         {
