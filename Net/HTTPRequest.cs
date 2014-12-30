@@ -365,7 +365,13 @@ namespace SynapLink.Zener.Net
             }
         }
 
-
+        /// <summary>
+        /// Creates an HttpRequest from a request line, set of headers,
+        /// and a stream containing the body.
+        /// </summary>
+        /// <param name="requestLine">The HTTP request line (e.g. GET / HTTP/1.1).</param>
+        /// <param name="headers">The headers sent with the request.</param>
+        /// <param name="body">A stream containing the request body's bytes.</param>
         internal HttpRequest(string requestLine, HttpHeaderCollection headers, Stream body)
         {
             this.SetPropertiesFromRequestLine(requestLine);
