@@ -30,75 +30,28 @@ namespace SynapLink.Zener.Net
         public NamedParametersHttpHeader(string field, string value)
             : base(field, value)
         {
-            _nvPairs = new Dictionary<string, string>();
             StringBuilder secb = new StringBuilder();
-            string tStore = String.Empty;
-
-            bool
-                hdr = true,
-                str = false,
-                key = true;
-
-            for (int i = 0; i < value.Length; i++)
-            {
-                if (hdr)
-                {                
-                    if (value[i] == ';')
-                    {
-                        base.Value = secb.ToString();
-                        secb.Clear();
-                        hdr = false;
-                    }
-                    else
-                    {
-                        secb.Append(value[i]);
-                    }
-                }
-                else if (key && !str && value[i] == '=')
+            int index;
+            // Extract the header's main value from the string.
+            for (index = 0; index < value.Length; index++)
+            {         
+                if (value[index] == ';')
                 {
-                    tStore = secb.ToString();
+                    base.Value = secb.ToString();
                     secb.Clear();
-                    key = false;
-                }
-                else if (!str && value[i] == '"')
-                {
-                    str = true;
-                }
-                else if (str && value[i] == '\\')
-                {
-                    // Backward-slash (\) is used to escape
-                    // other characters, like quotes.
-                    secb.Append(value[++i]);
-                }
-                else if (str && value[i] == '"')
-                {
-                    str = false;
-                }
-                else if (!str && value[i] == ' ' && value[i - 1] == ' ')
-                {
-                    continue;
-                }
-                else if (!str && value[i] == ';')
-                {
-                    _nvPairs[tStore.Trim(BasicHttpHeader.TRIM_CHARS)] = secb.ToString();
-                    secb.Clear();
-                    key = true;
+                    break;
                 }
                 else
                 {
-                    secb.Append(value[i]);
+                    secb.Append(value[index]);
                 }
             }
 
-            if (key && secb.Length > 0)
-            {
-                _nvPairs[secb.ToString().Trim(BasicHttpHeader.TRIM_CHARS)] = String.Empty;
-            }
-            else
-            {
-                _nvPairs[tStore.Trim(BasicHttpHeader.TRIM_CHARS)] = secb.ToString();
-                    
-            }
+            if (++index < value.Length)
+                _nvPairs = NameValueHttpHeader.ParsePairs(
+                    value.Substring(index)
+                    );
+            else _nvPairs = new Dictionary<string, string>();
         }
         /// <summary>
         /// Creates a new NamedParametersHttpHeader from a BasicHttpHeader.
