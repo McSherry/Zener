@@ -84,7 +84,10 @@ namespace SynapLink.Zener.Net
         private const string CRLF = "\r\n";
         private const int REQ_READTIMEOUT = 60000; // 60s
         private const int MAX_REQUEST_BODY = (1024 * 1024) * 16; // 16 MiB
+        private const int TCP_EPHEMERAL_MIN = 49152;
+        private const int TCP_EPHEMERAL_MAX = 65535;
         internal const string HTTP_VERSION = "1.1";
+        private static Random _rng;
 
         /// <summary>
         /// The error handler called when no other handler exists.
@@ -99,6 +102,11 @@ namespace SynapLink.Zener.Net
                 );
 
             response.WriteLine("{0}\n", exception.ToString());
+        }
+
+        private static HttpServer()
+        {
+            _rng = new Random();
         }
 
         private TcpListener _listener;
@@ -338,6 +346,15 @@ namespace SynapLink.Zener.Net
             res.Close();
         }
 
+        /// <summary>
+        /// Creates a new instance of the HTTP server, listening on the IPv4 loopback
+        /// and a random TCP ephemeral port.
+        /// </summary>
+        public HttpServer()
+            : this(IPAddress.Loopback, (ushort)_rng.Next(TCP_EPHEMERAL_MIN, TCP_EPHEMERAL_MAX))
+        {
+
+        }
         /// <summary>
         /// Creates a new instance of the HTTP server, listening on the specified
         /// port and the IPv4 loopback.
