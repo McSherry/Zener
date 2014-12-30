@@ -404,77 +404,55 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// Writes the provided strings to the response body.
+        /// Writes the provided value to the response.
         /// </summary>
-        /// <param name="content">The strings to write.</param>
-        public void Write(params string[] content)
+        /// <param name="value">The value to write.</param>
+        public void Write(object value)
         {
-            this._CheckClosed();
+            _CheckClosed();
+            _ConditionalWriteHeaders();
 
-            this._ConditionalWriteHeaders();
-
-            foreach (var s in content)
-            {
-                _nsw.Write(s);
-            }
+            _nsw.Write(value);
         }
         /// <summary>
-        /// Writes the provided bytes to the response body.
+        /// Writes the provided values to the response in the
+        /// specified format.
         /// </summary>
-        /// <param name="content">The bytes to write.</param>
-        public void Write(params byte[] content)
+        /// <param name="format">The format to write the values in.</param>
+        /// <param name="args">The values to write.</param>
+        public void Write(string format, params object[] args)
         {
-            this._CheckClosed();
-            this._ConditionalWriteHeaders();
+            _CheckClosed();
+            _ConditionalWriteHeaders();
 
-            _nsw.BaseStream.Write(content, 0, content.Length);
+            _nsw.Write(format, args);
         }
         /// <summary>
-        /// Writes the provided string with the inserts added.
+        /// Writes the provided value to the response, followed
+        /// by a new-line.
         /// </summary>
-        /// <param name="format">The format to write the string in.</param>
-        /// <param name="inserts">The content to insert in to the format.</param>
-        public void Write(string format, params object[] inserts)
+        /// <param name="value">The value to write.</param>
+        public void WriteLine(object value)
         {
-            this._CheckClosed();
-            this._ConditionalWriteHeaders();
+            _CheckClosed();
+            _ConditionalWriteHeaders();
 
-            _nsw.Write(format, inserts);
+            _nsw.WriteLine(value);
         }
         /// <summary>
-        /// Writes an empty line to the response body.
+        /// Writes the provided values to the response in the
+        /// specified format, followed by a new-line.
         /// </summary>
-        public void WriteLine()
+        /// <param name="format">The format to write the values in.</param>
+        /// <param name="args">The values to write.</param>
+        public void WriteLine(string format, params object[] args)
         {
-            this._CheckClosed();
-            this._ConditionalWriteHeaders();
+            _CheckClosed();
+            _ConditionalWriteHeaders();
 
-            _nsw.WriteLine();
+            _nsw.WriteLine(format, args);
         }
-        /// <summary>
-        /// Writes the provided line to the response body.
-        /// </summary>
-        /// <param name="line">The line to write.</param>
-        public void WriteLine(string line)
-        {
-            this._CheckClosed();
-            this._ConditionalWriteHeaders();
 
-            _nsw.WriteLine(line);
-        }
-        /// <summary>
-        /// Writes the line given in the format to the response body,
-        /// with inserts added where specified.
-        /// </summary>
-        /// <param name="format">The format to write to the response body.</param>
-        /// <param name="inserts">The items to insert in to the format.</param>
-        public void WriteLine(string format, params object[] inserts)
-        {
-            this._CheckClosed();
-            this._ConditionalWriteHeaders();
-
-            _nsw.WriteLine(format, inserts);
-        }
         /// <summary>
         /// Closes the connection between the server and the client.
         /// </summary>
@@ -482,5 +460,6 @@ namespace SynapLink.Zener.Net
         {
             if (!_closed) _closeCallback();
         }
+         
     }
 }
