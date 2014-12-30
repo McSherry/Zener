@@ -104,7 +104,7 @@ namespace SynapLink.Zener.Net
             response.WriteLine("{0}\n", exception.ToString());
         }
 
-        private static HttpServer()
+       static HttpServer()
         {
             _rng = new Random();
         }
