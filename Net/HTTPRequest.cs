@@ -25,6 +25,7 @@ namespace SynapLink.Zener.Net
         private const string MT_FORMURLENCODED = "application/x-www-form-urlencoded";
         private const string MT_FORMMULTIPART = "multipart/form-data";
         private const string HDR_CDISPOSITION = "Content-Disposition";
+        private const string HDR_COOKIES = "Cookie";
         private const string CDIS_FORMDATA = "form-data";
         private const string HDR_CTYPE = "Content-Type";
         private const string HDR_CTYPE_KCHAR = "charset";
@@ -55,7 +56,7 @@ namespace SynapLink.Zener.Net
         }
 
         private HttpHeaderCollection _headers;
-        private dynamic _get, _post;
+        private dynamic _get, _post, _cookies;
         private byte[] _raw;
 
         /// <summary>
@@ -366,6 +367,29 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
+        /// Sets the current instance's Cookie property.
+        /// </summary>
+        private void SetCookiesFromHeaders()
+        {
+            if (this.Headers.Contains(HDR_COOKIES))
+            {
+                var dynObj = new ExpandoObject() as IDictionary<string, object>;
+
+                this.Headers[HDR_COOKIES]
+                    .Select(h => NameValueHttpHeader.ParsePairs(h.Value))
+                    .SelectMany(d => d)
+                    .ToList()
+                    .ForEach(nvp => dynObj.Add(_filterInvChars(nvp.Key), nvp.Value));
+
+                _cookies = dynObj;
+            }
+            else
+            {
+                _cookies = new Empty();
+            }
+        }
+
+        /// <summary>
         /// Creates an HttpRequest from a request line, set of headers,
         /// and a stream containing the body.
         /// </summary>
@@ -419,6 +443,8 @@ namespace SynapLink.Zener.Net
                 else _post = new Empty();
             }
             else _post = new Empty();
+
+            this.SetCookiesFromHeaders();
         }
 
         /// <summary>
@@ -468,6 +494,13 @@ namespace SynapLink.Zener.Net
         {
             get { return _get; }
             private set { _get = value; }
+        }
+        /// <summary>
+        /// Any cookies sent with the request.
+        /// </summary>
+        public dynamic Cookies
+        {
+            get { return _cookies; }
         }
         /// <summary>
         /// The raw bytes of the client's request.
