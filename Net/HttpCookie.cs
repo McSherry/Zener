@@ -223,7 +223,25 @@ namespace SynapLink.Zener.Net
 
             return cookieBuilder.ToString().Trim();
         }
+        /// <summary>
+        /// Retrieves the hash code for this object.
+        /// </summary>
+        public override int GetHashCode()
+        {
+            int hash = 0x5f3759df;
+            unchecked
+            {
+                hash *= (hash & 0xFFF) + this.Name.GetHashCode();
+                hash *= (hash & 0xFFF) + this.Value.GetHashCode();
+                hash *= (hash & 0xFFF) + this.Expiry.GetHashCode();
+                hash *= (hash & 0xFFF) + (this.Domain ?? "NULL_DOMAIN").GetHashCode();
+                hash *= (hash & 0xFFF) + (this.Path ?? "NULL_PATH").GetHashCode();
+                hash *= (hash & 0xFFF) + this.HttpOnly.GetHashCode();
+                hash *= (hash & 0xFFF) + this.Secure.GetHashCode();
+            }
 
+            return hash;
+        }
         /// <summary>
         /// Compares this cookie to an object using
         /// CookieComparison.Attributes.
