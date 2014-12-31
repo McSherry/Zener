@@ -46,7 +46,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="str">The string to filter.</param>
         /// <returns>The provided string, filtered to remove disallowed characters.</returns>
-        private static string _filterInvChars(string str)
+        internal static string FilterInvalidCharacters(string str)
         {
             return str
                 .TrimStart(VAR_NOSTART.ToCharArray())
@@ -128,7 +128,7 @@ namespace SynapLink.Zener.Net
                 if (!inVal && c == '=')
                 {
                     inVal = true;
-                    section = _filterInvChars(
+                    section = FilterInvalidCharacters(
                         WebUtility.UrlDecode(qBuilder.ToString())
                         );
                     qBuilder.Clear();
@@ -141,7 +141,7 @@ namespace SynapLink.Zener.Net
                 }
                 else if (!inVal && c == '&')
                 {
-                    section = _filterInvChars(
+                    section = FilterInvalidCharacters(
                         WebUtility.UrlDecode(qBuilder.ToString())
                         );
                     dynObj[section] = String.Empty;
@@ -155,7 +155,7 @@ namespace SynapLink.Zener.Net
 
             if (!inVal)
             {
-                section = _filterInvChars(
+                section = FilterInvalidCharacters(
                     WebUtility.UrlDecode(qBuilder.ToString())
                     );
 
@@ -379,7 +379,11 @@ namespace SynapLink.Zener.Net
                     .Select(h => NameValueHttpHeader.ParsePairs(h.Value))
                     .SelectMany(d => d)
                     .ToList()
-                    .ForEach(nvp => dynObj.Add(_filterInvChars(nvp.Key), nvp.Value));
+                    .ForEach(
+                        nvp => dynObj.Add(
+                            FilterInvalidCharacters(nvp.Key),
+                            WebUtility.UrlDecode(nvp.Value)
+                        ));
 
                 _cookies = dynObj;
             }
