@@ -114,6 +114,16 @@ namespace SynapLink.Zener.Net
             return pairs;
         }
 
+        internal static string PairsToString(IDictionary<string, string> pairs)
+        {
+            return pairs
+                .Aggregate(
+                    new StringBuilder(),
+                    (sb, pair) => sb.AppendFormat("{0}={1};", pair.Key, pair.Value)
+                    )
+                .ToString();
+        }
+
         /// <summary>
         /// Creates a NameValueHttpHeader from a field-name and value.
         /// </summary>
@@ -139,6 +149,17 @@ namespace SynapLink.Zener.Net
         /// <param name="httpHeader">The header string, containing the field and content.</param>
         public NameValueHttpHeader(string httpHeader)
             : this(BasicHttpHeader.Parse(httpHeader))
+        {
+
+        }
+        /// <summary>
+        /// Creates a NameValueHttpHeader from a field name and a
+        /// set of name-value pairs.
+        /// </summary>
+        /// <param name="field">The field name of the header.</param>
+        /// <param name="pairs">The pairs that the header's value comprises.</param>
+        public NameValueHttpHeader(string field, IDictionary<string, string> pairs)
+            : this(field, PairsToString(pairs))
         {
 
         }
