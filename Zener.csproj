@@ -53,6 +53,7 @@
     <Compile Include="Core\Routing.cs" />
     <Compile Include="Net\BasicHttpHeader.cs" />
     <Compile Include="Net\HttpCookie.cs" />
+    <Compile Include="Net\HttpCookieCollection.cs" />
     <Compile Include="Net\HttpHeaderCollection.cs" />
     <Compile Include="Net\HttpRequest.cs" />
     <Compile Include="Net\HttpResponse.cs" />

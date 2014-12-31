@@ -253,6 +253,16 @@ namespace SynapLink.Zener.Net
             return HttpCookie.Equals(this, obj as HttpCookie, CookieComparison.Attributes);
         }
         /// <summary>
+        /// Determines whether this cookie has
+        /// the provided name.
+        /// </summary>
+        /// <param name="name">The name to compare to.</param>
+        /// <returns>True if the names match.</returns>
+        public bool Equals(string name)
+        {
+            return this.Name.Equals(name, StringComparison.Ordinal);
+        }
+        /// <summary>
         /// Compares this cookie to another.
         /// </summary>
         /// <param name="cookie">The cookie to compare to.</param>
