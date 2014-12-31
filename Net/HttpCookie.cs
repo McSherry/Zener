@@ -15,6 +15,24 @@ using System.Net;
 namespace SynapLink.Zener.Net
 {
     /// <summary>
+    /// Specifies how cookies should be compared
+    /// when checking for equality.
+    /// </summary>
+    public enum CookieComparison
+    {
+        /// <summary>
+        /// Name comparison. A case-sensitive comparison
+        /// of the cookie names.
+        /// </summary>
+        Name,
+        /// <summary>
+        /// Attribute comparison. A comparison of all of
+        /// the cookie attributes.
+        /// </summary>
+        Attributes
+    }
+
+    /// <summary>
     /// A class representing an HTTP cookie.
     /// </summary>
     public class HttpCookie
@@ -204,6 +222,49 @@ namespace SynapLink.Zener.Net
                 cookieBuilder.Append("Secure; ");
 
             return cookieBuilder.ToString().Trim();
+        }
+
+        /// <summary>
+        /// Compares this cookie to an object using
+        /// CookieComparison.Attributes.
+        /// </summary>
+        /// <param name="obj">The object to compare to.</param>
+        /// <returns>True if the object equals this cookie.</returns>
+        public override bool Equals(object obj)
+        {
+            var ck = obj as HttpCookie;
+            bool equal = false;
+
+            if (ck == null)
+            {
+                equal = false;
+            }
+            else
+            {
+                equal = ck.Equals(this, CookieComparison.Attributes);
+            }
+
+            return equal;
+        }
+        /// <summary>
+        /// Compares this cookie to another.
+        /// </summary>
+        /// <param name="cookie">The cookie to compare to.</param>
+        /// <param name="comparison">How the comparison should be made.</param>
+        /// <returns>True if <paramref name="cookie"/> is considered equal.</returns>
+        public bool Equals(HttpCookie cookie, CookieComparison comparison)
+        {
+            bool equal = false;
+            if (comparison == CookieComparison.Name)
+            {
+                equal = this.Name.Equals(cookie.Name, StringComparison.Ordinal);
+            }
+            else
+            {
+                equal = this.ToString().Equals(cookie.ToString(), StringComparison.Ordinal);
+            }
+
+            return equal;
         }
     }
 }
