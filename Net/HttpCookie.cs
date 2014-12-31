@@ -250,19 +250,7 @@ namespace SynapLink.Zener.Net
         /// <returns>True if the object equals this cookie.</returns>
         public override bool Equals(object obj)
         {
-            var ck = obj as HttpCookie;
-            bool equal = false;
-
-            if (ck == null)
-            {
-                equal = false;
-            }
-            else
-            {
-                equal = ck.Equals(this, CookieComparison.Attributes);
-            }
-
-            return equal;
+            return HttpCookie.Equals(this, obj as HttpCookie, CookieComparison.Attributes);
         }
         /// <summary>
         /// Compares this cookie to another.
@@ -272,14 +260,29 @@ namespace SynapLink.Zener.Net
         /// <returns>True if <paramref name="cookie"/> is considered equal.</returns>
         public bool Equals(HttpCookie cookie, CookieComparison comparison)
         {
+            return HttpCookie.Equals(this, cookie, comparison);
+        }
+
+        /// <summary>
+        /// Compares two cookies and determines whether they are equal.
+        /// </summary>
+        /// <param name="c0">The first cookie to compare.</param>
+        /// <param name="c1">The second cookie to compare.</param>
+        /// <param name="comparison">The comparison semantics.</param>
+        /// <returns>True if the two cookies are considered equal.</returns>
+        public static bool Equals(HttpCookie c0, HttpCookie c1, CookieComparison comparison)
+        {
+            if (c0 == null ^ c1 == null) return false;
+            if (c0 == null && c1 == null) return true;
+
             bool equal = false;
             if (comparison == CookieComparison.Name)
             {
-                equal = this.Name.Equals(cookie.Name, StringComparison.Ordinal);
+                equal = c0.Name.Equals(c1.Name, StringComparison.Ordinal);
             }
             else
             {
-                equal = this.ToString().Equals(cookie.ToString(), StringComparison.Ordinal);
+                equal = c0.ToString().Equals(c1.ToString(), StringComparison.Ordinal);
             }
 
             return equal;
