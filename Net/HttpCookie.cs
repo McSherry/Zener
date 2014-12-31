@@ -288,7 +288,7 @@ namespace SynapLink.Zener.Net
             bool equal = false;
             if (comparison == CookieComparison.Name)
             {
-                equal = c0.Name.Equals(c1.Name, StringComparison.Ordinal);
+                equal = c0.Equals(c1.Name);
             }
             else
             {
