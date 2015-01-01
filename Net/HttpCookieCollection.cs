@@ -17,7 +17,7 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// Represents a collection of HttpCookies.
     /// </summary>
-    public class HttpCookieCollection
+    public sealed class HttpCookieCollection
         : ICollection<HttpCookie>
     {
         private List<HttpCookie> _cookies;

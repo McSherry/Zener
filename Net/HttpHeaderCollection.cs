@@ -18,7 +18,8 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// A class used to store HTTP header values.
     /// </summary>
-    public class HttpHeaderCollection : ICollection<BasicHttpHeader>
+    public sealed class HttpHeaderCollection 
+        : ICollection<BasicHttpHeader>
     {
         private List<BasicHttpHeader> _headerList;
         private bool _readOnly;
@@ -123,6 +124,13 @@ namespace SynapLink.Zener.Net
         {
             get { return _readOnly; }
         }
+        /// <summary>
+        /// The number of headers the collection currently holds.
+        /// </summary>
+        public int Count
+        {
+            get { return _headerList.Count; }
+        }
 
         /// <summary>
         /// Converts the stored headers in to their string representation.
@@ -207,17 +215,16 @@ namespace SynapLink.Zener.Net
                 h => h.Field.Equals(fieldName, StringComparison.OrdinalIgnoreCase)
                 );
         }
-
-        int ICollection<BasicHttpHeader>.Count
-        {
-            get { return _headerList.Count; }
-        }
-        void ICollection<BasicHttpHeader>.Clear()
+        /// <summary>
+        /// Removes all headers from the collection.
+        /// </summary>
+        public void Clear()
         {
             _readOnlyCheck();
 
             _headerList.Clear();
         }
+
         void ICollection<BasicHttpHeader>.CopyTo(BasicHttpHeader[] array, int arrayIndex)
         {
             _headerList.CopyTo(array, arrayIndex);
