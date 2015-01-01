@@ -200,7 +200,7 @@ namespace SynapLink.Zener.Net
             if (this.Expiry.HasValue)
                 cookieBuilder.AppendFormat(
                     "Expires={0}; ",
-                    this.Expiry.Value.ToString("R")
+                    this.Expiry.Value.ToUniversalTime().ToString("R")
                     );
 
             if (!String.IsNullOrWhiteSpace(this.Domain))
