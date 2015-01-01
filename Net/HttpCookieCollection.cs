@@ -38,102 +38,6 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="name">The name of the cookie.</param>
         /// <param name="value">The cookie's value.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
-        public void Add(string name, string value)
-        {
-            this.Add(new HttpCookie(name, value));
-        }
-        /// <summary>
-        /// Adds a new cookie to the collection.
-        /// </summary>
-        /// <param name="name">The name of the cookie.</param>
-        /// <param name="value">The cookie's value.</param>
-        /// <param name="expiry">The date and time the cookie expires.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
-        public void Add(string name, string value, DateTime expiry)
-        {
-            this.Add(new HttpCookie(name, value)
-            {
-                Expiry = expiry
-            });
-        }
-        /// <summary>
-        /// Adds a new cookie to the collection.
-        /// </summary>
-        /// <param name="name">The name of the cookie.</param>
-        /// <param name="value">The cookie's value.</param>
-        /// <param name="expiry">The date and time the cookie expires.</param>
-        /// <param name="domain">The domain the cookie is restricted to.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
-        public void Add(string name, string value, DateTime expiry, string domain)
-        {
-            this.Add(new HttpCookie(name, value)
-            {
-                Expiry = expiry,
-                Domain = domain
-            });
-        }
-        /// <summary>
-        /// Adds a new cookie to the collection.
-        /// </summary>
-        /// <param name="name">The name of the cookie.</param>
-        /// <param name="value">The cookie's value.</param>
-        /// <param name="expiry">The date and time the cookie expires.</param>
-        /// <param name="domain">The domain the cookie is restricted to.</param>
-        /// <param name="path">The path the cookie is restricted to.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
-        public void Add(
-            string name,
-            string value,
-            DateTime expiry,
-            string domain,
-            string path
-            )
-        {
-            this.Add(new HttpCookie(name, value)
-            {
-                Expiry = expiry,
-                Domain = domain,
-                Path = path
-            });
-        }
-        /// <summary>
-        /// Adds a new cookie to the collection.
-        /// </summary>
-        /// <param name="name">The name of the cookie.</param>
-        /// <param name="value">The cookie's value.</param>
-        /// <param name="expiry">The date and time the cookie expires.</param>
-        /// <param name="domain">The domain the cookie is restricted to.</param>
-        /// <param name="path">The path the cookie is restricted to.</param>
-        /// <param name="secure">Whether the cookie should only be served over secure connections.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
-        public void Add(
-            string name,
-            string value,
-            DateTime expiry,
-            string domain,
-            string path,
-            bool secure
-            )
-        {
-            this.Add(new HttpCookie(name, value)
-            {
-                Expiry = expiry,
-                Domain = domain,
-                Path = path,
-                Secure = secure
-            });
-        }
-        /// <summary>
-        /// Adds a new cookie to the collection.
-        /// </summary>
-        /// <param name="name">The name of the cookie.</param>
-        /// <param name="value">The cookie's value.</param>
         /// <param name="expiry">The date and time the cookie expires.</param>
         /// <param name="domain">The domain the cookie is restricted to.</param>
         /// <param name="path">The path the cookie is restricted to.</param>
@@ -144,11 +48,11 @@ namespace SynapLink.Zener.Net
         public void Add(
             string name,
             string value,
-            DateTime expiry,
-            string domain,
-            string path,
-            bool secure,
-            bool httpOnly
+            Nullable<DateTime> expiry = null,
+            string domain = null,
+            string path = null,
+            bool secure = false,
+            bool httpOnly = false
             )
         {
             this.Add(new HttpCookie(name, value)
