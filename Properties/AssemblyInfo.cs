@@ -11,7 +11,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("SynapLink, LLC")]
 [assembly: AssemblyProduct("Zener")]
-[assembly: AssemblyCopyright("Copyright 2014 © SynapLink, LLC")]
+[assembly: AssemblyCopyright("Copyright 2014-2015 © SynapLink, LLC")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

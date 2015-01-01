@@ -1,4 +1,11 @@
-﻿using System;
+﻿/*
+ *      Copyright (c) 2014-2015, SynapLink, LLC
+ *      All Rights reserved.
+ *      
+ *      Released under BSD 3-Clause licence. See terms in
+ *      /LICENCE.txt, or online: http://opensource.org/licenses/BSD-3-Clause
+ */
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
