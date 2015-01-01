@@ -17,7 +17,8 @@ namespace SynapLink.Zener.Net
     /// Represents an HTTP header where the value is a set
     /// of name-value pairs.
     /// </summary>
-    public class NameValueHttpHeader : BasicHttpHeader
+    public sealed class NameValueHttpHeader 
+        : BasicHttpHeader
     {
         private static Dictionary<char, char> EscapeCodes
             = new Dictionary<char, char>()

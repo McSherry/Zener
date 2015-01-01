@@ -17,7 +17,8 @@ namespace SynapLink.Zener.Net
     /// Represents an HTTP header where the value has a set of associated
     /// name-value parameters.
     /// </summary>
-    public class NamedParametersHttpHeader : BasicHttpHeader
+    public sealed class NamedParametersHttpHeader 
+        : BasicHttpHeader
     {
         private Dictionary<string, string> _nvPairs;
 
