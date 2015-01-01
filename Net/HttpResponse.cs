@@ -326,7 +326,13 @@ namespace SynapLink.Zener.Net
                 // the collection cannot be modified after the headers are sent.
                 this.Cookies.IsReadOnly = true;
                 foreach (var cookie in this.Cookies)
-                    this.Headers.Add(HDR_SETCOOKIE, cookie.ToString(), false);
+                {
+                    this.Headers.Add(
+                        fieldName:  HDR_SETCOOKIE,
+                        fieldValue: cookie.ToString(),
+                        overwrite:  false
+                        );
+                }
 
                 if (!this.Headers.Contains("Server"))
                 {
