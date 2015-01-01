@@ -238,6 +238,7 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpResponse
     {
+        private const string HDR_SETCOOKIE = "Set-Cookie";
         private static readonly Dictionary<HttpStatus, string> STAT_MSGS
             = new Dictionary<HttpStatus, string>()
             {
@@ -289,6 +290,7 @@ namespace SynapLink.Zener.Net
 
         private HttpStatus _httpStatus;
         private HttpHeaderCollection _headers;
+        private HttpCookieCollection _cookies;
         private Action _closeCallback;
         private StreamWriter _nsw;
         // Set to true when the first write is made. When this is
@@ -319,6 +321,12 @@ namespace SynapLink.Zener.Net
                 {
                     this.Headers.Add("Content-Type", "text/html");
                 }
+
+                // Since cookies are sent in headers, we want to make sure that
+                // the collection cannot be modified after the headers are sent.
+                this.Cookies.IsReadOnly = true;
+                foreach (var cookie in this.Cookies)
+                    this.Headers.Add(HDR_SETCOOKIE, cookie.ToString(), false);
 
                 if (!this.Headers.Contains("Server"))
                 {
@@ -373,6 +381,7 @@ namespace SynapLink.Zener.Net
                 NewLine = "\r\n"
             };
             _headers = new HttpHeaderCollection();
+            _cookies = new HttpCookieCollection();
             _beginRespond = false;
             _closed = false;
         }
@@ -401,6 +410,13 @@ namespace SynapLink.Zener.Net
         public HttpHeaderCollection Headers
         {
             get { return _headers; }
+        }
+        /// <summary>
+        /// The cookies to be sent with the response.
+        /// </summary>
+        public HttpCookieCollection Cookies
+        {
+            get { return _cookies; }
         }
 
         /// <summary>
