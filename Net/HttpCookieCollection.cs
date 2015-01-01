@@ -191,20 +191,18 @@ namespace SynapLink.Zener.Net
                 "The provided cookie was null."
                 );
 
-            _cookies.RemoveAll(c => c.Equals(item, CookieComparison.Name));
-
-            return true;
+            return this.Remove(item.Name);
         }
         /// <summary>
         /// Removes a cookie based on its name.
         /// </summary>
         /// <param name="name">The name of the cookie to remove.</param>
         /// <exception cref="System.InvalidOperationException"></exception>
-        public void Remove(string name)
+        public bool Remove(string name)
         {
             _readOnlyCheck();
 
-            _cookies.RemoveAll(c => c.Equals(name));
+            return 0 < _cookies.RemoveAll(c => c.Equals(name));
         }
         /// <summary>
         /// Determines whether the collection contains the specified cookie.
