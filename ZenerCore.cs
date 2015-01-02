@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
+using System.IO;
 
 using SynapLink.Zener.Net;
 using SynapLink.Zener.Core;
@@ -25,17 +26,17 @@ namespace SynapLink.Zener
     /// <summary>
     /// A class implementing the Zener interface between web server and application.
     /// </summary>
-    public class Zener
+    public class ZenerCore
     {
         /// <summary>
         /// Contains the handlers which provide Zener's
         /// route-based APIs.
         /// </summary>
-        private static class ZenerApi
+        private static class Api
         {
             private static Dictionary<string, RouteHandler> _apiRoutes;
 
-            static ZenerApi()
+            static Api()
             {
                 _apiRoutes = new Dictionary<string, RouteHandler>()
                 {
@@ -86,7 +87,7 @@ namespace SynapLink.Zener
             }
         }
 
-        static Zener()
+        static ZenerCore()
         {
             _ver = Assembly.GetCallingAssembly().GetName().Version;
         }
@@ -96,7 +97,7 @@ namespace SynapLink.Zener
         /// </summary>
         /// <param name="port">A TCP port to use for the web server.</param>
         /// <exception cref="System.ArgumentException"></exception>
-        public Zener(ushort port)
+        public ZenerCore(ushort port)
             : this(System.Net.IPAddress.Loopback, port)
         {
 
@@ -107,7 +108,7 @@ namespace SynapLink.Zener
         /// <param name="address">The IP address to bind to.</param>
         /// <param name="port">The port to bind to.</param>
         /// <exception cref="System.ArgumentException"></exception>
-        public Zener(System.Net.IPAddress address, ushort port)
+        public ZenerCore(System.Net.IPAddress address, ushort port)
         {
             _http = new HttpServer(address, port)
             {
@@ -116,7 +117,7 @@ namespace SynapLink.Zener
             };
             this.Routes = new Router();
 
-            foreach (var route in ZenerApi.Routes)
+            foreach (var route in Api.Routes)
                 this.Routes.AddHandler(route.Key, route.Value);
 
             _http.Start();

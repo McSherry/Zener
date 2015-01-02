@@ -336,7 +336,7 @@ namespace SynapLink.Zener.Net
 
                 if (!this.Headers.Contains("Server"))
                 {
-                    this.Headers.Add("Server", "Zener/" + Zener.Version.ToString(3), true);
+                    this.Headers.Add("Server", "Zener/" + ZenerCore.Version.ToString(3), true);
                 }
 
                 _nsw.Write(this.Headers.ToString());
