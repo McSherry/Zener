@@ -31,8 +31,8 @@ namespace SynapLink.Zener.Core
         /// Attempts retrieve the handler for the specified path.
         /// </summary>
         /// <param name="path">The path to find a handler for.</param>
-        /// <param name="handler">The handler for the path.</param>
-        /// <returns>True if retrieval was successful.</returns>
+        /// <param name="handler">This will contain the handler if successful, null if otherwise.</param>
+        /// <returns>True if a handler was found.</returns>
         public bool TryFind(string path, out HttpRequestHandler handler)
         {
             /*
@@ -72,6 +72,35 @@ namespace SynapLink.Zener.Core
                 );
 
             return rhandler != default(object);
+        }
+        /// <summary>
+        /// Attempts to retrieve the handler for a route with the
+        /// specified name.
+        /// </summary>
+        /// <param name="name">The name of the route.</param>
+        /// <param name="parameters">The parameters to pass to the route.</param>
+        /// <param name="handler">This will contain the handler if successful, null if otherwise.</param>
+        /// <returns>True if a handler was found.</returns>
+        public bool TryFind(
+            string name, dynamic parameters,
+            out HttpRequestHandler handler
+            )
+        {
+            var named = _routes
+                .Where(r => r.Name.Equals(name, StringComparison.Ordinal))
+                .FirstOrDefault();
+
+            bool ret = named == default(Route);
+            if (ret)
+            {
+                handler = null;
+            }
+            else
+            {
+                handler = (rq, rs) => named.Handler(rq, rs, parameters);
+            }
+
+            return ret;
         }
 
         /// <summary>
