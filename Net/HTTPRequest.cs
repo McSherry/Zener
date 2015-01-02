@@ -22,6 +22,23 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpRequest
     {
+        /// <summary>
+        /// A class containing HTTP method constants.
+        /// </summary>
+        public static class Methods
+        {
+            public const string
+                OPTIONS     = "OPTIONS",
+                GET         = "GET",
+                HEAD        = "HEAD",
+                POST        = "POST",
+                PUT         = "PUT",
+                DELETE      = "DELETE",
+                TRACE       = "TRACE",
+                CONNECT     = "CONNECT"
+                ;
+        }
+
         private const string MT_FORMURLENCODED = "application/x-www-form-urlencoded";
         private const string MT_FORMMULTIPART = "multipart/form-data";
         private const string HDR_CDISPOSITION = "Content-Disposition";
