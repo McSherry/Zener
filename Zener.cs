@@ -27,6 +27,28 @@ namespace SynapLink.Zener
     /// </summary>
     public class Zener
     {
+        /// <summary>
+        /// Contains the handlers which provide Zener's
+        /// route-based APIs.
+        /// </summary>
+        private static class ZenerApi
+        {
+            private static Dictionary<string, RouteHandler> _apiRoutes;
+
+            static ZenerApi()
+            {
+                _apiRoutes = new Dictionary<string, RouteHandler>()
+                {
+
+                };
+            }
+
+            public static IDictionary<string, RouteHandler> Routes
+            {
+                get { return _apiRoutes; }
+            }
+        }
+
         private const string INTERNAL_PREFIX = ":";
         private static Version _ver;
 
@@ -93,6 +115,9 @@ namespace SynapLink.Zener
                 ErrorHandler = HandleHttpRequestError
             };
             this.Routes = new Router();
+
+            foreach (var route in ZenerApi.Routes)
+                this.Routes.AddHandler(route.Key, route.Value);
 
             _http.Start();
         }
