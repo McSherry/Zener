@@ -196,6 +196,10 @@ namespace SynapLink.Zener
                         }
                         #endregion
                     }
+                    else
+                    {
+                        rs.StatusCode = HttpStatus.MethodNotAllowed;
+                    }
                 }
                 catch (UnauthorizedAccessException)
                 {
