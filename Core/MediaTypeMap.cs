@@ -46,8 +46,7 @@ namespace SynapLink.Zener.Core
                         "text/html",
                         new List<string>()
                         {
-                            ".htm", ".html", ".xht",
-                            ".xhtml"
+                            ".htm", ".html"
                         }
                     },
                     {
@@ -88,6 +87,22 @@ namespace SynapLink.Zener.Core
                         }
                     },
                     #endregion
+                    #region video/* Media Types
+                    {
+                        "video/mp4",
+                        new List<string>()
+                        {
+                            ".mp4", ".m4v",
+                        }
+                    },
+                    {
+                        "video/avi",
+                        new List<string>()
+                        {
+                            ".avi"
+                        }
+                    },
+                    #endregion
                     #region application/* Media Types
                     {
                         "application/javascript",
@@ -101,6 +116,20 @@ namespace SynapLink.Zener.Core
                         new List<string>()
                         {
                             ".json"
+                        }
+                    },
+                    {
+                        "application/dart",
+                        new List<string>()
+                        {
+                            ".dart"
+                        }
+                    },
+                    {
+                        "application/xhtml+xml",
+                        new List<string>()
+                        {
+                             ".xht", ".xhtml"
                         }
                     }
                     #endregion
