@@ -63,7 +63,7 @@
     <Compile Include="Net\NameValueHttpHeader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Net\HttpServer.cs" />
-    <Compile Include="Zener.cs" />
+    <Compile Include="ZenerCore.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram1.cd" />

@@ -308,7 +308,9 @@ namespace SynapLink.Zener.Core
                 }
             }
 
-            param = dynObj;
+            if (dynObj.Count > 0) param = dynObj;
+            else param = new Empty();
+
             return formatBuilder.ToString().Equals(
                 pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
                 );
