@@ -25,7 +25,7 @@ namespace SynapLink.Zener.Core
 
         static Routing()
         {
-            Routing.MediaTypeMap = MediaTypeMap.Default.Copy();
+            Routing.MediaTypes = MediaTypeMap.Default.Copy();
         }
 
         /// <summary>
@@ -97,7 +97,7 @@ namespace SynapLink.Zener.Core
                         else
                         {
                             string ext = Path.GetExtension(filePath);
-                            rs.Headers.Add("Content-Type", MediaTypeMap.Find(ext));
+                            rs.Headers.Add("Content-Type", MediaTypes.Find(ext));
                         }
 
                         byte[] response = new byte[fs.Length];
@@ -165,7 +165,7 @@ namespace SynapLink.Zener.Core
                 string mediaType = MediaTypeMap.FallbackType;
                 if (Path.HasExtension(filePath))
                 {
-                    mediaType = MediaTypeMap.Find(
+                    mediaType = MediaTypes.Find(
                         Path.GetExtension(filePath)
                         );
                 }
@@ -265,7 +265,7 @@ namespace SynapLink.Zener.Core
         /// <summary>
         /// A map of media types and file extensions used to determine the media type of files.
         /// </summary>
-        public static MediaTypeMap MediaTypeMap
+        public static MediaTypeMap MediaTypes
         {
             get;
             set;
