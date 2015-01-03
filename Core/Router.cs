@@ -120,7 +120,11 @@ namespace SynapLink.Zener.Core
         /// <param name="name">The name to give the route.</param>
         public void AddHandler(string format, RouteHandler handler, string name)
         {
-            _routes.Add(new Route(format, handler) { Name = name });
+            var route = new Route(format, handler) { Name = name };
+
+            _routes.RemoveAll(r => r.Name.Equals(route.Name));
+
+            _routes.Add(route);
         }
     }
 }
