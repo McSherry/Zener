@@ -63,7 +63,7 @@ namespace SynapLink.Zener.Core
 
             var rhandler = validHandlers
                 .Zip(validParams, (r, pr) => new { Route = r, Params = pr })
-                .OrderBy(hwp => !(hwp.Params is Empty))
+                .OrderByDescending(hwp => hwp.Params is Empty)
                 .FirstOrDefault()
                 ;
 
