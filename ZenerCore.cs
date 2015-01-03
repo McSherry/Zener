@@ -83,7 +83,7 @@ namespace SynapLink.Zener
 
                 string path;
                 if (@params is Empty) path = Environment.CurrentDirectory;
-                else path = @params.path;
+                else path = WebUtility.UrlDecode(@params.path);
 
                 rs.Headers.Add("Content-Type", "application/json");
                 StringBuilder jsonBuilder = new StringBuilder("{");
@@ -102,7 +102,7 @@ namespace SynapLink.Zener
 
                                 jsonBuilder.AppendFormat(
                                     @"""file"": ""{0}""",
-                                    Encoding.ASCII.GetString(fileBytes)
+                                    WebUtility.UrlEncode(Encoding.ASCII.GetString(fileBytes))
                                     );
                             }
                             #endregion
@@ -115,12 +115,12 @@ namespace SynapLink.Zener
                             string fileArray = files
                                 .Aggregate(
                                     new StringBuilder(),
-                                    (sb, f) => sb.AppendFormat(@"""{0}"", ", f))
+                                    (sb, f) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(f)))
                                 .ToString();
                             string dirsArray = subdirs
                                 .Aggregate(
                                     new StringBuilder(),
-                                    (sb, d) => sb.AppendFormat(@"""{0}"", ", d))
+                                    (sb, d) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(d)))
                                 .ToString();
 
                             jsonBuilder.AppendFormat(
