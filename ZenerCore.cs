@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.IO;
+using WebUtility = System.Net.WebUtility;
 
 using SynapLink.Zener.Net;
 using SynapLink.Zener.Core;
@@ -34,19 +35,204 @@ namespace SynapLink.Zener
         /// </summary>
         private static class Api
         {
+            private const string FILESYSTEM_CONTENTS = "fileContent";
             private static Dictionary<string, RouteHandler> _apiRoutes;
 
             static Api()
             {
                 _apiRoutes = new Dictionary<string, RouteHandler>()
                 {
-
+                    { ":fs", Api.Filesystem },
+                    { ":fs/[*path]", Api.Filesystem }
                 };
             }
 
+            /// <summary>
+            /// The routes provided by Zener for its API.
+            /// </summary>
             public static IDictionary<string, RouteHandler> Routes
             {
                 get { return _apiRoutes; }
+            }
+
+            /// <summary>
+            /// The route providing a file-system API.
+            /// </summary>
+            /// <param name="rq">The HttpRequest to respond to.</param>
+            /// <param name="rs">The HttpResponse to respond with.</param>
+            /// <param name="params">The route's parameters.</param>
+            public static void Filesystem(HttpRequest rq, HttpResponse rs, dynamic @params)
+            {
+                /* The filesystem API provides client-side code (such as JavaScript)
+                 * with an easy way to access the underlying file system. It is accessed
+                 * via the ':fs' route.
+                 * 
+                 * Through this API, client-side code can:
+                 * 
+                 *      - Read files
+                 *      - Write (and create) files
+                 *      - Check files exist
+                 *      - Delete files
+                 *      - Retrieve directory listings
+                 *      - Delete directories
+                 *      - Check directories exist
+                 *      
+                 * See issue #2 (or relevant documentation when available) for more
+                 * information.
+                 */
+
+                string path;
+                if (@params is Empty) path = Environment.CurrentDirectory;
+                else path = @params.path;
+
+                rs.Headers.Add("Content-Type", "application/json");
+                StringBuilder jsonBuilder = new StringBuilder("{");
+                try
+                {
+
+                    if (rq.Method == HttpRequest.Methods.GET)
+                    {
+                        if (File.Exists(path))
+                        {
+                            #region Read file contents
+                            using (FileStream fs = File.Open(path, FileMode.Open))
+                            {
+                                byte[] fileBytes = new byte[fs.Length];
+                                fs.Read(fileBytes, 0, fileBytes.Length);
+
+                                jsonBuilder.AppendFormat(
+                                    @"""file"": ""{0}""",
+                                    Encoding.ASCII.GetString(fileBytes)
+                                    );
+                            }
+                            #endregion
+                        }
+                        else if (Directory.Exists(path))
+                        {
+                            #region Get directory listing
+                            string[] files = Directory.GetFiles(path),
+                                subdirs = Directory.GetDirectories(path);
+                            string fileArray = files
+                                .Aggregate(
+                                    new StringBuilder(),
+                                    (sb, f) => sb.AppendFormat(@"""{0}"", ", f))
+                                .ToString();
+                            string dirsArray = subdirs
+                                .Aggregate(
+                                    new StringBuilder(),
+                                    (sb, d) => sb.AppendFormat(@"""{0}"", ", d))
+                                .ToString();
+
+                            jsonBuilder.AppendFormat(
+                                @"""files"": [ {0} ], ""directories"": [ {1} ]",
+                                fileArray, dirsArray
+                                );
+                            #endregion
+                        }
+                        else
+                        {
+                            rs.StatusCode = HttpStatus.NotFound;
+                        }
+                    }
+                    else if (rq.Method == HttpRequest.Methods.POST)
+                    {
+                        #region File writing/creation
+                        var dict = rq.POST as IDictionary<string, object>;
+                        // POST is empty or doesn't contain any data to write
+                        // to the file, so we can just create an empty file.
+                        if (dict == null || !dict.ContainsKey(FILESYSTEM_CONTENTS))
+                        {
+                            using (File.Create(path)) { }
+                        }
+                        // POST contains content to write to the file.
+                        else
+                        {
+                            using (StreamWriter sw = File.CreateText(path))
+                            {
+                                sw.Write(dict[FILESYSTEM_CONTENTS]);
+                            }
+                        }
+
+                        jsonBuilder.Append(@"""message"": ""File created.""");
+                        #endregion
+                    }
+                    else if (rq.Method == HttpRequest.Methods.DELETE)
+                    {
+                        #region File/Directory deletion
+                        if (File.Exists(path))
+                        {
+                            File.Delete(path);
+
+                            jsonBuilder.Append(@"""message"": ""File deleted.""");
+                        }
+                        else if (Directory.Exists(path))
+                        {
+                            jsonBuilder.Append(@"""message"": ""Directory deleted.""");
+                        }
+                        else
+                        {
+                            rs.StatusCode = HttpStatus.NotFound;
+                        }
+                        #endregion
+                    }
+                    else if (rq.Method == HttpRequest.Methods.HEAD)
+                    {
+                        #region File/Directory existence check
+                        if (File.Exists(path))
+                        {
+                            jsonBuilder.Append(
+                                @"""message"": ""File exists."""
+                                );
+                        }
+                        else if (Directory.Exists(path))
+                        {
+                            jsonBuilder.Append(
+                                @"""message"": ""Directory exists."""
+                                );
+                        }
+                        else
+                        {
+                            rs.StatusCode = HttpStatus.NotFound;
+                        }
+                        #endregion
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    rs.StatusCode = HttpStatus.Forbidden;
+                }
+                catch (ArgumentException)
+                {
+                    rs.StatusCode = HttpStatus.BadRequest;
+                }
+                catch (NotSupportedException)
+                {
+                    rs.StatusCode = HttpStatus.BadRequest;
+                }
+                catch (PathTooLongException)
+                {
+                    rs.StatusCode = HttpStatus.RequestUriTooLarge;
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    rs.StatusCode = HttpStatus.NotFound;
+                }
+                catch (FileNotFoundException)
+                {
+                    rs.StatusCode = HttpStatus.NotFound;
+                }
+                catch (IOException)
+                {
+                    rs.StatusCode = HttpStatus.InternalServerError;
+                }
+
+                jsonBuilder.AppendFormat(
+                    "{0}\"status\": {1}}}",
+                    jsonBuilder.Length == 1 ? String.Empty : ", ",
+                    (int)rs.StatusCode
+                    );
+
+                rs.Write(jsonBuilder.ToString());
             }
         }
 
