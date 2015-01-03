@@ -12,10 +12,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.IO;
-using WebUtility = System.Net.WebUtility;
 
 using SynapLink.Zener.Net;
 using SynapLink.Zener.Core;
+
+using WebUtility = System.Net.WebUtility;
+using RouteList = System.Collections.Generic.Dictionary<string, SynapLink.Zener.Core.RouteHandler>;
 
 namespace SynapLink.Zener
 {
@@ -33,24 +35,27 @@ namespace SynapLink.Zener
         /// Contains the handlers which provide Zener's
         /// route-based APIs.
         /// </summary>
-        private static class Api
+        internal static class Api
         {
             private const string FILESYSTEM_CONTENTS = "fileContent";
-            private static Dictionary<string, RouteHandler> _apiRoutes;
+            private static List<RouteList> _apiRoutes;
 
             static Api()
             {
-                _apiRoutes = new Dictionary<string, RouteHandler>()
+                _apiRoutes = new List<RouteList>()
                 {
-                    { ":fs", Api.Filesystem },
-                    { ":fs/[*path]", Api.Filesystem }
+                    new RouteList()
+                    {
+                        { ":fs", Api.Filesystem },
+                        { ":fs/[*path]", Api.Filesystem }
+                    }
                 };
             }
 
             /// <summary>
             /// The routes provided by Zener for its API.
             /// </summary>
-            public static IDictionary<string, RouteHandler> Routes
+            public static List<RouteList> Routes
             {
                 get { return _apiRoutes; }
             }
@@ -283,34 +288,21 @@ namespace SynapLink.Zener
         }
 
         /// <summary>
-        /// Creates a new instance, bound to the specified port.
+        /// Creates a new ZenerCore.
         /// </summary>
-        /// <param name="port">A TCP port to use for the web server.</param>
-        /// <exception cref="System.ArgumentException"></exception>
-        public ZenerCore(ushort port)
-            : this(System.Net.IPAddress.Loopback, port)
+        /// <param name="context">The context to use when creating the ZenerCore.</param>
+        public ZenerCore(ZenerCoreContext context)
         {
-
-        }
-        /// <summary>
-        /// Creates a new instance, bound to the specified address and port.
-        /// </summary>
-        /// <param name="address">The IP address to bind to.</param>
-        /// <param name="port">The port to bind to.</param>
-        /// <exception cref="System.ArgumentException"></exception>
-        public ZenerCore(System.Net.IPAddress address, ushort port)
-        {
-            _http = new HttpServer(address, port)
+            this.Routes = new Router();
+            _http = new HttpServer(context.IpAddress, context.TcpPort)
             {
                 RequestHandler = HandleHttpRequestSuccessful,
                 ErrorHandler = HandleHttpRequestError
             };
-            this.Routes = new Router();
 
-            foreach (var route in Api.Routes)
-                this.Routes.AddHandler(route.Key, route.Value);
-
-            _http.Start();
+            foreach (var api in context.ActiveApis)
+                foreach (var route in Api.Routes[api])
+                    this.Routes.AddHandler(route.Key, route.Value);
         }
 
         /// <summary>
