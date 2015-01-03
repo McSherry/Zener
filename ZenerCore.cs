@@ -303,6 +303,8 @@ namespace SynapLink.Zener
             foreach (var api in context.ActiveApis)
                 foreach (var route in Api.Routes[api])
                     this.Routes.AddHandler(route.Key, route.Value);
+
+            _http.Start();
         }
 
         /// <summary>
