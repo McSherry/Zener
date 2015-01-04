@@ -291,7 +291,7 @@ namespace SynapLink.Zener
         /// Creates a new ZenerCore.
         /// </summary>
         /// <param name="context">The context to use when creating the ZenerCore.</param>
-        public ZenerCore(ZenerCoreContext context)
+        public ZenerCore(ZenerContext context)
         {
             this.Routes = new Router();
             _http = new HttpServer(context.IpAddress, context.TcpPort)
@@ -300,6 +300,8 @@ namespace SynapLink.Zener
                 ErrorHandler = HandleHttpRequestError
             };
 
+            // Load API routes based on those enabled in the
+            // ZenerContext we were passed.
             foreach (var api in context.ActiveApis)
                 foreach (var route in Api.Routes[api])
                     this.Routes.AddHandler(route.Key, route.Value);

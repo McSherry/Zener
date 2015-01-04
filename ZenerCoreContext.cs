@@ -17,7 +17,7 @@ namespace SynapLink.Zener
     /// <summary>
     /// Used to pass state information to a ZenerCore.
     /// </summary>
-    public class ZenerCoreContext
+    public class ZenerContext
     {
         private const int
             API_QUANTITY        = 3,
@@ -45,7 +45,7 @@ namespace SynapLink.Zener
         /// Creates a new ZenerCoreContext with the IP address
         /// set to the IPv4 loopback.
         /// </summary>
-        public ZenerCoreContext()
+        public ZenerContext()
             : this(IPAddress.Loopback)
         {
 
@@ -55,7 +55,10 @@ namespace SynapLink.Zener
         /// </summary>
         /// <param name="address">The IP address for the ZenerCore to bind to.</param>
         /// <param name="port">The TCP port for the ZenerCore to bind to.</param>
-        public ZenerCoreContext(IPAddress address, ushort port = 80)
+        public ZenerContext(
+            IPAddress address, 
+            ushort port = 80
+            )
         {
             this.IpAddress = address;
             this.TcpPort = port;
