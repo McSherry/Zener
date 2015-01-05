@@ -47,7 +47,8 @@ namespace SynapLink.Zener
                     new RouteList()
                     {
                         { ":fs", Api.Filesystem },
-                        { ":fs/[*path]", Api.Filesystem }
+                        { ":fs/[*path]", Api.Filesystem },
+                        { ":call/[method]", Api.MethodCall }
                     }
                 };
             }
@@ -65,8 +66,8 @@ namespace SynapLink.Zener
             /// </summary>
             /// <param name="rq">The HttpRequest to respond to.</param>
             /// <param name="rs">The HttpResponse to respond with.</param>
-            /// <param name="params">The route's parameters.</param>
-            public static void Filesystem(HttpRequest rq, HttpResponse rs, dynamic @params)
+            /// <param name="pr">The route's parameters.</param>
+            public static void Filesystem(HttpRequest rq, HttpResponse rs, dynamic pr)
             {
                 /* The filesystem API provides client-side code (such as JavaScript)
                  * with an easy way to access the underlying file system. It is accessed
@@ -87,8 +88,8 @@ namespace SynapLink.Zener
                  */
 
                 string path;
-                if (@params is Empty) path = Environment.CurrentDirectory;
-                else path = WebUtility.UrlDecode(@params.path);
+                if (pr is Empty) path = Environment.CurrentDirectory;
+                else path = WebUtility.UrlDecode(pr.path);
 
                 rs.Headers.Add("Content-Type", "application/json");
                 StringBuilder jsonBuilder = new StringBuilder("{");
@@ -242,6 +243,16 @@ namespace SynapLink.Zener
                     );
 
                 rs.Write(jsonBuilder.ToString());
+            }
+            /// <summary>
+            /// The route providing a method call API.
+            /// </summary>
+            /// <param name="rq">The HttpRequest to respond to.</param>
+            /// <param name="rs">The HttpResponse to respond with.</param>
+            /// <param name="pr">The route's parameters.</param>
+            public static void MethodCall(HttpRequest rq, HttpResponse rs, dynamic pr)
+            {
+
             }
         }
 
