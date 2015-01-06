@@ -10,7 +10,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using IPAddress = System.Net.IPAddress;
+using Method = System.Func<dynamic, string>;
 
 namespace SynapLink.Zener
 {
@@ -20,11 +22,9 @@ namespace SynapLink.Zener
     public class ZenerContext
     {
         private const int
-            API_QUANTITY        = 3,
+            API_QUANTITY        = 1,
 
-            API_FILESYSTEM      = 0x00,
-            API_METHODCALL      = 0x01,
-            API_EVENTS          = 0x02
+            API_FILESYSTEM      = 0x00
             ;
         private bool[] _activeApis = new bool[API_QUANTITY];
 
@@ -55,17 +55,25 @@ namespace SynapLink.Zener
         /// </summary>
         /// <param name="address">The IP address for the ZenerCore to bind to.</param>
         /// <param name="port">The TCP port for the ZenerCore to bind to.</param>
+        /// <param name="useFilesystem">Whether to enable the file system API.</param>
+        /// <param name="methods">The methods to make available via the method call API.</param>
         public ZenerContext(
             IPAddress address, 
             ushort port = 80,
 
-            bool useFilesystem = false
+            bool useFilesystem = false,
+            Dictionary<string, Method> methods = null
             )
         {
             this.IpAddress = address;
             this.TcpPort = port;
 
             this.EnableFileSystemApi = useFilesystem;
+
+            if (methods == null)
+                this.Methods = new Dictionary<string, Method>(0, StringComparer.OrdinalIgnoreCase);
+            else
+                new Dictionary<string, Method>(methods, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -93,6 +101,15 @@ namespace SynapLink.Zener
         {
             get { return _activeApis[API_FILESYSTEM]; }
             set { _activeApis[API_FILESYSTEM] = value; }
+        }
+        /// <summary>
+        /// The methods to make available via the method
+        /// call API.
+        /// </summary>
+        public Dictionary<string, Method> Methods
+        {
+            get;
+            private set;
         }
     }
 }

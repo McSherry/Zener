@@ -47,8 +47,7 @@ namespace SynapLink.Zener
                     new RouteList()
                     {
                         { ":fs", Api.Filesystem },
-                        { ":fs/[*path]", Api.Filesystem },
-                        { ":call/[method]", Api.MethodCall }
+                        { ":fs/[*path]", Api.Filesystem }
                     }
                 };
             }
@@ -236,15 +235,14 @@ namespace SynapLink.Zener
 
                 rs.Write(jsonBuilder.ToString());
             }
-            /// <summary>
-            /// The route providing a method call API.
-            /// </summary>
-            /// <param name="rq">The HttpRequest to respond to.</param>
-            /// <param name="rs">The HttpResponse to respond with.</param>
-            /// <param name="pr">The route's parameters.</param>
-            public static void MethodCall(HttpRequest rq, HttpResponse rs, dynamic pr)
-            {
 
+            public static void MethodCall(HttpRequest rq, HttpResponse rs, Func<dynamic, string> m)
+            {
+                rs.Headers.Add("Content-Type", "application/json");
+                var ret = m(rq.POST);
+                rs.Write(@"{{ ""returned"": {0}", ret == null);
+
+                if (ret != null) rs.Write(@", ""return"": {0} }}", ret);
             }
         }
 
@@ -308,6 +306,32 @@ namespace SynapLink.Zener
             foreach (var api in context.ActiveApis)
                 foreach (var route in Api.Routes[api])
                     this.Routes.AddHandler(route.Key, route.Value);
+
+            if (context.Methods.Count > 0)
+                this.Routes.AddHandler(
+                    ":call/[*method]",
+                    (rq, rs, pr) =>
+                    {
+                        rs.Headers.Add("Content-Type", "application/json");
+                        rs.Write("{ ");
+                        if (context.Methods.ContainsKey(pr.method))
+                        {
+                            var ret = context.Methods[pr.method](rq.POST);
+                            var retIsNull = ret == null;
+                            rs.Write(
+                                @"""returned"": {0}, ""return"": ""{1}""",
+                                (!retIsNull).ToString().ToLower(),
+                                retIsNull ? String.Empty : ret
+                                );
+                        }
+                        rs.Write(" }");
+                    }
+                );
+                //foreach (var method in context.Methods)
+                //    this.Routes.AddHandler(
+                //        String.Format(":call/{0}", method.Key),
+                //        (rq, rs, pr) => Api.MethodCall(rq, rs, method.Value)
+                //        );
 
             _http.Start();
         }
