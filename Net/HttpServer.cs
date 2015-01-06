@@ -143,118 +143,125 @@ namespace SynapLink.Zener.Net
             bool timedOut = true;
             var readThread = new Thread(() =>
             {
-                #region Request Handler Thread #2
-                string line;
-                // Lines before the request line can be blank.
-                // We want to skip these since there's nothing
-                // to parse.
-                do { line = HttpRequest.ReadAsciiLine(ns); }
-                while (String.IsNullOrEmpty(line));
-                // We've now hit the first line with content. In
-                // a compliant HTTP request, this is the request
-                // line.
-                requestLine = line;
-                // Move past the request line in to what is likely
-                // to be the first HTTP header in the request.
-                line = HttpRequest.ReadAsciiLine(ns);
-
-                StringBuilder headerBuilder = new StringBuilder();
-                // Now that we have the start of the header section,
-                // we need to keep reading lines until we find a blank
-                // one, which indicates the end of the header section.
-                while (!String.IsNullOrEmpty(line))
-                {
-                    headerBuilder.AppendLine(line);
-                    line = HttpRequest.ReadAsciiLine(ns);
-                }
-
-                // We now have all the HTTP headers in the request.
-                // To determine the content length, which we need for
-                // reading the rest of the request, we need to parse
-                // the headers.
                 try
                 {
-                    using (StringReader sr = new StringReader(headerBuilder.ToString()))
+                    #region Request Handler Thread #2
+                    string line;
+                    // Lines before the request line can be blank.
+                    // We want to skip these since there's nothing
+                    // to parse.
+                    do { line = HttpRequest.ReadAsciiLine(ns); }
+                    while (String.IsNullOrEmpty(line));
+                    // We've now hit the first line with content. In
+                    // a compliant HTTP request, this is the request
+                    // line.
+                    requestLine = line;
+                    // Move past the request line in to what is likely
+                    // to be the first HTTP header in the request.
+                    line = HttpRequest.ReadAsciiLine(ns);
+
+                    StringBuilder headerBuilder = new StringBuilder();
+                    // Now that we have the start of the header section,
+                    // we need to keep reading lines until we find a blank
+                    // one, which indicates the end of the header section.
+                    while (!String.IsNullOrEmpty(line))
                     {
-                        headers = new HttpHeaderCollection(BasicHttpHeader.ParseMany(sr));
-                    }
-                }
-                catch (ArgumentException aex)
-                {
-                    threadException = new HttpRequestException(
-                        "Could not parse HTTP headers.", aex
-                        );
-
-                    return;
-                }
-
-                // If there isn't a Content-Length header, we can't
-                // know how much data we have to wait for. This means
-                // that we can't know if there is a request body or
-                // not.
-                //
-                // To ensure maximum functionality (some browsers
-                // don't send Content-Length when there is no body),
-                // we will assume that, when no Content-Length header
-                // is present, there is no request body. Only the
-                // request line and headers will be passed to the
-                // request handler.
-                if (headers.Contains(HTTP_HDR_CTNLEN))
-                {
-                    var cLen = headers[HTTP_HDR_CTNLEN].Last();
-
-                    Int32 cLenOctets;
-                    // Make sure that the value of the Content-Length
-                    // header is a valid integer.
-                    if (!Int32.TryParse(cLen.Value, out cLenOctets))
-                    {
-                        threadException = new HttpRequestException(
-                            "Invalid Content-Length header."
-                            );
-
-                        return;
+                        headerBuilder.AppendLine(line);
+                        line = HttpRequest.ReadAsciiLine(ns);
                     }
 
-                    // The Content-Length cannot be negative.
-                    if (cLenOctets < 0)
+                    // We now have all the HTTP headers in the request.
+                    // To determine the content length, which we need for
+                    // reading the rest of the request, we need to parse
+                    // the headers.
+                    try
                     {
-                        threadException = new HttpRequestException(
-                            "Invalid Content-Length header."
-                            );
-
-                        return;
-                    }
-
-                    // Make sure the Content-Length isn't longer
-                    // than our maximum length.
-                    if (cLenOctets > MAX_REQUEST_BODY)
-                    {
-                        threadException = new HttpException(
-                            HttpStatus.RequestEntityTooLarge,
-                            "The request body was too large."
-                            );
-
-                        return;
-                    }
-
-                    // Read the bytes from the network.
-                    byte[] bodyBytes = new byte[cLenOctets];
-                    int index = 0;
-
-                    while (index < bodyBytes.Length)
-                    {
-                        if (ns.DataAvailable)
+                        using (StringReader sr = new StringReader(headerBuilder.ToString()))
                         {
-                            bodyBytes[index++] = (byte)ns.ReadByte();
+                            headers = new HttpHeaderCollection(BasicHttpHeader.ParseMany(sr));
                         }
                     }
+                    catch (ArgumentException aex)
+                    {
+                        threadException = new HttpRequestException(
+                            "Could not parse HTTP headers.", aex
+                            );
 
-                    // Write the bytes back to our memory stream.
-                    ms.Write(bodyBytes, 0, bodyBytes.Length);
+                        return;
+                    }
+
+                    // If there isn't a Content-Length header, we can't
+                    // know how much data we have to wait for. This means
+                    // that we can't know if there is a request body or
+                    // not.
+                    //
+                    // To ensure maximum functionality (some browsers
+                    // don't send Content-Length when there is no body),
+                    // we will assume that, when no Content-Length header
+                    // is present, there is no request body. Only the
+                    // request line and headers will be passed to the
+                    // request handler.
+                    if (headers.Contains(HTTP_HDR_CTNLEN))
+                    {
+                        var cLen = headers[HTTP_HDR_CTNLEN].Last();
+
+                        Int32 cLenOctets;
+                        // Make sure that the value of the Content-Length
+                        // header is a valid integer.
+                        if (!Int32.TryParse(cLen.Value, out cLenOctets))
+                        {
+                            threadException = new HttpRequestException(
+                                "Invalid Content-Length header."
+                                );
+
+                            return;
+                        }
+
+                        // The Content-Length cannot be negative.
+                        if (cLenOctets < 0)
+                        {
+                            threadException = new HttpRequestException(
+                                "Invalid Content-Length header."
+                                );
+
+                            return;
+                        }
+
+                        // Make sure the Content-Length isn't longer
+                        // than our maximum length.
+                        if (cLenOctets > MAX_REQUEST_BODY)
+                        {
+                            threadException = new HttpException(
+                                HttpStatus.RequestEntityTooLarge,
+                                "The request body was too large."
+                                );
+
+                            return;
+                        }
+
+                        // Read the bytes from the network.
+                        byte[] bodyBytes = new byte[cLenOctets];
+                        int index = 0;
+
+                        while (index < bodyBytes.Length)
+                        {
+                            if (ns.DataAvailable)
+                            {
+                                bodyBytes[index++] = (byte)ns.ReadByte();
+                            }
+                        }
+
+                        // Write the bytes back to our memory stream.
+                        ms.Write(bodyBytes, 0, bodyBytes.Length);
+                    }
+
+                    timedOut = false;
+                    #endregion
                 }
-
-                timedOut = false;
-                #endregion
+                catch (IOException ioex)
+                {
+                    threadException = ioex;
+                }
             });
 
             readThread.Start();
@@ -341,6 +348,24 @@ namespace SynapLink.Zener.Net
                 {
                     this.ErrorHandler(hex, res);
                 }
+            }
+            catch (IOException ioex)
+            {
+                // If the connection's been reset, none of our handlers will
+                // be much use, since they all write to the connection. The
+                // best thing to do is to just return and stop handling it.
+                //
+                // I'm sure this is preferable to throwing an exception every
+                // time the client resets the connection.
+                if (ioex.InnerException is SocketException)
+                {
+                    if (((SocketException)ioex.InnerException).ErrorCode == (int)SocketError.ConnectionReset)
+                    {
+                        return;
+                    }
+                }
+                
+                throw;
             }
             
             res.Close();
