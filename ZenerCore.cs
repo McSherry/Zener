@@ -151,6 +151,7 @@ namespace SynapLink.Zener
                         if (dict == null || !dict.ContainsKey(FILESYSTEM_CONTENTS))
                         {
                             using (File.Create(path)) { }
+                            jsonBuilder.Append(@"""message"": ""File created.""");
                         }
                         // POST contains content to write to the file.
                         else
@@ -159,9 +160,10 @@ namespace SynapLink.Zener
                             {
                                 sw.Write(dict[FILESYSTEM_CONTENTS]);
                             }
+
+                            jsonBuilder.Append(@"""message"": ""File modified.""");
                         }
 
-                        jsonBuilder.Append(@"""message"": ""File created.""");
                         #endregion
                     }
                     else if (rq.Method == HttpRequest.Methods.DELETE)
@@ -186,19 +188,7 @@ namespace SynapLink.Zener
                     else if (rq.Method == HttpRequest.Methods.HEAD)
                     {
                         #region File/Directory existence check
-                        if (File.Exists(path))
-                        {
-                            jsonBuilder.Append(
-                                @"""message"": ""File exists."""
-                                );
-                        }
-                        else if (Directory.Exists(path))
-                        {
-                            jsonBuilder.Append(
-                                @"""message"": ""Directory exists."""
-                                );
-                        }
-                        else
+                        if (!File.Exists(path) || !Directory.Exists(path))
                         {
                             rs.StatusCode = HttpStatus.NotFound;
                         }
