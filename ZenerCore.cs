@@ -83,8 +83,8 @@ namespace SynapLink.Zener
                  *      - Delete directories
                  *      - Check directories exist
                  *      
-                 * See issue #2 (or relevant documentation when available) for more
-                 * information.
+                 * See API reference for more: 
+                 *      https://github.com/SynapLink/Zener/wiki/Filesystem-API
                  */
 
                 string path;
