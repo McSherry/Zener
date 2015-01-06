@@ -119,11 +119,13 @@ namespace SynapLink.Zener
                             string[] files = Directory.GetFiles(path),
                                 subdirs = Directory.GetDirectories(path);
                             string fileArray = files
+                                .Select(p => Path.GetFullPath(p))
                                 .Aggregate(
                                     new StringBuilder(),
                                     (sb, f) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(f)))
                                 .ToString();
                             string dirsArray = subdirs
+                                .Select(p => Path.GetFullPath(p))
                                 .Aggregate(
                                     new StringBuilder(),
                                     (sb, d) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(d)))

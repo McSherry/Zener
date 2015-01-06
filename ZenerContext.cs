@@ -26,7 +26,7 @@ namespace SynapLink.Zener
             API_METHODCALL      = 0x01,
             API_EVENTS          = 0x02
             ;
-        private bool[] _activeApis;
+        private bool[] _activeApis = new bool[API_QUANTITY];
 
         /// <summary>
         /// All active APIs.
@@ -57,13 +57,15 @@ namespace SynapLink.Zener
         /// <param name="port">The TCP port for the ZenerCore to bind to.</param>
         public ZenerContext(
             IPAddress address, 
-            ushort port = 80
+            ushort port = 80,
+
+            bool useFilesystem = false
             )
         {
             this.IpAddress = address;
             this.TcpPort = port;
 
-            _activeApis = new bool[API_QUANTITY];
+            this.EnableFileSystemApi = useFilesystem;
         }
 
         /// <summary>
