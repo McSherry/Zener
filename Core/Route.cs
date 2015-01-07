@@ -68,6 +68,7 @@ namespace SynapLink.Zener.Core
          */
 
         private Lazy<IReadOnlyList<string>> _paramNames;
+        private string _formatOriginal;
 
         /// <summary>
         /// Creates a new route.
@@ -76,7 +77,8 @@ namespace SynapLink.Zener.Core
         /// <param name="handler">The handler to be associated with this route.</param>
         public Route(string format, RouteHandler handler)
         {
-            this.Format = format.ToLower().Trim(' ', '/');
+            _formatOriginal = format.Trim(' ', '/');
+            this.Format = _formatOriginal.ToLower();
             this.Handler = handler;
             this.Name = this.Format;
 
@@ -145,7 +147,7 @@ namespace SynapLink.Zener.Core
                     // Param name
                     else
                     {
-                        paramNameBuilder.Append(this.Format[fIndex++]);
+                        paramNameBuilder.Append(_formatOriginal[fIndex++]);
                     }
                 }
 
