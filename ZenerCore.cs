@@ -321,7 +321,7 @@ namespace SynapLink.Zener
                             rs.Write(
                                 @"""returned"": {0}, ""return"": ""{1}""",
                                 (!retIsNull).ToString().ToLower(),
-                                retIsNull ? String.Empty : ret
+                                retIsNull ? String.Empty : WebUtility.UrlEncode(ret)
                                 );
                         }
                         rs.Write(" }");
