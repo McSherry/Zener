@@ -324,6 +324,10 @@ namespace SynapLink.Zener
                                 retIsNull ? String.Empty : WebUtility.UrlEncode(ret)
                                 );
                         }
+                        else
+                        {
+                            rs.StatusCode = HttpStatus.NotFound;
+                        }
                         rs.Write(" }");
                     }
                 );
