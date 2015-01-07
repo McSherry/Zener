@@ -307,6 +307,8 @@ namespace SynapLink.Zener
                 foreach (var route in Api.Routes[api])
                     this.Routes.AddHandler(route.Key, route.Value);
 
+            // If the dictionary of methods isn't empty, the
+            // method call API is to be enabled.
             if (context.Methods.Count > 0)
                 this.Routes.AddHandler(
                     ":call/[*method]",
@@ -331,11 +333,6 @@ namespace SynapLink.Zener
                         rs.Write(" }");
                     }
                 );
-                //foreach (var method in context.Methods)
-                //    this.Routes.AddHandler(
-                //        String.Format(":call/{0}", method.Key),
-                //        (rq, rs, pr) => Api.MethodCall(rq, rs, method.Value)
-                //        );
 
             _http.Start();
         }
