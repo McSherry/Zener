@@ -34,46 +34,204 @@ namespace SynapLink.Zener.Archives
          * to inherit from this class.
          */
 
-        protected const long
-            TAR_HEADER_LENGTH   = 512
+        protected const int
+            RADIX_OCTAL         = 8,
+            TAR_BLOCK_SIZE      = 512,
+            TAR_FILENAME_LENGTH = 100,
+            TAR_FILESIZE_OFFSET = 124,
+            TAR_FILESIZE_LENGTH = 11,   // The real length is 12, but the last is NUL
+            TAR_FILETYPE_OFFSET = 156
+            ;
+        protected const byte
+            ASCII_NUL           = 0x00,
+            FILE_TYPE_NORMAL_A  = ASCII_NUL,
+            FILE_TYPE_NORMAL_B  = 0x30,
+            FILE_TYPE_LINK_HARD = 0x31,
+            FILE_TYPE_LINK_SOFT = 0x32
             ;
 
         protected List<string> _names;
         protected List<byte[]> _headers;
         protected List<Filemark> _marks;
-        protected FileStream _dataDump;
+        protected Stream _dataDump;
+
+        protected void ParseTarFile(Stream source)
+        {
+            // A file header is, minimally, 512 bytes. If we
+            // don't have 512 bytes, we can't have a valid file
+            // header.
+            if (source.Length < TAR_BLOCK_SIZE)
+                throw new InvalidDataException(
+                    "The provided stream does not contain enough data."
+                    );
+            // File lengths should be padded to a multiple of the
+            // block length. If it isn't, we won't accept it.
+            if (source.Length % TAR_BLOCK_SIZE != 0)
+                throw new ArgumentOutOfRangeException(
+                    "The provided stream's length is invalid."
+                    );
+
+            byte[] buffer = new byte[TAR_BLOCK_SIZE];
+            StringBuilder builder = new StringBuilder();
+            bool cont = true, lastWasEmpty = false;
+            long dumpLength = 0, dumpOffset = 0;
+
+            do
+            {
+                builder.Clear();
+                int readStatus = source.Read(buffer, 0, TAR_BLOCK_SIZE);
+
+                // Two blocks of NUL in a row means we've reached the
+                // end of the meaningful data in the file. If we encounter
+                // this, we should be able to safely stop.
+                if (Array.TrueForAll(buffer, b => b == ASCII_NUL))
+                {
+                    if (lastWasEmpty) break;
+                    else
+                    {
+                        lastWasEmpty = true;
+                        continue;
+                    }
+                }
+                else lastWasEmpty = false;
+
+                // We've reached the end of the stream. There
+                // isn't anything more to be read.
+                if (readStatus == -1) break;
+
+                // The offset within the stream of the buffer's
+                // first byte.
+                long fbOffset = source.Position - TAR_BLOCK_SIZE;
+
+                // Parse the name from the headers. The name is,
+                // at most, 100 ASCII characters in length. It will
+                // be terminated by an ASCII_NUL.
+                for (int i = 0; i < TAR_FILENAME_LENGTH; i++)
+                {
+                    if (buffer[i] == ASCII_NUL) break;
+                    
+                    builder.Append((char)buffer[i]);
+                }
+
+                try
+                {
+                    dumpLength = Convert.ToInt64(
+                        Encoding.ASCII.GetString(
+                            buffer, TAR_FILESIZE_OFFSET, TAR_FILESIZE_LENGTH
+                            ),
+                        RADIX_OCTAL
+                        );
+
+                }
+                catch (FormatException fex)
+                {
+                    throw new InvalidDataException(
+                        String.Format(
+                            "Header contains an invalid length field (header first byte offset {0}).",
+                            fbOffset
+                            ),
+                        fex
+                        );
+                }
+
+                // The number of bytes comprising the current
+                // entry within the archive.
+                long entryBytes = dumpLength + (TAR_BLOCK_SIZE - (dumpLength % TAR_BLOCK_SIZE));
+
+                // The entry isn't for a normal file. Skip it.
+                if (
+                    buffer[TAR_FILETYPE_OFFSET] != FILE_TYPE_NORMAL_A &&
+                    buffer[TAR_FILETYPE_OFFSET] != FILE_TYPE_NORMAL_B
+                    )
+                {
+                    // Skip past the entry's contents.
+                    source.Seek(entryBytes, SeekOrigin.Current);
+                    continue;
+                }
+
+                // If we've made it this far, we're going to be adding
+                // the file to our table of contents.
+                //
+                // First on the list, add the header buffer to our list
+                // of headers.
+                _headers.Add((byte[])buffer.Clone());
+                // Then we add the name.
+                _names.Add(builder.ToString());
+                // Then we create a mark for it, and add that.
+                _marks.Add(new Filemark(dumpLength, dumpOffset));
+                // Increment the offset within the file dump
+                // by the number of bytes (sans padding).
+                dumpOffset += dumpLength;
+                // Then we read the data from the archive to the
+                // data dump.
+                long lim = entryBytes / TAR_BLOCK_SIZE;
+                for (int i = 0; i < lim; i++)
+                {
+                    source.Read(buffer, 0, TAR_BLOCK_SIZE);
+
+                    // If it's the last block, it's extremely
+                    // likely that its real length won't be a
+                    // multiple of the block size.
+                    //
+                    // To ensure we write the correct amount of
+                    // data, we take the remainder of the current
+                    // file's length divided by the block size. This
+                    // gives us the number of bytes in the current
+                    // block that will be meaningless data.
+                    //
+                    // We then subtract this number from the block
+                    // size. This gives us the number of meaningful
+                    // bytes, which we then take from the start of
+                    // our buffer and write to our data dump file.
+                    if (i == lim - 1)
+                    {
+                        _dataDump.Write(
+                            buffer, 0,
+                            (int)(dumpLength % TAR_BLOCK_SIZE)
+                            );
+                    }
+                    else
+                    {
+                        _dataDump.Write(buffer, 0, TAR_BLOCK_SIZE);
+                    }
+                }
+            } 
+            while (cont);
+
+        }
 
         /// <summary>
         /// Creates a new TarArchive.
         /// </summary>
         /// <param name="stream">The stream containing </param>
         /// <exception cref="System.IOException"></exception>
+        /// <exception cref="System.InvalidDataException"></exception>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
         public TarArchive(Stream stream)
         {
-            // If we can seek in the stream, it's likely
-            // that we should be at position 0, since it's
-            // like we'll be reading from a file or memory
-            // stream.
-            //
-            // If not, it's possible we're reading from the
-            // network, so we won't be able to seek.
-            if (stream.CanSeek) stream.Position = 0;
+            if (!stream.CanSeek) throw new ArgumentException(
+                "The provided stream must be seekable.", "stream"
+                );
             if (!stream.CanRead) throw new ArgumentException(
-                "The provided stream could not be read from.", "stream"
+                "The provided stream must be readable.", "stream"
                 );
 
+            stream.Position = 0;
             _names = new List<string>();
             _headers = new List<byte[]>();
             _marks = new List<Filemark>();
 
             try
             {
-                _dataDump = File.Open(
-                    Path.GetTempFileName(),
-                    FileMode.Open,
-                    FileAccess.ReadWrite,
-                    FileShare.None
-                    );
+                _dataDump = Stream.Synchronized(
+                    new FileStream(
+                        Path.GetTempFileName(),
+                        FileMode.Open,
+                        FileAccess.ReadWrite,
+                        FileShare.None,
+                        8,
+                        FileOptions.DeleteOnClose | FileOptions.RandomAccess
+                    ));
             }
             catch (IOException ioex)
             {
@@ -82,6 +240,29 @@ namespace SynapLink.Zener.Archives
                     ioex
                     );
             }
+
+            this.ParseTarFile(stream);
+        }
+
+        ~TarArchive()
+        {
+            _dataDump.Close();
+            _dataDump.Dispose();
+        }
+
+        public override int Count
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public override IEnumerable<string> Files
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public override IEnumerable<byte> GetFile(string name)
+        {
+            throw new NotImplementedException();
         }
     }
 }
