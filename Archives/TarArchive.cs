@@ -116,13 +116,10 @@ namespace SynapLink.Zener.Archives
 
                 try
                 {
-                    dumpLength = Convert.ToInt64(
-                        Encoding.ASCII.GetString(
-                            buffer, TAR_FILESIZE_OFFSET, TAR_FILESIZE_LENGTH
-                            ),
-                        RADIX_OCTAL
-                        );
-
+                    string octStr = Encoding.ASCII.GetString(
+                        buffer, TAR_FILESIZE_OFFSET, TAR_FILESIZE_LENGTH
+                        ).Trim();
+                    dumpLength = Convert.ToInt64(octStr, RADIX_OCTAL);
                 }
                 catch (FormatException fex)
                 {
