@@ -54,6 +54,7 @@ namespace SynapLink.Zener.Archives
         protected List<byte[]> _headers;
         protected List<Filemark> _marks;
         protected Stream _dataDump;
+        protected object _dataLock;
 
         protected void ParseTarFile(Stream source)
         {
@@ -195,6 +196,8 @@ namespace SynapLink.Zener.Archives
                         _dataDump.Write(buffer, 0, TAR_BLOCK_SIZE);
                     }
                 }
+
+                _dataDump.Flush();
             } 
             while (cont);
 
@@ -217,21 +220,21 @@ namespace SynapLink.Zener.Archives
                 );
 
             stream.Position = 0;
+            _dataLock = new object();
             _names = new List<string>();
             _headers = new List<byte[]>();
             _marks = new List<Filemark>();
 
             try
             {
-                _dataDump = Stream.Synchronized(
-                    new FileStream(
-                        Path.GetTempFileName(),
-                        FileMode.Open,
-                        FileAccess.ReadWrite,
-                        FileShare.None,
-                        8,
-                        FileOptions.DeleteOnClose | FileOptions.RandomAccess
-                    ));
+                _dataDump = new FileStream(
+                    Path.GetTempFileName(),
+                    FileMode.Open,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    TAR_BLOCK_SIZE,
+                    FileOptions.DeleteOnClose | FileOptions.RandomAccess
+                    );
             }
             catch (IOException ioex)
             {
@@ -250,19 +253,54 @@ namespace SynapLink.Zener.Archives
             _dataDump.Dispose();
         }
 
+        /// <summary>
+        /// The number of files in the archive. Excludes
+        /// hard and soft links.
+        /// </summary>
         public override int Count
         {
-            get { throw new NotImplementedException(); }
+            get { return _names.Count; }
         }
-
+        /// <summary>
+        /// The names of all files within the archive.
+        /// Excludes hard and soft links.
+        /// </summary>
         public override IEnumerable<string> Files
         {
-            get { throw new NotImplementedException(); }
+            get { return _names; }
         }
-
-        public override IEnumerable<byte> GetFile(string name)
+        /// <summary>
+        /// Retrieves a file based on its name.
+        /// </summary>
+        /// <param name="name">The name of the file to retrieve.</param>
+        /// <returns>An enumerable containing the file's bytes.</returns>
+        public override bool GetFile(string name, out IEnumerable<byte> contents)
         {
-            throw new NotImplementedException();
+            int fileIndex;
+            try
+            {
+                fileIndex = _names.IndexOf(name);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                contents = null;
+                return false;
+            }
+            var mark = _marks[fileIndex];
+
+            var file = new byte[mark.Length];
+            lock (_dataLock)
+            {
+                _dataDump.Position = mark.Offset;
+                _dataDump.Read(
+                    file,
+                    0,
+                    (int)mark.Length
+                    );
+            }
+
+            contents = file;
+            return true;
         }
     }
 }
