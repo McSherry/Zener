@@ -18,7 +18,7 @@ namespace SynapLink.Zener.Archives
     /// Represents a UNIX V6 Tape Archive file.
     /// </summary>
     public class TarArchive
-        : Archive
+        : Archive, IDisposable
     {
         /* To mitigate memory usage, the class will
          * mantain only a "table of contents." The
@@ -249,8 +249,7 @@ namespace SynapLink.Zener.Archives
 
         ~TarArchive()
         {
-            _dataDump.Close();
-            _dataDump.Dispose();
+            this.Dispose();
         }
 
         /// <summary>
@@ -269,6 +268,7 @@ namespace SynapLink.Zener.Archives
         {
             get { return _names; }
         }
+
         /// <summary>
         /// Retrieves a file based on its name.
         /// </summary>
@@ -301,6 +301,14 @@ namespace SynapLink.Zener.Archives
 
             contents = file;
             return true;
+        }
+        /// <summary>
+        /// Releases the resources used by this class.
+        /// </summary>
+        public void Dispose()
+        {
+            _dataDump.Close();
+            _dataDump.Dispose();
         }
     }
 }
