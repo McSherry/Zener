@@ -32,7 +32,7 @@ namespace SynapLink.Zener.Archives
         /// </summary>
         /// <param name="name">The name of the file to retrieve.</param>
         /// <returns>An enumerable containing the file's contents.</returns>
-        public abstract IEnumerable<byte> GetFileByName(string name);
+        public abstract IEnumerable<byte> GetFile(string name);
         /// <summary>
         /// Retrieves a file from the archive based on its name, and
         /// returns it after converting it to a string with the specified
@@ -41,7 +41,7 @@ namespace SynapLink.Zener.Archives
         /// <param name="name">The name of the file to retrieve.</param>
         /// <param name="encoding">The encoding to apply to the file.</param>
         /// <returns>A string containing the encoded contents of the file.</returns>
-        public virtual string GetFileByName(string name, Encoding encoding)
+        public virtual string GetFile(string name, Encoding encoding)
         {
             return encoding.GetString(this.GetFileByName(name).ToArray());
         }

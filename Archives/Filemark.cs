@@ -17,7 +17,7 @@ namespace SynapLink.Zener.Archives
     /// Stores the location of an extracted file within a
     /// sequence of bytes.
     /// </summary>
-    internal struct Filemark
+    public struct Filemark
     {
         private readonly long _length, _offset;
 
