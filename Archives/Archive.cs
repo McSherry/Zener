@@ -16,7 +16,7 @@ namespace SynapLink.Zener.Archives
     /// <summary>
     /// Defines the interface for working with archive files.
     /// </summary>
-    public class Archive
+    public abstract class Archive
     {
         /// <summary>
         /// The number of files in the archive.
@@ -43,7 +43,7 @@ namespace SynapLink.Zener.Archives
         /// <returns>A string containing the encoded contents of the file.</returns>
         public virtual string GetFile(string name, Encoding encoding)
         {
-            return encoding.GetString(this.GetFileByName(name).ToArray());
+            return encoding.GetString(this.GetFile(name).ToArray());
         }
     }
 }
