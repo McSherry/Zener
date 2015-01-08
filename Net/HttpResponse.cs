@@ -445,6 +445,16 @@ namespace SynapLink.Zener.Net
             this.Write((object)value);
         }
         /// <summary>
+        /// Writes the provided bytes to the response.
+        /// </summary>
+        /// <param name="value"></param>
+        public void Write(IEnumerable<byte> value)
+        {
+            _nsw.BaseStream.Write(
+                value.ToArray(), 0, value.Count()
+                );
+        }
+        /// <summary>
         /// Writes the provided values to the response in the
         /// specified format.
         /// </summary>

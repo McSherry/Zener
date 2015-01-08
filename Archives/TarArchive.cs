@@ -74,7 +74,7 @@ namespace SynapLink.Zener.Archives
 
             byte[] buffer = new byte[TAR_BLOCK_SIZE];
             StringBuilder builder = new StringBuilder();
-            bool cont = true, lastWasEmpty = false;
+            bool lastWasEmpty = false;
             long dumpLength = 0, dumpOffset = 0;
 
             do
@@ -85,7 +85,7 @@ namespace SynapLink.Zener.Archives
                 // Two blocks of NUL in a row means we've reached the
                 // end of the meaningful data in the file. If we encounter
                 // this, we should be able to safely stop.
-                if (Array.TrueForAll(buffer, b => b == ASCII_NUL))
+                if (Array.TrueForAll(buffer, ASCII_NUL.Equals))
                 {
                     if (lastWasEmpty) break;
                     else
@@ -199,7 +199,7 @@ namespace SynapLink.Zener.Archives
 
                 _dataDump.Flush();
             } 
-            while (cont);
+            while (true);
 
         }
 
