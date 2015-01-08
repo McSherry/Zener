@@ -11,8 +11,28 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Path = System.IO.Path;
+
 namespace SynapLink.Zener.Core
 {
+    /// <summary>
+    /// The type of parameter being passed to the
+    /// MediaTypeMap's Find method.
+    /// </summary>
+    public enum FindParameterType
+    {
+        /// <summary>
+        /// Indicates that the parameter is only the
+        /// file extension.
+        /// </summary>
+        Extension,
+        /// <summary>
+        /// Indicates that the parameter is the file's
+        /// name or its path.
+        /// </summary>
+        NameOrPath
+    }
+
     /// <summary>
     /// A class used to map media types to file extensions.
     /// </summary>
@@ -184,13 +204,37 @@ namespace SynapLink.Zener.Core
         /// <summary>
         /// Determines the media type for a given file extension.
         /// </summary>
-        /// <param name="fileExtension">The file extension to find the media type for.</param>
-        public string Find(string fileExtension)
+        /// <param name="str">The string representing the file to find the media type for.</param>
+        /// <param name="type">Indicates what is being passed in the <paramref name="str"/> parameter.</param>
+        /// <param name="default">The media type to default to if no match is found.</param>
+        public string Find(
+            string str, 
+            FindParameterType type = FindParameterType.Extension,
+            string @default = FallbackType
+            )
         {
-            fileExtension = fileExtension.ToLower().Trim();
+            string fileExtension;
 
-            if (fileExtension[0] != '.')
-                fileExtension = String.Format(".{0}", fileExtension);
+            if (type == FindParameterType.Extension)
+            {
+                fileExtension = str.ToLower().Trim();
+
+                if (str[0] != '.')
+                    fileExtension = String.Format(".{0}", str);
+            }
+            else if (type == FindParameterType.NameOrPath)
+            {
+                if (!Path.HasExtension(str))
+                {
+                    return @default;
+                }
+
+                fileExtension = Path.GetExtension(str);
+            }
+            else throw new ArgumentException(
+                "Unrecognised enum value.", "type"
+                );
+
 
             return _map
                 .Where(mt => mt.Value.Contains(fileExtension))
