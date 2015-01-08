@@ -3,7 +3,7 @@
  *      All Rights reserved.
  *      
  *      Released under BSD 3-Clause licence. See terms in
- *      /LICENCE.txt, or online: http://opensource.org/licenses/BSD-3-Clause
+ *      /LICENCE, or online: http://opensource.org/licenses/BSD-3-Clause
  */
 using System;
 using System.Collections;

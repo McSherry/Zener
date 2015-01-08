@@ -49,6 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Archives\IArchive.cs" />
     <Compile Include="Core\MediaTypeMap.cs" />
     <Compile Include="Core\Route.cs" />
     <Compile Include="Core\Router.cs" />
