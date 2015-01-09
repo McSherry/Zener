@@ -33,7 +33,7 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="format">The format string to extract parameters from.</param>
         /// <returns>A read-only list containing the names of parameters.</returns>
-        public static IReadOnlyList<string> GetParameters(string format)
+        public static IEnumerable<string> GetParameters(string format)
         {
             List<string> @params = new List<string>();
 
@@ -59,7 +59,7 @@ namespace SynapLink.Zener.Core
                 else continue;
             }
 
-            return @params.AsReadOnly();
+            return @params;
         }
         /// <summary>
         /// Adds a directory handler to the router. A directory handler

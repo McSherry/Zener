@@ -67,7 +67,7 @@ namespace SynapLink.Zener.Core
          * 
          */
 
-        private Lazy<IReadOnlyList<string>> _paramNames;
+        private Lazy<IEnumerable<string>> _paramNames;
         private string _formatOriginal;
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace SynapLink.Zener.Core
             this.Handler = handler;
             this.Name = this.Format;
 
-            _paramNames = new Lazy<IReadOnlyList<string>>(
+            _paramNames = new Lazy<IEnumerable<string>>(
                 () => Routing.GetParameters(this.Format)
                 );
         }
@@ -262,7 +262,7 @@ namespace SynapLink.Zener.Core
         /// The names of all parameters within the route's
         /// format string.
         /// </summary>
-        public IReadOnlyList<string> Parameters
+        public IEnumerable<string> Parameters
         {
             get { return _paramNames.Value; }
         }
