@@ -38,6 +38,25 @@ namespace SynapLink.Zener.Archives
             bool caseSensitive = false
             )
         {
+            using (FileStream fs = File.Open(filepath, FileMode.Open))
+            {
+                router.AddTarArchive(format, fs, caseSensitive);
+            }
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves
+        /// files from a UNIX V6 Tape Archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
+        public static void AddTarArchive(
+            this Router router,
+            string format, Stream stream,
+            bool caseSensitive = false
+            )
+        {
             var paramNames = Routing.GetParameters(format);
 
             if (!paramNames.Contains(RTR_ADDARCHIVE_PARAM))
@@ -47,11 +66,7 @@ namespace SynapLink.Zener.Archives
                         RTR_ADDARCHIVE_PARAM
                     ));
 
-            TarArchive tar;
-            using (FileStream fs = File.Open(filepath, FileMode.Open))
-            {
-                tar = new TarArchive(fs);
-            }
+            Archive tar = new TarArchive(stream);
 
             router.AddHandler(format, (rq, rs, pr) =>
             {
