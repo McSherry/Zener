@@ -167,20 +167,6 @@ namespace SynapLink.Zener.Archives
                 {
                     source.Read(buffer, 0, TAR_BLOCK_SIZE);
 
-                    // If it's the last block, it's extremely
-                    // likely that its real length won't be a
-                    // multiple of the block size.
-                    //
-                    // To ensure we write the correct amount of
-                    // data, we take the remainder of the current
-                    // file's length divided by the block size. This
-                    // gives us the number of bytes in the current
-                    // block that will be meaningless data.
-                    //
-                    // We then subtract this number from the block
-                    // size. This gives us the number of meaningful
-                    // bytes, which we then take from the start of
-                    // our buffer and write to our data dump file.
                     if (i == lim - 1)
                     {
                         _dataDump.Write(
