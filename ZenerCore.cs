@@ -17,7 +17,8 @@ using SynapLink.Zener.Net;
 using SynapLink.Zener.Core;
 
 using WebUtility = System.Net.WebUtility;
-using RouteList = System.Collections.Generic.Dictionary<string, SynapLink.Zener.Core.RouteHandler>;
+using RouteList = System.Collections.Generic
+    .Dictionary<string, System.Func<SynapLink.Zener.ZenerContext, SynapLink.Zener.Core.RouteHandler>>;
 
 namespace SynapLink.Zener
 {
@@ -46,8 +47,12 @@ namespace SynapLink.Zener
                 {
                     new RouteList()
                     {
-                        { ":fs", Api.Filesystem },
-                        { ":fs/[*path]", Api.Filesystem }
+                        { ":fs", Api.FilesystemWrapper },
+                        { ":fs/[*path]", Api.FilesystemWrapper }
+                    },
+                    new RouteList()
+                    {
+                        { ":call/[*method]", Api.MethodCall }
                     }
                 };
             }
@@ -60,6 +65,10 @@ namespace SynapLink.Zener
                 get { return _apiRoutes; }
             }
 
+            public static RouteHandler FilesystemWrapper(ZenerContext context)
+            {
+                return Api.Filesystem;
+            }
             /// <summary>
             /// The route providing a file-system API.
             /// </summary>
@@ -235,14 +244,36 @@ namespace SynapLink.Zener
 
                 rs.Write(jsonBuilder.ToString());
             }
-
-            public static void MethodCall(HttpRequest rq, HttpResponse rs, Func<dynamic, string> m)
+            /// <summary>
+            /// The route providing a method call API.
+            /// </summary>
+            /// <param name="context"></param>
+            /// <returns></returns>
+            public static RouteHandler MethodCall(ZenerContext context)
             {
-                rs.Headers.Add("Content-Type", "application/json");
-                var ret = m(rq.POST);
-                rs.Write(@"{{ ""returned"": {0}", ret == null);
+                return (rq, rs, pr) =>
+                {
+                    rs.Headers.Add("Content-Type", "application/json");
+                    StringBuilder jsonBuilder = new StringBuilder();
+                    jsonBuilder.Append("{ ");
+                    if (context.Methods.ContainsKey(pr.method))
+                    {
+                        var ret = context.Methods[pr.method](rq.POST);
+                        var retIsNull = ret == null;
+                        jsonBuilder.AppendFormat(
+                            @"""returned"": {0}, ""return"": ""{1}""",
+                            (!retIsNull).ToString().ToLower(),
+                            retIsNull ? String.Empty : WebUtility.UrlEncode(ret)
+                            );
+                    }
+                    else
+                    {
+                        rs.StatusCode = HttpStatus.NotFound;
+                    }
+                    jsonBuilder.Append(" }");
 
-                if (ret != null) rs.Write(@", ""return"": {0} }}", ret);
+                    rs.Write(jsonBuilder.ToString());
+                };
             }
         }
 
@@ -305,34 +336,7 @@ namespace SynapLink.Zener
             // ZenerContext we were passed.
             foreach (var api in context.ActiveApis)
                 foreach (var route in Api.Routes[api])
-                    this.Routes.AddHandler(route.Key, route.Value);
-
-            // If the dictionary of methods isn't empty, the
-            // method call API is to be enabled.
-            if (context.Methods.Count > 0)
-                this.Routes.AddHandler(
-                    ":call/[*method]",
-                    (rq, rs, pr) =>
-                    {
-                        rs.Headers.Add("Content-Type", "application/json");
-                        rs.Write("{ ");
-                        if (context.Methods.ContainsKey(pr.method))
-                        {
-                            var ret = context.Methods[pr.method](rq.POST);
-                            var retIsNull = ret == null;
-                            rs.Write(
-                                @"""returned"": {0}, ""return"": ""{1}""",
-                                (!retIsNull).ToString().ToLower(),
-                                retIsNull ? String.Empty : WebUtility.UrlEncode(ret)
-                                );
-                        }
-                        else
-                        {
-                            rs.StatusCode = HttpStatus.NotFound;
-                        }
-                        rs.Write(" }");
-                    }
-                );
+                    this.Routes.AddHandler(route.Key, route.Value(context));
 
             _http.Start();
         }

@@ -22,9 +22,10 @@ namespace SynapLink.Zener
     public class ZenerContext
     {
         private const int
-            API_QUANTITY        = 1,
+            API_QUANTITY        = 2,
 
-            API_FILESYSTEM      = 0x00
+            API_FILESYSTEM      = 0x00,
+            API_METHODCALL      = 0x01
             ;
         private bool[] _activeApis = new bool[API_QUANTITY];
 
@@ -62,18 +63,16 @@ namespace SynapLink.Zener
             ushort port = 80,
 
             bool useFilesystem = false,
-            Dictionary<string, Method> methods = null
+            bool useMethodCall = false
             )
         {
             this.IpAddress = address;
             this.TcpPort = port;
 
             this.EnableFileSystemApi = useFilesystem;
-
-            if (methods == null)
-                this.Methods = new Dictionary<string, Method>(0, StringComparer.OrdinalIgnoreCase);
-            else
-                new Dictionary<string, Method>(methods, StringComparer.OrdinalIgnoreCase);
+            
+            this.EnableMethodCallApi = useMethodCall;
+            this.Methods = new Dictionary<string, Method>();
         }
 
         /// <summary>
@@ -101,6 +100,15 @@ namespace SynapLink.Zener
         {
             get { return _activeApis[API_FILESYSTEM]; }
             set { _activeApis[API_FILESYSTEM] = value; }
+        }
+        /// <summary>
+        /// Whether the method call API should be enabled
+        /// for the ZenerCore.
+        /// </summary>
+        public bool EnableMethodCallApi
+        {
+            get { return _activeApis[API_METHODCALL]; }
+            set { _activeApis[API_METHODCALL] = value; }
         }
         /// <summary>
         /// The methods to make available via the method
