@@ -261,7 +261,7 @@ namespace SynapLink.Zener
                         var ret = context.Methods[pr.method](rq.POST);
                         var retIsNull = ret == null;
                         jsonBuilder.AppendFormat(
-                            @"""returned"": {0}, ""return"": ""{1}""",
+                            @"""returned"": {0}, ""return"": ""{1}"", ",
                             (!retIsNull).ToString().ToLower(),
                             retIsNull ? String.Empty : WebUtility.UrlEncode(ret)
                             );
@@ -270,7 +270,10 @@ namespace SynapLink.Zener
                     {
                         rs.StatusCode = HttpStatus.NotFound;
                     }
-                    jsonBuilder.Append(" }");
+                    jsonBuilder.AppendFormat(
+                        @"""status"": {0} }}",
+                        (int)rs.StatusCode
+                        );
 
                     rs.Write(jsonBuilder.ToString());
                 };
