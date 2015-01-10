@@ -353,5 +353,13 @@ namespace SynapLink.Zener
             get;
             set;
         }
+
+        /// <summary>
+        /// Stops ZenerCore's underlying HTTP server.
+        /// </summary>
+        public void Stop()
+        {
+            _http.Stop();
+        }
     }
 }

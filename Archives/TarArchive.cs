@@ -136,13 +136,14 @@ namespace SynapLink.Zener.Archives
                 // entry within the archive.
                 long entryBytes = dumpLength + (TAR_BLOCK_SIZE - (dumpLength % TAR_BLOCK_SIZE));
 
-                // The entry isn't for a normal file. Skip it.
+                // Check whether the entry is a normal file.
                 if (
                     buffer[TAR_FILETYPE_OFFSET] != FILE_TYPE_NORMAL_A &&
                     buffer[TAR_FILETYPE_OFFSET] != FILE_TYPE_NORMAL_B
                     )
                 {
-                    // Skip past the entry's contents.
+                    // The entry isn't a normal file, so skip
+                    // past it.
                     source.Seek(entryBytes, SeekOrigin.Current);
                     continue;
                 }
