@@ -35,23 +35,6 @@ namespace SynapLink.Zener
         private static class Api
         {
             private const string FILESYSTEM_CONTENTS = "fileContent";
-            private static List<RouteList> _apiRoutes;
-
-            static Api()
-            {
-                _apiRoutes = new List<RouteList>()
-                {
-                    new RouteList()
-                    {
-                        { ":fs", Api.FilesystemWrapper },
-                        { ":fs/[*path]", Api.FilesystemWrapper }
-                    },
-                    new RouteList()
-                    {
-                        { ":call/[*method]", Api.MethodCall }
-                    }
-                };
-            }
 
             public static RouteHandler FilesystemWrapper(ZenerContext context)
             {
