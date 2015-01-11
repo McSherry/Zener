@@ -10,9 +10,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+
+using SynapLink.Zener.Core;
+using SynapLink.Zener.Net;
 
 using IPAddress = System.Net.IPAddress;
 using Method = System.Func<dynamic, string>;
+using WebUtility = System.Net.WebUtility;
+using RouteList = System.Collections.Generic
+    .Dictionary<string, System.Func<SynapLink.Zener.ZenerContext, SynapLink.Zener.Core.RouteHandler>>;
 
 namespace SynapLink.Zener
 {
@@ -21,24 +28,262 @@ namespace SynapLink.Zener
     /// </summary>
     public class ZenerContext
     {
-        private const int
-            API_QUANTITY        = 2,
+        /// <summary>
+        /// Contains the handlers which provide Zener's
+        /// route-based APIs.
+        /// </summary>
+        private static class Api
+        {
+            private const string FILESYSTEM_CONTENTS = "fileContent";
+            private static List<RouteList> _apiRoutes;
 
-            API_FILESYSTEM      = 0x00,
-            API_METHODCALL      = 0x01
-            ;
-        private bool[] _activeApis = new bool[API_QUANTITY];
+            static Api()
+            {
+                _apiRoutes = new List<RouteList>()
+                {
+                    new RouteList()
+                    {
+                        { ":fs", Api.FilesystemWrapper },
+                        { ":fs/[*path]", Api.FilesystemWrapper }
+                    },
+                    new RouteList()
+                    {
+                        { ":call/[*method]", Api.MethodCall }
+                    }
+                };
+            }
+
+            public static RouteHandler FilesystemWrapper(ZenerContext context)
+            {
+                return Api.Filesystem;
+            }
+            /// <summary>
+            /// The route providing a file-system API.
+            /// </summary>
+            /// <param name="rq">The HttpRequest to respond to.</param>
+            /// <param name="rs">The HttpResponse to respond with.</param>
+            /// <param name="pr">The route's parameters.</param>
+            public static void Filesystem(HttpRequest rq, HttpResponse rs, dynamic pr)
+            {
+                /* The filesystem API provides client-side code (such as JavaScript)
+                 * with an easy way to access the underlying file system. It is accessed
+                 * via the ':fs' route.
+                 * 
+                 * Through this API, client-side code can:
+                 * 
+                 *      - Read files
+                 *      - Write (and create) files
+                 *      - Check files exist
+                 *      - Delete files
+                 *      - Retrieve directory listings
+                 *      - Delete directories
+                 *      - Check directories exist
+                 *      
+                 * See API reference for more: 
+                 *      https://github.com/SynapLink/Zener/wiki/Filesystem-API
+                 */
+
+                string path;
+                if (pr is Empty) path = Environment.CurrentDirectory;
+                else path = WebUtility.UrlDecode(pr.path);
+
+                rs.Headers.Add("Content-Type", "application/json");
+                StringBuilder jsonBuilder = new StringBuilder("{");
+                try
+                {
+
+                    if (rq.Method == HttpRequest.Methods.GET)
+                    {
+                        if (File.Exists(path))
+                        {
+                            #region Read file contents
+                            using (FileStream fs = File.Open(path, FileMode.Open))
+                            {
+                                byte[] fileBytes = new byte[fs.Length];
+                                fs.Read(fileBytes, 0, fileBytes.Length);
+
+                                jsonBuilder.AppendFormat(
+                                    @"""file"": ""{0}""",
+                                    WebUtility.UrlEncode(Encoding.ASCII.GetString(fileBytes))
+                                    );
+                            }
+                            #endregion
+                        }
+                        else if (Directory.Exists(path))
+                        {
+                            #region Get directory listing
+                            string[] files = Directory.GetFiles(path),
+                                subdirs = Directory.GetDirectories(path);
+                            string fileArray = files
+                                .Select(p => Path.GetFullPath(p))
+                                .Aggregate(
+                                    new StringBuilder(),
+                                    (sb, f) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(f)))
+                                .ToString();
+                            string dirsArray = subdirs
+                                .Select(p => Path.GetFullPath(p))
+                                .Aggregate(
+                                    new StringBuilder(),
+                                    (sb, d) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(d)))
+                                .ToString();
+
+                            jsonBuilder.AppendFormat(
+                                @"""files"": [ {0} ], ""directories"": [ {1} ]",
+                                fileArray, dirsArray
+                                );
+                            #endregion
+                        }
+                        else
+                        {
+                            rs.StatusCode = HttpStatus.NotFound;
+                        }
+                    }
+                    else if (rq.Method == HttpRequest.Methods.POST)
+                    {
+                        #region File writing/creation
+                        var dict = rq.POST as IDictionary<string, object>;
+                        // POST is empty or doesn't contain any data to write
+                        // to the file, so we can just create an empty file.
+                        if (dict == null || !dict.ContainsKey(FILESYSTEM_CONTENTS))
+                        {
+                            using (File.Create(path)) { }
+                            jsonBuilder.Append(@"""message"": ""File created.""");
+                        }
+                        // POST contains content to write to the file.
+                        else
+                        {
+                            using (StreamWriter sw = File.CreateText(path))
+                            {
+                                sw.Write(dict[FILESYSTEM_CONTENTS]);
+                            }
+
+                            jsonBuilder.Append(@"""message"": ""File modified.""");
+                        }
+
+                        #endregion
+                    }
+                    else if (rq.Method == HttpRequest.Methods.DELETE)
+                    {
+                        #region File/Directory deletion
+                        if (File.Exists(path))
+                        {
+                            File.Delete(path);
+
+                            jsonBuilder.Append(@"""message"": ""File deleted.""");
+                        }
+                        else if (Directory.Exists(path))
+                        {
+                            jsonBuilder.Append(@"""message"": ""Directory deleted.""");
+                        }
+                        else
+                        {
+                            rs.StatusCode = HttpStatus.NotFound;
+                        }
+                        #endregion
+                    }
+                    else if (rq.Method == HttpRequest.Methods.HEAD)
+                    {
+                        #region File/Directory existence check
+                        if (!File.Exists(path) || !Directory.Exists(path))
+                        {
+                            rs.StatusCode = HttpStatus.NotFound;
+                        }
+                        #endregion
+                    }
+                    else
+                    {
+                        rs.StatusCode = HttpStatus.MethodNotAllowed;
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    rs.StatusCode = HttpStatus.Forbidden;
+                }
+                catch (ArgumentException)
+                {
+                    rs.StatusCode = HttpStatus.BadRequest;
+                }
+                catch (NotSupportedException)
+                {
+                    rs.StatusCode = HttpStatus.BadRequest;
+                }
+                catch (PathTooLongException)
+                {
+                    rs.StatusCode = HttpStatus.RequestUriTooLarge;
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    rs.StatusCode = HttpStatus.NotFound;
+                }
+                catch (FileNotFoundException)
+                {
+                    rs.StatusCode = HttpStatus.NotFound;
+                }
+                catch (IOException)
+                {
+                    rs.StatusCode = HttpStatus.InternalServerError;
+                }
+
+                jsonBuilder.AppendFormat(
+                    "{0}\"status\": {1}}}",
+                    jsonBuilder.Length == 1 ? String.Empty : ", ",
+                    (int)rs.StatusCode
+                    );
+
+                rs.Write(jsonBuilder.ToString());
+            }
+            /// <summary>
+            /// The route providing a method call API.
+            /// </summary>
+            /// <param name="context"></param>
+            /// <returns></returns>
+            public static RouteHandler MethodCall(ZenerContext context)
+            {
+                return (rq, rs, pr) =>
+                {
+                    rs.Headers.Add("Content-Type", "application/json");
+                    StringBuilder jsonBuilder = new StringBuilder();
+                    jsonBuilder.Append("{ ");
+                    if (context.Methods.ContainsKey(pr.method))
+                    {
+                        var ret = context.Methods[pr.method](rq.POST);
+                        var retIsNull = ret == null;
+                        jsonBuilder.AppendFormat(
+                            @"""returned"": {0}, ""return"": ""{1}"", ",
+                            (!retIsNull).ToString().ToLower(),
+                            retIsNull ? String.Empty : WebUtility.UrlEncode(ret)
+                            );
+                    }
+                    else
+                    {
+                        rs.StatusCode = HttpStatus.NotFound;
+                    }
+                    jsonBuilder.AppendFormat(
+                        @"""status"": {0} }}",
+                        (int)rs.StatusCode
+                        );
+
+                    rs.Write(jsonBuilder.ToString());
+                };
+            }
+        }
 
         /// <summary>
-        /// All active APIs.
+        /// Adds the routes for any active APIs to the
+        /// provided router. To be called from the ZenerCore's
+        /// constructor.
         /// </summary>
-        internal IEnumerable<int> ActiveApis
+        internal void AddApiRoutes(Router router)
         {
-            get 
+            if (this.EnableFileSystemApi)
             {
-                return Enumerable
-                    .Range(0, API_QUANTITY)
-                    .Where(i => _activeApis[i]);
+                router.AddHandler(":fs", Api.Filesystem);
+                router.AddHandler(":fs/[*file]", Api.Filesystem);
+            }
+
+            if (this.Methods.Count > 0)
+            {
+                router.AddHandler(":call/[*method]", Api.MethodCall(this));
             }
         }
 
@@ -63,16 +308,15 @@ namespace SynapLink.Zener
             ushort port = 80,
 
             bool useFilesystem = false,
-            bool useMethodCall = false
+            Dictionary<string, Method> methods = null
             )
         {
             this.IpAddress = address;
             this.TcpPort = port;
 
             this.EnableFileSystemApi = useFilesystem;
-            
-            this.EnableMethodCallApi = useMethodCall;
-            this.Methods = new Dictionary<string, Method>();
+
+            this.Methods = methods ?? new Dictionary<string, Method>();
         }
 
         /// <summary>
@@ -98,17 +342,8 @@ namespace SynapLink.Zener
         /// </summary>
         public bool EnableFileSystemApi
         {
-            get { return _activeApis[API_FILESYSTEM]; }
-            set { _activeApis[API_FILESYSTEM] = value; }
-        }
-        /// <summary>
-        /// Whether the method call API should be enabled
-        /// for the ZenerCore.
-        /// </summary>
-        public bool EnableMethodCallApi
-        {
-            get { return _activeApis[API_METHODCALL]; }
-            set { _activeApis[API_METHODCALL] = value; }
+            get;
+            set;
         }
         /// <summary>
         /// The methods to make available via the method
