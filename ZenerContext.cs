@@ -29,8 +29,7 @@ namespace SynapLink.Zener
     public class ZenerContext
     {
         /// <summary>
-        /// Contains the handlers which provide Zener's
-        /// route-based APIs.
+        /// Contains the handlers which provide Zener's route-based APIs.
         /// </summary>
         private static class Api
         {
