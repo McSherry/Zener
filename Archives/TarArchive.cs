@@ -133,13 +133,28 @@ namespace SynapLink.Zener.Archives
                 }
 
                 // The number of bytes comprising the current
-                // entry within the archive.
-                long entryBytes = dumpLength + (TAR_BLOCK_SIZE - (dumpLength % TAR_BLOCK_SIZE));
+                // entry within the archive. If the length is zero,
+                // it is kept as zero. Otherwise, we round to the
+                // next highest integral multiple of the tar block
+                // length.
+                //
+                // For example:
+                //
+                //  Content length      Entry length
+                //   0              =>   0
+                //   56             =>   512
+                //   511            =>   512
+                //   513            =>   1024
+                //
+                long entryBytes = dumpLength > 0
+                    ? dumpLength + (TAR_BLOCK_SIZE - (dumpLength % TAR_BLOCK_SIZE))
+                    : 0;
 
                 // Check whether the entry is a normal file.
+                byte type = buffer[TAR_FILETYPE_OFFSET];
                 if (
-                    buffer[TAR_FILETYPE_OFFSET] != FILE_TYPE_NORMAL_A &&
-                    buffer[TAR_FILETYPE_OFFSET] != FILE_TYPE_NORMAL_B
+                    type != FILE_TYPE_NORMAL_A &&
+                    type != FILE_TYPE_NORMAL_B
                     )
                 {
                     // The entry isn't a normal file, so skip
