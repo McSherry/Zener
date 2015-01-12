@@ -19,8 +19,20 @@ namespace SynapLink.Zener.Archives
     /// Tape Archive file.
     /// </summary>
     public sealed class UstarArchive
-        : TarArchive
+        : TarArchive, IDisposable
     {
+        private static readonly byte[] USTAR_ID;
+        private const int 
+            USTAR_ID_POS            = 257,
+            USTAR_FILEPREFIX_POS    = 345,
+            USTAR_FILEPREFIX_MAX    = 155
+            ;
+
+        static UstarArchive()
+        {
+            USTAR_ID = Encoding.ASCII.GetBytes("ustar");
+        }
+
         /// <summary>
         /// Creates a new UstarArchive class.
         /// </summary>
