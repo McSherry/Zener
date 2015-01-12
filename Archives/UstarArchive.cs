@@ -78,11 +78,11 @@ namespace SynapLink.Zener.Archives
                     // its position, adding the bytes we iterate over, until
                     // we meet a NUL, or until we've iterated over 155 bytes
                     // (the maximum length of the filename prefix field).
-                    for (int j = USTAR_FILEPREFIX_POS; j < USTAR_FILEPREFIX_MAX; j++)
+                    for (int j = 0; j < USTAR_FILEPREFIX_MAX; j++)
                     {
-                        if (_headers[i][j] == TarArchive.ASCII_NUL) break;
+                        if (_headers[i][USTAR_FILEPREFIX_POS + j] == TarArchive.ASCII_NUL) break;
 
-                        nameBuilder.Append(_headers[i][j]);
+                        nameBuilder.Append(_headers[i][USTAR_FILEPREFIX_POS + j]);
                     }
 
                     // This prefix then needs to be prepended to the filename
