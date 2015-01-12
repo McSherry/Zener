@@ -42,7 +42,8 @@ namespace SynapLink.Zener.Archives
         /// </exception>
         /// <exception cref="System.InvalidDataException">
         ///     Thrown when the stream's length is shorter than the length of
-        ///     one Tape Archive block.
+        ///     one Tape Archive block, or when the tar file size field does
+        ///     not contain a valid sequence of octal digits.
         /// </exception>
         /// <exception cref="System.ArgumentOutOfRangeException">
         ///     Thrown when the stream's length is not an integral multiple of
