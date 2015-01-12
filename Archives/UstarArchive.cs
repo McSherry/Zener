@@ -54,7 +54,44 @@ namespace SynapLink.Zener.Archives
         public UstarArchive(Stream stream)
             : base(stream)
         {
+            byte[] idBuffer = new byte[USTAR_ID.Length];
+            for (int i = 0; i < base._headers.Count; i++)
+            {
+                // If this header is from a Ustar archive, it will have
+                // the ASCII string "ustar" starting at position 257 within
+                // the header block.
+                //
+                // If this identifier is present, we'll continue. If not, we
+                // won't make any modifications.
+                Buffer.BlockCopy(_headers[i], USTAR_ID_POS, idBuffer, 0, idBuffer.Length);
+                if (idBuffer.SequenceEqual(USTAR_ID))
+                {
+                    StringBuilder nameBuilder = new StringBuilder();
+                    // We only care about one of the fields present
+                    // in the ustar header: the filename prefix field.
+                    // This field allows stored files to have file-names
+                    // up to 255 bytes in length.
+                    //
+                    // As with the normal UNIX V6 tar filename, this should
+                    // be terminated with an ASCII NUL, so we'll iterate from
+                    // its position, adding the bytes we iterate over, until
+                    // we meet a NUL, or until we've iterated over 155 bytes
+                    // (the maximum length of the filename prefix field).
+                    for (int j = USTAR_FILEPREFIX_POS; j < USTAR_FILEPREFIX_MAX; j++)
+                    {
+                        if (_headers[i][j] == TarArchive.ASCII_NUL) break;
 
+                        nameBuilder.Append(_headers[i][j]);
+                    }
+
+                    // This prefix then needs to be prepended to the filename
+                    // we already have associated with this header.
+                    nameBuilder.Append(base._names[i]);
+                    // We then need to replace our currently-stored filename
+                    // with the new one.
+                    base._names[i] = nameBuilder.ToString();
+                }
+            }
         }
     }
 }
