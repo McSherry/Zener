@@ -26,12 +26,23 @@ namespace SynapLink.Zener.Archives
 
         /// <summary>
         /// Adds a handler to the router which serves
-        /// files from a UNIX V6 Tape Archive.
+        /// files from a UNIX V6 Tape Archive or a
+        /// POSIX IEEE P1003.1 Uniform Standard Tape
+        /// Archive.
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
         /// <param name="filepath">The file path of the archive.</param>
         /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
+        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.InvalidDataException">
+        ///     Thrown when the TarArchive/UstarArchive constructor throws
+        ///     an exception.
+        /// </exception>
         public static void AddTarArchive(
             this Router router,
             string format, string filepath,
@@ -45,12 +56,22 @@ namespace SynapLink.Zener.Archives
         }
         /// <summary>
         /// Adds a handler to the router which serves
-        /// files from a UNIX V6 Tape Archive.
+        /// files from a UNIX V6 Tape Archive or a
+        /// POSIX IEEE P1003.1 Uniform Standard Tape
+        /// Archive.
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
         /// <param name="stream">The stream containing the archive.</param>
         /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.InvalidDataException">
+        ///     Thrown when the TarArchive/UstarArchive constructor throws
+        ///     an exception.
+        /// </exception>
         public static void AddTarArchive(
             this Router router,
             string format, Stream stream,
@@ -66,7 +87,18 @@ namespace SynapLink.Zener.Archives
                         RTR_ADDARCHIVE_PARAM
                     ));
 
-            Archive tar = new UstarArchive(stream);
+            Archive tar;
+            try
+            {
+                tar = new UstarArchive(stream);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDataException(
+                    "The provided data was not a valid tar or ustar archive.",
+                    ex
+                    );
+            }
 
             router.AddHandler(format, (rq, rs, pr) =>
             {
