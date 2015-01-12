@@ -66,7 +66,7 @@ namespace SynapLink.Zener.Archives
                         RTR_ADDARCHIVE_PARAM
                     ));
 
-            Archive tar = new TarArchive(stream);
+            Archive tar = new UstarArchive(stream);
 
             router.AddHandler(format, (rq, rs, pr) =>
             {
