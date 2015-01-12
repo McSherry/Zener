@@ -190,10 +190,21 @@ namespace SynapLink.Zener.Archives
         /// <summary>
         /// Creates a new TarArchive.
         /// </summary>
-        /// <param name="stream">The stream containing </param>
-        /// <exception cref="System.IOException"></exception>
-        /// <exception cref="System.InvalidDataException"></exception>
-        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
+        /// <param name="stream">The stream containing the archive's bytes.</param>
+        /// <exception cref="System.IOException">
+        ///     Thrown when a temporary file could not be opened for writing.
+        /// </exception>
+        /// <exception cref="System.InvalidDataException">
+        ///     Thrown when the stream's length is shorter than the length of
+        ///     one Tape Archive block.
+        /// </exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        ///     Thrown when the stream's length is not an integral multiple of
+        ///     the Tape Archive block size.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the stream does not support the required operations.
+        /// </exception>
         public TarArchive(Stream stream)
         {
             if (!stream.CanSeek) throw new ArgumentException(

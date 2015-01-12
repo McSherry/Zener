@@ -54,6 +54,7 @@
     <Compile Include="Archives\Filemark.cs" />
     <Compile Include="Archives\Archive.cs" />
     <Compile Include="Archives\TarArchive.cs" />
+    <Compile Include="Archives\UstarArchive.cs" />
     <Compile Include="Core\MediaTypeMap.cs" />
     <Compile Include="Core\Route.cs" />
     <Compile Include="Core\Router.cs" />
