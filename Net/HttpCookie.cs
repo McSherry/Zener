@@ -136,6 +136,10 @@ namespace SynapLink.Zener.Net
         /// The domain the cookie is valid for. Set to
         /// null to let the browser infer the domain.
         /// </summary>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when an attempt is made to set the
+        ///     value to a string containing invalid characters.
+        /// </exception>
         public string Domain
         {
             get { return _domain; }
@@ -153,6 +157,10 @@ namespace SynapLink.Zener.Net
         /// The path the cookie is valid for. Set to
         /// null to let the browser infer the path.
         /// </summary>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when an attempt is made to set the
+        ///     value to a string containing invalid characters.
+        /// </exception>
         public string Path
         {
             get { return _path; }

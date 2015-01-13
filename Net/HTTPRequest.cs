@@ -81,6 +81,10 @@ namespace SynapLink.Zener.Net
         /// based on its values.
         /// </summary>
         /// <param name="reqestLine"></param>
+        /// <exception cref="SynapLink.Zener.HttpRequestException">
+        ///     Thrown when the HTTP request line is invalid or
+        ///     is malformed.
+        /// </exception>
         private void SetPropertiesFromRequestLine(string requestLine)
         {
             // The sections of the request line can always be split using
@@ -343,6 +347,9 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="stream">The stream to read from.</param>
         /// <returns>A single line from the stream, ASCII-encoded.</returns>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided stream cannot be read from.
+        /// </exception>
         internal static string ReadAsciiLine(Stream stream)
         {
             if (!stream.CanRead)

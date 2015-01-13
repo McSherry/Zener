@@ -153,7 +153,9 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="fieldName">The field name of the header to be added.</param>
         /// <param name="fieldValue">The value of the header to be added.</param>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public void Add(string fieldName, string fieldValue)
         {
             this.Add(fieldName, fieldValue, false);
@@ -164,7 +166,9 @@ namespace SynapLink.Zener.Net
         /// <param name="fieldName">The field name of the header to be added.</param>
         /// <param name="fieldValue">The value of the header to be added.</param>
         /// <param name="overwrite">Whether to overwrite any previous headers with the same field name.</param>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public void Add(string fieldName, string fieldValue, bool overwrite)
         {
             _readOnlyCheck();
@@ -188,7 +192,9 @@ namespace SynapLink.Zener.Net
         /// Removes all headers with the specified field name.
         /// </summary>
         /// <param name="fieldName">The field name of the headers to remove.</param>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public void Remove(string fieldName)
         {
             _readOnlyCheck();

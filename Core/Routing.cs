@@ -69,6 +69,11 @@ namespace SynapLink.Zener.Core
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
         /// <param name="dirPath">The directory to serve files from.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used to identify files within
+        ///     <paramref name="dirPath"/>.
+        /// </exception>
         public static void AddDirectory(
             this Router router,
             string format, string dirPath

@@ -369,6 +369,15 @@ namespace SynapLink.Zener.Net
             return STAT_MSGS[status];
         }
 
+        /// <summary>
+        /// Creates a new HttpResponse.
+        /// </summary>
+        /// <param name="responseStream">The stream to write the response to.</param>
+        /// <param name="closeCallback">The method to call when the response is closed.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided stream does not support the
+        ///     required operations.
+        /// </exception>
         internal HttpResponse(Stream responseStream, Action closeCallback)
         {
             if (
@@ -395,8 +404,10 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The HTTP status code to be returned by the server.
         /// </summary>
-        /// <exception cref="System.ArgumentException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the response body has already been sent
+        ///     to the client.
+        /// </exception>
         public HttpStatus StatusCode
         {
             get { return _httpStatus; }

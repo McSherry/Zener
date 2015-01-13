@@ -207,6 +207,10 @@ namespace SynapLink.Zener.Core
         /// <param name="str">The string representing the file to find the media type for.</param>
         /// <param name="type">Indicates what is being passed in the <paramref name="str"/> parameter.</param>
         /// <param name="default">The media type to default to if no match is found.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the value passed in <paramref name="type"/> is
+        ///     not recognised or is invalid.
+        /// </exception>
         public string Find(
             string str, 
             FindParameterType type = FindParameterType.Extension,
