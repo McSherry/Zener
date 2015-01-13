@@ -16,7 +16,8 @@ namespace SynapLink.Zener.Archives
     /// <summary>
     /// Defines the interface for working with archive files.
     /// </summary>
-    public abstract class Archive
+    public abstract class Archive 
+        : IDisposable
     {
         /// <summary>
         /// The number of files in the archive.
@@ -59,5 +60,9 @@ namespace SynapLink.Zener.Archives
 
             return success;
         }
+        /// <summary>
+        /// Releases any resources in use by the class.
+        /// </summary>
+        public abstract void Dispose();
     }
 }

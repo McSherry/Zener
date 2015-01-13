@@ -317,7 +317,7 @@ namespace SynapLink.Zener.Archives
         /// <summary>
         /// Releases the resources used by this class.
         /// </summary>
-        public void Dispose()
+        public override void Dispose()
         {
             _dataDump.Close();
             _dataDump.Dispose();
