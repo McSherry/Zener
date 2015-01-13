@@ -50,8 +50,12 @@ namespace SynapLink.Zener.Net
         /// <param name="path">The path the cookie is restricted to.</param>
         /// <param name="secure">Whether the cookie should only be served over secure connections..</param>
         /// <param name="httpOnly">Whether the cookie should only be served over an HTTP protocol.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the cookie name is null.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public void Add(
             string name,
             string value,
@@ -75,8 +79,12 @@ namespace SynapLink.Zener.Net
         /// Adds a cookie to the collection.
         /// </summary>
         /// <param name="item">The cookie to add.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when <paramref name="item"/> is null.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public void Add(HttpCookie item)
         {
             _readOnlyCheck();
@@ -93,7 +101,9 @@ namespace SynapLink.Zener.Net
         /// Removes a cookie from the collection.
         /// </summary>
         /// <param name="item">The cookie to remove.</param>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public bool Remove(HttpCookie item)
         {
             _readOnlyCheck();
@@ -108,7 +118,9 @@ namespace SynapLink.Zener.Net
         /// Removes a cookie based on its name.
         /// </summary>
         /// <param name="name">The name of the cookie to remove.</param>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public bool Remove(string name)
         {
             _readOnlyCheck();
@@ -137,7 +149,9 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// Removes all cookies from the collection.
         /// </summary>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public void Clear()
         {
             _readOnlyCheck();

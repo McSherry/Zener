@@ -87,7 +87,9 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="fieldName">The field name of the headers to retrieve.</param>
         /// <returns>The retrieved headers.</returns>
-        /// <exception cref="System.InvalidOperationException"></exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
         public List<BasicHttpHeader> this[string fieldName]
         {
             get

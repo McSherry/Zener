@@ -73,8 +73,13 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="name">The cookie's name.</param>
         /// <param name="value">The value of the cookie.</param>
-        /// <exception cref="System.ArgumentException"></exception>
-        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the name provided for the cookie was not
+        ///     long enough.
+        /// </exception>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the name provided for the cookie was null.
+        /// </exception>
         public HttpCookie(string name, string value)
         {
             if (name == null)

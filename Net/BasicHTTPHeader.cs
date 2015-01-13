@@ -32,19 +32,25 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="fieldName">The header/field name (e.g. Content-Type).</param>
         /// <param name="value">The value of the header/field (e.g. text/html).</param>
-        /// <exception cref="System.ArgumentException"></exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when:
+        ///         1. The provided field name is null, zero-length, or whitespace.
+        ///         2. The provided value is null, zero-length, or whitespace.
+        ///         3. The field name contains a carriage return or line feed character.
+        ///         4. The value contains a carriage return or line feed character.
+        /// </exception>
         public BasicHttpHeader(string fieldName, string value)
         {
             fieldName = fieldName.Trim(TRIM_CHARS);
             value = value.Trim(TRIM_CHARS);
 
-            if (fieldName == null || fieldName.Length == 0)
+            if (String.IsNullOrWhiteSpace(fieldName))
             {
                 throw new ArgumentException
                 ("A field name must be provided.", "fieldName");
             }
 
-            if (value == null || value.Length == 0)
+            if (String.IsNullOrWhiteSpace(value))
             {
                 throw new ArgumentException
                 ("A value must be provided.", "value");
@@ -87,7 +93,13 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="headerLine">A single line containing the header text.</param>
         /// <returns>A BasicHttpHeader equivalent to the provided string.</returns>
-        /// <exception cref="System.ArgumentException"></exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when:
+        ///         1. The provided field name is null, zero-length, or whitespace.
+        ///         2. The provided value is null, zero-length, or whitespace.
+        ///         3. The field name contains a carriage return or line feed character.
+        ///         4. The value contains a carriage return or line feed character.
+        /// </exception>
         public static BasicHttpHeader Parse(string headerLine)
         {
             headerLine = headerLine.Trim(
@@ -112,7 +124,13 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="text">The text containing the headers.</param>
         /// <returns>An enumerable containing parsed headers.</returns>
-        /// <exception cref="System.ArgumentException"></exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when:
+        ///         1. A provided field name is null, zero-length, or whitespace.
+        ///         2. A provided value is null, zero-length, or whitespace.
+        ///         3. A field name contains a carriage return or line feed character.
+        ///         4. A value contains a carriage return or line feed character.
+        /// </exception>
         public static IEnumerable<BasicHttpHeader> ParseMany(TextReader text)
         {
             List<string> lines = new List<string>();

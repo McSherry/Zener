@@ -186,7 +186,14 @@ namespace SynapLink.Zener.Net
         /// Parses the HTTP request body, assuming that it is in the
         /// multipart/form-data format.
         /// </summary>
-        /// <exception cref="SynapLink.Zener.Net.HttpRequestException"></exception>
+        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
+        ///     Thrown when the client's HTTP request was invalid and
+        ///     could not be parsed.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided stream did not support the
+        ///     required operations.
+        /// </exception>
         private static dynamic ParseMultipartFormData(Stream formatBody, string boundary)
         {
             if (!formatBody.CanRead || !formatBody.CanSeek)
