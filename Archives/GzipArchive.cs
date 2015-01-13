@@ -45,11 +45,7 @@ namespace SynapLink.Zener.Archives
         /// <summary>
         /// The encoding to use for file names and comments.
         /// </summary>
-        private static readonly Encoding IsoEncoding
-        {
-            get;
-            set;
-        }
+        private static readonly Encoding IsoEncoding;
 
         static GzipArchive()
         {
