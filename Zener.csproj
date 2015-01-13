@@ -53,6 +53,7 @@
     <Compile Include="Archives\Archiving.cs" />
     <Compile Include="Archives\Filemark.cs" />
     <Compile Include="Archives\Archive.cs" />
+    <Compile Include="Archives\GzipArchive.cs" />
     <Compile Include="Archives\TarArchive.cs" />
     <Compile Include="Archives\UstarArchive.cs" />
     <Compile Include="Core\MediaTypeMap.cs" />
