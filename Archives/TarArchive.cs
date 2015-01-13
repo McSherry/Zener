@@ -285,6 +285,7 @@ namespace SynapLink.Zener.Archives
         /// </summary>
         /// <param name="name">The name of the file to retrieve.</param>
         /// <returns>An enumerable containing the file's bytes.</returns>
+        /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {
             int fileIndex;

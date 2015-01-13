@@ -31,7 +31,8 @@ namespace SynapLink.Zener.Archives
         /// Retrieves a file from the archive based on its name.
         /// </summary>
         /// <param name="name">The name of the file to retrieve.</param>
-        /// <returns>An enumerable containing the file's contents.</returns>
+        /// <param name="contents">An enumerable containing the file's contents.</param>
+        /// <returns>True if a file with the given name exists within the archive.</returns>
         public abstract bool GetFile(string name, out IEnumerable<byte> contents);
         /// <summary>
         /// Retrieves a file from the archive based on its name, and
@@ -40,7 +41,11 @@ namespace SynapLink.Zener.Archives
         /// </summary>
         /// <param name="name">The name of the file to retrieve.</param>
         /// <param name="encoding">The encoding to apply to the file.</param>
-        /// <returns>A string containing the encoded contents of the file.</returns>
+        /// <param name="str">
+        ///     A string containing the file's contents with <paramref name="encoding"/>
+        ///     applied to the bytes.
+        /// </param>
+        /// <returns>True if a file with the given name exists within the archive.</returns>
         public virtual bool GetFile(string name, Encoding encoding, out string str)
         {
             IEnumerable<byte> file;
