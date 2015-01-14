@@ -173,11 +173,109 @@ namespace SynapLink.Zener.Archives
         {
             IsoEncoding = Encoding.GetEncoding(ISO_ENCODING);
         }
+
+        private string _name;
+        private byte[] _dcData;
+
+        /// <summary>
+        /// Creates a new GzipArchive.
+        /// </summary>
+        /// <param name="stream">The stream containing the archive file's bytes.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided stream does not support the
+        ///     required operations.
+        /// </exception>
+        /// <exception cref="System.InvalidDataException">
+        ///     Thrown when the provided stream's first two bytes are
+        ///     not the Gzip archive magic number.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when the compression method specified in the
+        ///     archive's header is not supported by the GzipArchive
+        ///     class.
+        /// </exception>
+        public GzipArchive(Stream stream)
+        {
+            if (!stream.CanRead || !stream.CanSeek)
+                throw new ArgumentException(
+                    "The provided stream does not support reading and seeking.",
+                    "stream"
+                    );
+
+            stream.Position = 0;
+
+            byte[] headerBuf = new byte[HEADER_LEN_MIN];
+            stream.Read(headerBuf, 0, HEADER_LEN_MIN);
+
+            // Gzip archives should contain a 2-byte magic number.
+            // If it isn't present, we probably don't have a gzip
+            // archive file.
+            if (
+                headerBuf[ID_1_OFFSET] != ID_1 ||
+                headerBuf[ID_2_OFFSET] != ID_2
+                )
+            {
+                throw new InvalidDataException(
+                    "The provided stream does not contain a Gzip archive."
+                    );
+            }
+
+            // RFC 1952 specifies a compression method field, but only
+            // defines DEFLATE. As we're being RFC 1952-compliant, any
+            // value that isn't DEFLATE won't be supported.
+            if (headerBuf[CM_OFFSET] != (byte)GzipCompression.DEFLATE)
+                throw new NotSupportedException(
+                    "The compression method specified in the archive is not supported."
+                    );
         }
 
-        public GzipArchive()
+        /// <summary>
+        /// The number of files contained within the archive.
+        /// </summary>
+        public override int Count
         {
-            
+            // Gzip archives can only ever contain
+            // a single file.
+            get { return 1; }
+        }
+        /// <summary>
+        /// The names of the files contained within the
+        /// archive file.
+        /// </summary>
+        public override IEnumerable<string> Files
+        {
+            get { return new[] { _name }; }
+        }
+        /// <summary>
+        /// The contents of the file contained within the Gzip archive.
+        public IEnumerable<byte> File
+        {
+            get { return _dcData.Clone() as IEnumerable<byte>; }
+        }
+
+        /// <summary>
+        /// Retrieves a file based on its name.
+        /// </summary>
+        /// <param name="name">The name of the file to retrieve.</param>
+        /// <returns>An enumerable containing the file's bytes.</returns>
+        /// <returns>True if a file with the given name exists within the archive.</returns>
+        public override bool GetFile(string name, out IEnumerable<byte> contents)
+        {
+            if (!name.Equals(_name))
+            {
+                contents = null;
+                return false;
+            }
+
+            contents = _dcData.Clone() as IEnumerable<byte>;
+            return true;
+        }
+        /// <summary>
+        /// Releases the resources used by the class. This is not implemented.
+        /// </summary>
+        public override void Dispose()
+        {
+            return;
         }
     }
 }
