@@ -144,9 +144,14 @@ namespace SynapLink.Zener.Archives
             // the OS identifier.
             HEADER_LEN_MIN  = 0x0A,
             HEADER_OFFSET   = 0x00,
-
-            FLG_OFFSET      = 0x04,
-
+            // The length of the trailer. Also serves as
+            // the offset of the trailer from the end of
+            // the archive's bytes.
+            TRAILER_LENGTH  = 0x08,
+            // The offset of the ISIZE field within the
+            // archive's trailer.
+            ISIZE_OFFSET    = 0x04,
+            
             // The gzip magic number bytes. These are the first
             // two bytes within any gzip archive file.
             ID_1            = 0x1f,
@@ -154,18 +159,22 @@ namespace SynapLink.Zener.Archives
             ID_2            = 0x8b,
             ID_2_OFFSET     = 0x01,
 
+            // The flags byte
+            FLG_OFFSET      = 0x04,
             // Compression method identifier
             CM_OFFSET       = 0x02,
             // Modification time
             MTIME_OFFSET    = 0x03,
-            // Optional extra flags
+            // Extra flags
             XFL_OFFSET      = 0x08,
             // Operating system identifier
             OS_OFFSET       = 0x09,
             // Optional extra length field position
             XLEN_OFFSET     = 0x0A,
             // The number of bytes comprising the XLEN field
-            XLEN_LENGTH     = 0x02
+            XLEN_LENGTH     = 0x02,
+            // The length of the header checksum
+            HDRCHKSUM_LEN   = 0x02
             ;
         private const string ISO_ENCODING = "ISO-8859-1";
         /// <summary>
@@ -178,9 +187,17 @@ namespace SynapLink.Zener.Archives
             IsoEncoding = Encoding.GetEncoding(ISO_ENCODING);
         }
 
+        // The original file name, if present. Otherwise,
+        // the hex representation of the archive's CRC-32.
         private string _name;
+        // The length of the uncompressed data.
+        private uint _isize;
+        // The uncompressed data.
         private byte[] _dcData;
+        // Any archive flags.
         private GzipFlags _flags;
+        // Extra archive flags
+        private GzipExtra _xfl;
 
         /// <summary>
         /// Creates a new GzipArchive.
@@ -233,6 +250,7 @@ namespace SynapLink.Zener.Archives
                     );
 
             _flags = (GzipFlags)headerBuf[FLG_OFFSET];
+            _xfl = (GzipExtra)headerBuf[XFL_OFFSET];
 
             // Our current offset from the Gzip headers.
             long offset = 0;
@@ -251,13 +269,13 @@ namespace SynapLink.Zener.Archives
                 // to know how long it is so we can read/skip any
                 // other fields correctly.
                 offset = ((((ushort)xlenBuf[1]) << 8) | xlenBuf[0]) + XLEN_LENGTH;
+                stream.Position = HEADER_LEN_MIN + offset;
             }
 
             // The archive contains the original file name of the stored
             // file. We do want to use this.
             if ((_flags & GzipFlags.OriginalName) == GzipFlags.OriginalName)
             {
-                stream.Position = HEADER_LEN_MIN + offset;
                 List<byte> ofnBytes = new List<byte>();
 
                 stream.ReadUntilFound(new[] { ASCII_NUL }, ofnBytes.Add);
@@ -266,6 +284,70 @@ namespace SynapLink.Zener.Archives
 
                 offset = stream.Position;
             }
+            else _name = null;
+
+            // Some archives will contain a comment. We don't need or
+            // want it, but we still need to skip past it.
+            if ((_flags & GzipFlags.Comment) == GzipFlags.Comment)
+            {
+                stream.ReadUntilFound(new[] { ASCII_NUL }, b => { });
+                offset = stream.Position;
+            }
+
+            // We won't be doing any integrity checks.
+            if ((_flags & GzipFlags.Checksum) == GzipFlags.Checksum)
+            {
+                offset += HDRCHKSUM_LEN;
+                stream.Seek(HDRCHKSUM_LEN, SeekOrigin.Current);
+            }
+
+            // The remaining data, minus the file's trailer, should be
+            // the compressed blocks. Its length is the length of
+            // the stream, minus the length of the headers and the length
+            // of the trailer.
+            byte[] cDataBuf = new byte[stream.Length - offset - TRAILER_LENGTH];
+            stream.Read(cDataBuf, 0, cDataBuf.Length);
+            byte[] trailerBuf = new byte[TRAILER_LENGTH];
+            stream.Read(trailerBuf, 0, TRAILER_LENGTH);
+
+            if (BitConverter.IsLittleEndian)
+                _isize = BitConverter.ToUInt32(trailerBuf, ISIZE_OFFSET);
+            else
+                _isize = BitConverter.ToUInt32(
+                    trailerBuf.Skip(ISIZE_OFFSET).Reverse().ToArray(),
+                    0
+                    );
+
+            using (var ms = new MemoryStream(cDataBuf))
+            using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
+            {
+                _dcData = new byte[_isize];
+
+                // The stream's Read method only accepts an Int32 for length,
+                // which can have a value of up to 2^31. Gzip, however, supports
+                // files up to 2^32 in length.
+                //
+                // To allow >2GiB files to be used, we need to read in two goes
+                // rather than one when they are present.
+                if (_isize > Int32.MaxValue)
+                {
+                    ds.Read(_dcData, 0, Int32.MaxValue);
+                    ds.Read(_dcData, Int32.MaxValue, (int)(_isize - Int32.MaxValue));
+                }
+                else
+                {
+
+                    ds.Read(_dcData, 0, (int)_isize);
+                }
+            }
+
+            // If the archive doesn't contain the original file name,
+            // set the file name to the file's CRC-32 as a hex string.
+            if (_name == null)
+                _name = trailerBuf
+                    .Take(4)
+                    .Aggregate(new StringBuilder(), (sb, b) => sb.Append(b.ToString("x")))
+                    .ToString();
         }
 
         /// <summary>
