@@ -53,7 +53,21 @@ namespace SynapLink.Zener
             )
         {
             byte[] boundaryBytes = encoding.GetBytes(boundary);
-            byte[] window = new byte[boundaryBytes.Length];
+
+            stream.ReadUntilFound(boundaryBytes, readCall);
+        }
+        /// <summary>
+        /// Reads bytes until the specified boundary is found.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="boundary">The boundary to read to.</param>
+        /// <param name="readCall">The callback that is passed each byte as it is read.</param>
+        public static void ReadUntilFound(
+            this Stream stream,
+            byte[] boundary, Action<byte> readCall
+            )
+        {
+            byte[] window = new byte[boundary.Length];
 
             //if (stream.Length - stream.Position < boundaryBytes.Length)
             //    throw new InvalidOperationException
@@ -64,7 +78,7 @@ namespace SynapLink.Zener
             while (true)
             {
                 // We've reached the boundary!
-                if (window.SequenceEqual(boundaryBytes)) break;
+                if (window.SequenceEqual(boundary)) break;
 
                 int next = stream.ReadByte();
                 // Looks like we've hit the end of the stream.
