@@ -17,7 +17,7 @@ using SynapLink.Zener.Net;
 
 using IPAddress = System.Net.IPAddress;
 using Method = System.Func<dynamic, string>;
-using WebUtility = System.Net.WebUtility;
+using WebUtility = System.Web.HttpUtility;
 using RouteList = System.Collections.Generic
     .Dictionary<string, System.Func<SynapLink.Zener.ZenerContext, SynapLink.Zener.Core.RouteHandler>>;
 

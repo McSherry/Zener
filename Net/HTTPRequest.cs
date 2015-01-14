@@ -15,6 +15,8 @@ using System.Text;
 using System.IO;
 using System.Net;
 
+using WebUtility = System.Web.HttpUtility;
+
 namespace SynapLink.Zener.Net
 {
     /// <summary>
