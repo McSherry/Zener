@@ -150,7 +150,7 @@ namespace SynapLink.Zener.Net
                     // Lines before the request line can be blank.
                     // We want to skip these since there's nothing
                     // to parse.
-                    do { line = HttpRequest.ReadAsciiLine(ns); }
+                    do { line = ns.ReadAsciiLine(); }
                     while (String.IsNullOrEmpty(line));
                     // We've now hit the first line with content. In
                     // a compliant HTTP request, this is the request
@@ -158,7 +158,7 @@ namespace SynapLink.Zener.Net
                     requestLine = line;
                     // Move past the request line in to what is likely
                     // to be the first HTTP header in the request.
-                    line = HttpRequest.ReadAsciiLine(ns);
+                    line = ns.ReadAsciiLine();
 
                     StringBuilder headerBuilder = new StringBuilder();
                     // Now that we have the start of the header section,
@@ -167,7 +167,7 @@ namespace SynapLink.Zener.Net
                     while (!String.IsNullOrEmpty(line))
                     {
                         headerBuilder.AppendLine(line);
-                        line = HttpRequest.ReadAsciiLine(ns);
+                        line = ns.ReadAsciiLine();
                     }
 
                     // We now have all the HTTP headers in the request.
@@ -316,7 +316,7 @@ namespace SynapLink.Zener.Net
                             // Gets the first line of the response,
                             // or the "response line" (analogous to
                             // the client's request line)
-                            HttpRequest.ReadAsciiLine(resMS),
+                            resMS.ReadAsciiLine(),
                             // The headers, correctly formatted
                             res.Headers.ToString()
                             );

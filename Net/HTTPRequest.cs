@@ -209,7 +209,7 @@ namespace SynapLink.Zener.Net
             byte[] doubleDash = Encoding.ASCII.GetBytes("--");
 
             // We should ignore data before the first boundary.
-            ReadUntilFound(formatBody, boundary, Encoding.ASCII, b => { });
+            formatBody.ReadUntilFound(boundary, Encoding.ASCII, b => { });
             // Seek past CRLF
             formatBody.Seek(2, SeekOrigin.Current);
             boundary = String.Format("\r\n--{0}", boundary);
@@ -221,7 +221,7 @@ namespace SynapLink.Zener.Net
                 StringBuilder partHdrBuilder = new StringBuilder();
                 while (true)
                 {
-                    string line = ReadAsciiLine(formatBody);
+                    string line = formatBody.ReadAsciiLine();
                     // An empty line indicates the break between the part
                     // headers and the part body. If we get one when reading
                     // headers, we can safely assume that no more headers are
@@ -266,7 +266,7 @@ namespace SynapLink.Zener.Net
 
                 // Read the contents of this part.
                 List<byte> buffer = new List<byte>();
-                ReadUntilFound(formatBody, boundary, Encoding.ASCII, buffer.Add);
+                formatBody.ReadUntilFound(boundary, Encoding.ASCII, buffer.Add);
                 // Seek past CRLF
                 formatBody.Seek(2, SeekOrigin.Current);
 
@@ -341,60 +341,6 @@ namespace SynapLink.Zener.Net
             // If we added anything to dynObj, return it. Else,
             // return an Empty to indicate that there is no data.
             return dynObj.Count == 0 ? (dynamic)new Empty() : (dynamic)dynObj;
-        }
-        /// <summary>
-        /// Reads a single line from a stream and returns the ASCII-encoded string.
-        /// </summary>
-        /// <param name="stream">The stream to read from.</param>
-        /// <returns>A single line from the stream, ASCII-encoded.</returns>
-        /// <exception cref="System.ArgumentException">
-        ///     Thrown when the provided stream cannot be read from.
-        /// </exception>
-        internal static string ReadAsciiLine(Stream stream)
-        {
-            if (!stream.CanRead)
-                throw new ArgumentException
-                ("Provided stream cannot be read from.");
-
-            List<byte> buf = new List<byte>();
-            ReadUntilFound(stream, "\r\n", Encoding.ASCII, buf.Add);
-
-            return Encoding.ASCII.GetString(buf.ToArray());
-        }
-        /// <summary>
-        /// Reads bytes until the specified boundary is found.
-        /// </summary>
-        /// <param name="stream">The stream to read from.</param>
-        /// <param name="boundary">The boundary to read to.</param>
-        /// <param name="encoding">The encoding of the data and boundary.</param>
-        internal static void ReadUntilFound(Stream stream, string boundary, Encoding encoding, Action<byte> readCall)
-        {
-            byte[] boundaryBytes = encoding.GetBytes(boundary);
-            byte[] window = new byte[boundaryBytes.Length];
-
-            //if (stream.Length - stream.Position < boundaryBytes.Length)
-            //    throw new InvalidOperationException
-            //    ("Too few bytes left in stream to find boundary.");
-
-            stream.Read(window, 0, window.Length);
-
-            while (true)
-            {
-                // We've reached the boundary!
-                if (window.SequenceEqual(boundaryBytes)) break;
-
-                int next = stream.ReadByte();
-                // Looks like we've hit the end of the stream.
-                // Nothing more to read.
-                if (next == -1) break;
-
-                // Return the byte we're about to discard so
-                // it can be used by the caller.
-                readCall(window[0]);
-                // Shift the window ahead by a single byte.
-                Buffer.BlockCopy(window, 1, window, 0, window.Length - 1);
-                window[window.Length - 1] = (byte)next;
-            }
         }
 
         /// <summary>
