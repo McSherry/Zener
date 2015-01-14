@@ -36,7 +36,7 @@ namespace SynapLink.Zener.Net
                 POST        = "POST",
                 PUT         = "PUT",
                 DELETE      = "DELETE",
-                TRACE       = "TRACE",
+                TRACE = "TRACE",
                 CONNECT     = "CONNECT"
                 ;
         }
@@ -86,8 +86,8 @@ namespace SynapLink.Zener.Net
         /// Parses the HTTP Request Line and sets the appropriate properties
         /// based on its values.
         /// </summary>
-        /// <param name="reqestLine"></param>
-        /// <exception cref="SynapLink.Zener.HttpRequestException">
+        /// <param name="requestLine">The HTTP request's request line.</param>
+        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
         ///     Thrown when the HTTP request line is invalid or
         ///     is malformed.
         /// </exception>

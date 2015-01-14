@@ -23,16 +23,31 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpException : Exception
     {
+        /// <summary>
+        /// Creates a new HttpException.
+        /// </summary>
+        /// <param name="status">The HTTP status code representing the error.</param>
         public HttpException(HttpStatus status)
             : base()
         {
             this.StatusCode = status;
         }
+        /// <summary>
+        /// Creates a new HttpException.
+        /// </summary>
+        /// <param name="status">The HTTP status code representing the error.</param>
+        /// <param name="message">The message to send with the exception.</param>
         public HttpException(HttpStatus status, string message)
             : base(message)
         {
             this.StatusCode = status;
         }
+        /// <summary>
+        /// Creates a new HttpException.
+        /// </summary>
+        /// <param name="status">The HTTP status code representing the error.</param>
+        /// <param name="message">The message to send with the exception.</param>
+        /// <param name="innerException">The exception that caused this exception to be raised.</param>
         public HttpException(HttpStatus status, string message, Exception innerException)
             : base(message, innerException)
         {
@@ -54,23 +69,40 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public sealed class HttpRequestException : HttpException
     {
+        /// <summary>
+        /// Creates a new HttpRequestException.
+        /// </summary>
         public HttpRequestException()
             : base(HttpStatus.BadRequest)
         {
 
-        }
+        }        
+        /// <summary>
+        /// Creates a new HttpRequestException.
+        /// </summary>
+        /// <param name="message">The message to send with the exception.</param>
         public HttpRequestException(string message)
             : base(HttpStatus.BadRequest, message)
         {
 
         }
+        /// <summary>
+        /// Creates a new HttpRequestException.
+        /// </summary>
+        /// <param name="message">The message to send with the exception.</param>
+        /// <param name="innerException">The exception that is the cause of this exception.</param>
         public HttpRequestException(string message, Exception innerException)
             : base(HttpStatus.BadRequest, message, innerException)
         {
-
+            
         }
     }
 
+    /// <summary>
+    /// The signature that handlers of HTTP requests must fit.
+    /// </summary>
+    /// <param name="request">The received HTTP request.</param>
+    /// <param name="response">The class representing the handler's response.</param>
     public delegate void HttpRequestHandler(HttpRequest request, HttpResponse response);
     public delegate void HttpErrorHandler(HttpException exception, HttpResponse response);
 

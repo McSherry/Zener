@@ -67,6 +67,10 @@ namespace SynapLink.Zener.Net
         public NamedParametersHttpHeader(string httpHeader)
             : this(BasicHttpHeader.Parse(httpHeader)) { }
 
+        /// <summary>
+        /// Returns a string that represents the NamedParametersHttpHeader instance.
+        /// </summary>
+        /// <returns>A string that represents the NamedParametersHttpHeader instance.</returns>
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

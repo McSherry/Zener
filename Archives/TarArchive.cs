@@ -206,10 +206,10 @@ namespace SynapLink.Zener.Archives
         /// Creates a new TarArchive.
         /// </summary>
         /// <param name="stream">The stream containing the archive's bytes.</param>
-        /// <exception cref="System.IOException">
+        /// <exception cref="System.IO.IOException">
         ///     Thrown when a temporary file could not be opened for writing.
         /// </exception>
-        /// <exception cref="System.InvalidDataException">
+        /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the stream's length is shorter than the length of
         ///     one Tape Archive block, or when the tar file size field does
         ///     not contain a valid sequence of octal digits.
@@ -284,7 +284,7 @@ namespace SynapLink.Zener.Archives
         /// Retrieves a file based on its name.
         /// </summary>
         /// <param name="name">The name of the file to retrieve.</param>
-        /// <returns>An enumerable containing the file's bytes.</returns>
+        /// <param name="contents">The contents of the retrieved file.</param>
         /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {

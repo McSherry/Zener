@@ -207,7 +207,7 @@ namespace SynapLink.Zener.Archives
         ///     Thrown when the provided stream does not support the
         ///     required operations.
         /// </exception>
-        /// <exception cref="System.InvalidDataException">
+        /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the provided stream's first two bytes are
         ///     not the Gzip archive magic number.
         /// </exception>
@@ -369,6 +369,7 @@ namespace SynapLink.Zener.Archives
         }
         /// <summary>
         /// The contents of the file contained within the Gzip archive.
+        /// </summary>
         public IEnumerable<byte> File
         {
             get { return _dcData.Clone() as IEnumerable<byte>; }
@@ -378,7 +379,7 @@ namespace SynapLink.Zener.Archives
         /// Retrieves a file based on its name.
         /// </summary>
         /// <param name="name">The name of the file to retrieve.</param>
-        /// <returns>An enumerable containing the file's bytes.</returns>
+        /// <param name="contents">The contents of the retrieved file.</param>
         /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {

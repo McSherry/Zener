@@ -37,10 +37,10 @@ namespace SynapLink.Zener.Archives
         /// Creates a new UstarArchive class.
         /// </summary>
         /// <param name="stream">The stream containing the archive's bytes.</param>
-        /// <exception cref="System.IOException">
+        /// <exception cref="System.IO.IOException">
         ///     Thrown when a temporary file could not be opened for writing.
         /// </exception>
-        /// <exception cref="System.InvalidDataException">
+        /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the stream's length is shorter than the length of
         ///     one Tape Archive block, or when the tar file size field does
         ///     not contain a valid sequence of octal digits.

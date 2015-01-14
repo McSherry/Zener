@@ -34,12 +34,11 @@ namespace SynapLink.Zener.Archives
         /// <param name="format">The format string for the handler.</param>
         /// <param name="filepath">The file path of the archive.</param>
         /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
-        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
         ///     variable to be used as the file name.
         /// </exception>
-        /// <exception cref="System.InvalidDataException">
+        /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the TarArchive/UstarArchive constructor throws
         ///     an exception.
         /// </exception>
@@ -68,7 +67,7 @@ namespace SynapLink.Zener.Archives
         ///     Thrown when <paramref name="format"/> does not contain a
         ///     variable to be used as the file name.
         /// </exception>
-        /// <exception cref="System.InvalidDataException">
+        /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the TarArchive/UstarArchive constructor throws
         ///     an exception.
         /// </exception>
