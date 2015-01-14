@@ -36,6 +36,25 @@ namespace SynapLink.Zener.Archives
         /// <returns>True if a file with the given name exists within the archive.</returns>
         public abstract bool GetFile(string name, out IEnumerable<byte> contents);
         /// <summary>
+        /// Retrieves a file from the archive based on its name.
+        /// </summary>
+        /// <param name="name">The name of the file to retrieve.</param>
+        /// <returns>An enumerable containing the file's contents.</returns>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">
+        ///     Thrown when no file with the name passed to the method
+        ///     can be found within the archive.
+        /// </exception>
+        public virtual IEnumerable<byte> GetFile(string name)
+        {
+            IEnumerable<byte> ctns;
+            if (!this.GetFile(name, out ctns))
+                throw new KeyNotFoundException(
+                    "No file with the specified name exists."
+                    );
+
+            return ctns;
+        }
+        /// <summary>
         /// Retrieves a file from the archive based on its name, and
         /// returns it after converting it to a string with the specified
         /// encoding.

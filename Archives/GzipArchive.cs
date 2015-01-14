@@ -382,12 +382,6 @@ namespace SynapLink.Zener.Archives
         /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {
-            if (!name.Equals(_name))
-            {
-                contents = null;
-                return false;
-            }
-
             contents = _dcData.Clone() as IEnumerable<byte>;
             return true;
         }

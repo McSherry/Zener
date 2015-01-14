@@ -124,5 +124,77 @@ namespace SynapLink.Zener.Archives
                 rs.Write(file);
             });
         }
+        /// <summary>
+        /// Adds a handler which serves from an archive
+        /// to the router.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="archive">The archive to serve from.</param>
+        /// <param name="caseSensitive">Whether the names of archived files are case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the archive passed to the method does not contain
+        ///     any files.
+        /// </exception>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when either the router or the archive passed to the
+        ///     method is null.
+        /// </exception>
+        /// <exception cref="System.FormatException">
+        ///     Thrown when the format string passed to the method does not
+        ///     contain a variable to be used for file names.
+        /// </exception>
+        public static void AddArchive(
+            this Router router,
+            string format, Archive archive,
+            bool caseSensitive = false
+            )
+        {
+            if (!Routing.GetParameters(format).Contains(RTR_ADDARCHIVE_PARAM))
+                throw new FormatException(
+                    String.Format(
+                        @"The provided format string does not contain a variable named ""{0}"".",
+                        RTR_ADDARCHIVE_PARAM
+                    ));
+
+            if (router == null)
+                throw new ArgumentNullException(
+                    "The provided router cannot be null."
+                    );
+
+            if (archive == null)
+                throw new ArgumentNullException(
+                    "The provided archive cannot be null."
+                    );
+
+            if (archive.Count <= 0)
+                throw new ArgumentException(
+                    "The provided archive contains no files."
+                    );
+
+            StringComparison comparison = caseSensitive
+                ? StringComparison.Ordinal
+                : StringComparison.OrdinalIgnoreCase
+                ;
+
+            router.AddHandler(
+                format,
+                (request, response, parameters) =>
+                {
+                    string file = parameters.file;
+                    string name = archive.Files
+                            .Where(s => s.Equals(file, comparison))
+                            .FirstOrDefault();
+
+                    if (name == default(string))
+                        throw new HttpException(HttpStatus.NotFound);
+
+                    response.Headers.Add(
+                        "Content-Type",
+                        Routing.MediaTypes.Find(name, FindParameterType.NameOrPath)
+                        );
+                    response.Write(archive.GetFile(name));
+                });
+        }
     }
 }
