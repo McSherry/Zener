@@ -46,6 +46,7 @@ namespace SynapLink.Zener
         /// <param name="stream">The stream to read from.</param>
         /// <param name="boundary">The boundary to read to.</param>
         /// <param name="encoding">The encoding of the data and boundary.</param>
+        /// <param name="readCall">The callback that is passed each byte as it is read.</param>
         public static void ReadUntilFound(
             this Stream stream,
             string boundary, Encoding encoding,

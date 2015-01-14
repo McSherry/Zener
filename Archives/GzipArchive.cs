@@ -137,6 +137,7 @@ namespace SynapLink.Zener.Archives
         }
 
         private const byte
+            ASCII_NUL       = 0x00,
             // Gzip header is minimally 10 bytes:
             // ID bytes, compression method identifier,
             // flags, modification time, extra flags, and
@@ -161,8 +162,10 @@ namespace SynapLink.Zener.Archives
             XFL_OFFSET      = 0x08,
             // Operating system identifier
             OS_OFFSET       = 0x09,
-            // Optional extra length
-            XLEN_OFFSET     = 0x0A
+            // Optional extra length field position
+            XLEN_OFFSET     = 0x0A,
+            // The number of bytes comprising the XLEN field
+            XLEN_LENGTH     = 0x02
             ;
         private const string ISO_ENCODING = "ISO-8859-1";
         /// <summary>
@@ -204,8 +207,7 @@ namespace SynapLink.Zener.Archives
                     "stream"
                     );
 
-            stream.Position = 0;
-
+            stream.Position = HEADER_OFFSET;
             byte[] headerBuf = new byte[HEADER_LEN_MIN];
             stream.Read(headerBuf, 0, HEADER_LEN_MIN);
 
@@ -232,6 +234,38 @@ namespace SynapLink.Zener.Archives
 
             _flags = (GzipFlags)headerBuf[FLG_OFFSET];
 
+            // Our current offset from the Gzip headers.
+            long offset = 0;
+
+            // The archive contains an optional extra field. We don't use it,
+            // but we need to skip past it.
+            if ((_flags & GzipFlags.OptionalExtras) == GzipFlags.OptionalExtras)
+            {
+                stream.Position = XLEN_OFFSET;
+                byte[] xlenBuf = new byte[XLEN_LENGTH];
+                stream.Read(xlenBuf, 0, XLEN_LENGTH);
+
+                // Multi-byte fields are stored LSB-first.
+                //
+                // We won't be reading the XLEN field, but we need
+                // to know how long it is so we can read/skip any
+                // other fields correctly.
+                offset = ((((ushort)xlenBuf[1]) << 8) | xlenBuf[0]) + XLEN_LENGTH;
+            }
+
+            // The archive contains the original file name of the stored
+            // file. We do want to use this.
+            if ((_flags & GzipFlags.OriginalName) == GzipFlags.OriginalName)
+            {
+                stream.Position = HEADER_LEN_MIN + offset;
+                List<byte> ofnBytes = new List<byte>();
+
+                stream.ReadUntilFound(new[] { ASCII_NUL }, ofnBytes.Add);
+
+                _name = IsoEncoding.GetString(ofnBytes.ToArray());
+
+                offset = stream.Position;
+            }
         }
 
         /// <summary>
