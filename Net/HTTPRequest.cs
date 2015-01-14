@@ -55,7 +55,11 @@ namespace SynapLink.Zener.Net
                 { "ascii", Encoding.ASCII },
                 { "us-ascii", Encoding.ASCII },
                 { "utf-8", Encoding.UTF8 },
-                { "utf8", Encoding.UTF8 }
+                { "utf8", Encoding.UTF8 },
+                { "iso-8859-1", Encoding.GetEncoding("ISO-8859-1") },
+                { "latin-1", Encoding.GetEncoding("ISO-8859-1") },
+                { "windows-1252", Encoding.GetEncoding(1252) },
+                { "cp-1252", Encoding.GetEncoding(1252) }
             };
 
         /// <summary>
