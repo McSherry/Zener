@@ -21,6 +21,7 @@ namespace SynapLink.Zener.Archives
     public sealed class GzipArchive
         : Archive, IDisposable
     {
+        [Flags]
         private enum GzipFlags : byte
         {
             /// <summary>
@@ -153,15 +154,15 @@ namespace SynapLink.Zener.Archives
             ID_2_OFFSET     = 0x01,
 
             // Compression method identifier
-            CM_OFFSET       = 0x03,
+            CM_OFFSET       = 0x02,
             // Modification time
-            MTIME_OFFSET    = 0x05,
+            MTIME_OFFSET    = 0x03,
             // Optional extra flags
-            XFL_OFFSET      = 0x09,
+            XFL_OFFSET      = 0x08,
             // Operating system identifier
-            OS_OFFSET       = 0x0A,
+            OS_OFFSET       = 0x09,
             // Optional extra length
-            XLEN_OFFSET     = 0x0B
+            XLEN_OFFSET     = 0x0A
             ;
         private const string ISO_ENCODING = "ISO-8859-1";
         /// <summary>
@@ -176,6 +177,7 @@ namespace SynapLink.Zener.Archives
 
         private string _name;
         private byte[] _dcData;
+        private GzipFlags _flags;
 
         /// <summary>
         /// Creates a new GzipArchive.
@@ -227,6 +229,9 @@ namespace SynapLink.Zener.Archives
                 throw new NotSupportedException(
                     "The compression method specified in the archive is not supported."
                     );
+
+            _flags = (GzipFlags)headerBuf[FLG_OFFSET];
+
         }
 
         /// <summary>
