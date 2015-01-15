@@ -416,7 +416,7 @@ namespace SynapLink.Zener.Net
         /// Creates a new instance of the HTTP server, listening on the specified
         /// port and the IPv4 loopback.
         /// </summary>
-        /// <param name="port">The TCP port to listen on (1025-65535).</param>
+        /// <param name="port">The TCP port to listen on.</param>
         public HttpServer(ushort port)
             : this(IPAddress.Loopback, port)
         {
@@ -427,7 +427,7 @@ namespace SynapLink.Zener.Net
         /// address and port.
         /// </summary>
         /// <param name="address">The IP address to listen on.</param>
-        /// <param name="port">The port to listen on.</param>
+        /// <param name="port">The TCP port to listen on.</param>
         public HttpServer(IPAddress address, ushort port)
         {
             _port = port;

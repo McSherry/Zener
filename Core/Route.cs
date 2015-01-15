@@ -67,8 +67,8 @@ namespace SynapLink.Zener.Core
          * 
          */
 
-        private Lazy<IEnumerable<string>> _paramNames;
-        private string _formatOriginal;
+        private readonly Lazy<IEnumerable<string>> _paramNames;
+        private readonly string _formatOriginal;
 
         /// <summary>
         /// Creates a new route.
