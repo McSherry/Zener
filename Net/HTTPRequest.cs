@@ -36,7 +36,7 @@ namespace SynapLink.Zener.Net
                 POST        = "POST",
                 PUT         = "PUT",
                 DELETE      = "DELETE",
-                TRACE = "TRACE",
+                TRACE       = "TRACE",
                 CONNECT     = "CONNECT"
                 ;
         }
