@@ -365,7 +365,16 @@ namespace SynapLink.Zener.Archives
         /// </summary>
         public override IEnumerable<string> Files
         {
-            get { return new[] { _name }; }
+            get { return new[] { this.Filename }; }
+        }
+        /// <summary>
+        /// The name of the file. Uses the Gzip Original Filename
+        /// field if present, otherwise uses the hex representation
+        /// of the archive's CRC-32.
+        /// </summary>
+        public string Filename
+        {
+            get { return _name; }
         }
         /// <summary>
         /// The contents of the file contained within the Gzip archive.
