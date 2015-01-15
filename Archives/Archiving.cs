@@ -25,61 +25,6 @@ namespace SynapLink.Zener.Archives
         private const string RTR_ADDARCHIVE_PARAM = "file";
 
         /// <summary>
-        /// Adds a handler to the router which serves
-        /// files from a UNIX V6 Tape Archive or a
-        /// POSIX IEEE P1003.1 Uniform Standard Tape
-        /// Archive.
-        /// </summary>
-        /// <param name="router">The router to add the handler to.</param>
-        /// <param name="format">The format string for the handler.</param>
-        /// <param name="filepath">The file path of the archive.</param>
-        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
-        /// <exception cref="System.ArgumentException">
-        ///     Thrown when <paramref name="format"/> does not contain a
-        ///     variable to be used as the file name.
-        /// </exception>
-        /// <exception cref="System.IO.InvalidDataException">
-        ///     Thrown when the TarArchive/UstarArchive constructor throws
-        ///     an exception.
-        /// </exception>
-        public static void AddTarArchive(
-            this Router router,
-            string format, string filepath,
-            bool caseSensitive = false
-            )
-        {
-            using (FileStream fs = File.Open(filepath, FileMode.Open))
-            {
-                router.AddTarArchive(format, fs, caseSensitive);
-            }
-        }
-        /// <summary>
-        /// Adds a handler to the router which serves
-        /// files from a UNIX V6 Tape Archive or a
-        /// POSIX IEEE P1003.1 Uniform Standard Tape
-        /// Archive.
-        /// </summary>
-        /// <param name="router">The router to add the handler to.</param>
-        /// <param name="format">The format string for the handler.</param>
-        /// <param name="stream">The stream containing the archive.</param>
-        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
-        /// <exception cref="System.ArgumentException">
-        ///     Thrown when <paramref name="format"/> does not contain a
-        ///     variable to be used as the file name.
-        /// </exception>
-        /// <exception cref="System.IO.InvalidDataException">
-        ///     Thrown when the TarArchive/UstarArchive constructor throws
-        ///     an exception.
-        /// </exception>
-        public static void AddTarArchive(
-            this Router router,
-            string format, Stream stream,
-            bool caseSensitive = false
-            )
-        {
-            router.AddArchive(format, new UstarArchive(stream), caseSensitive);
-        }
-        /// <summary>
         /// Adds a handler which serves from an archive
         /// to the router.
         /// </summary>
@@ -149,6 +94,75 @@ namespace SynapLink.Zener.Archives
                         Routing.MediaTypes.Find(name, FindParameterType.NameOrPath)
                         );
                     response.Write(archive.GetFile(name));
+                });
+        }
+
+        /// <summary>
+        /// Adds a handler to the router which serves
+        /// files from a UNIX V6 Tape Archive or a
+        /// POSIX IEEE P1003.1 Uniform Standard Tape
+        /// Archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the TarArchive/UstarArchive constructor throws
+        ///     an exception.
+        /// </exception>
+        public static void AddTarArchive(
+            this Router router,
+            string format, Stream stream,
+            bool caseSensitive = false
+            )
+        {
+            router.AddArchive(format, new UstarArchive(stream), caseSensitive);
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves files
+        /// from a GNU Zip (Gzip) archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the constructor for GzipArchive throws
+        ///     an exception.
+        /// </exception>
+        public static void AddGzipArchive(
+            this Router router,
+            string format, Stream stream
+            )
+        {
+            GzipArchive gzip;
+
+            try
+            {
+                using (stream) gzip = new GzipArchive(stream);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDataException(
+                    "The provided stream did not contain a valid Gzip archive.",
+                    ex
+                    );
+            }
+
+            string mediaType = Routing.MediaTypes.Find(
+                gzip.Filename, FindParameterType.NameOrPath
+                );
+
+            router.AddHandler(
+                format,
+                (request, response, parameters) =>
+                {
+                    response.Headers.Add("Content-Type", mediaType);
+                    response.Write(gzip.File);
                 });
         }
     }
