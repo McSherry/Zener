@@ -278,7 +278,7 @@ namespace SynapLink.Zener.Archives
             {
                 List<byte> ofnBytes = new List<byte>();
 
-                stream.ReadUntilFound(new[] { ASCII_NUL }, ofnBytes.Add);
+                stream.ReadUntilFound(ASCII_NUL, ofnBytes.Add);
 
                 _name = IsoEncoding.GetString(ofnBytes.ToArray());
 
@@ -290,7 +290,7 @@ namespace SynapLink.Zener.Archives
             // want it, but we still need to skip past it.
             if ((_flags & GzipFlags.Comment) == GzipFlags.Comment)
             {
-                stream.ReadUntilFound(new[] { ASCII_NUL }, b => { });
+                stream.ReadUntilFound(ASCII_NUL , b => { });
                 offset = stream.Position;
             }
 

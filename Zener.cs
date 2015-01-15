@@ -65,6 +65,19 @@ namespace SynapLink.Zener
         /// <param name="readCall">The callback that is passed each byte as it is read.</param>
         public static void ReadUntilFound(
             this Stream stream,
+            byte boundary, Action<byte> readCall
+            )
+        {
+            stream.ReadUntilFound(new[] { boundary }, readCall);
+        }
+        /// <summary>
+        /// Reads bytes until the specified boundary is found.
+        /// </summary>
+        /// <param name="stream">The stream to read from.</param>
+        /// <param name="boundary">The boundary to read to.</param>
+        /// <param name="readCall">The callback that is passed each byte as it is read.</param>
+        public static void ReadUntilFound(
+            this Stream stream,
             byte[] boundary, Action<byte> readCall
             )
         {
