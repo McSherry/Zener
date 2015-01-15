@@ -54,17 +54,26 @@ namespace SynapLink.Zener.Core
          *      user/[username]/messages/[message-id]
          * 
          * Parameter values must not contain forward-slashes.
-         * Parameter names are converted to lowercase (for example,
-         * "[USERname]" becomes "[username]").Parameter values
-         * retain their casing. Parameters should be separated
-         * from the rest of the format by a forward slash. For
-         * this reason, the below examples are not guaranteed to
-         * work.
+         * Parameters should be separated from the rest of the
+         * format by a forward slash. For this reason, the below
+         * examples are not guaranteed to work.
          * 
          *      test/path[param]
          *      [param]test/path
          *      
+         * Additionally, unbounded parameters (parameters which
+         * accept any character) may be created by prefixing the
+         * name with an asterisk, as below.
          * 
+         *      user/[*username]
+         *      
+         * As these unbounded variables may contain any character,
+         * they must appear at the end of a format string.
+         * 
+         *      a/[*b]/c
+         *      
+         * The format string shown above will never have any
+         * matches, because the unbounded variable is infixed.
          */
 
         private readonly Lazy<IEnumerable<string>> _paramNames;
