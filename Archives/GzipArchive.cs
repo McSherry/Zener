@@ -48,8 +48,8 @@ namespace SynapLink.Zener.Archives
             /// Whether the archive contains a
             /// human-readable comment.
             /// </summary>
-            Comment         = 0x0F,
-            Reserved        = 0xF0
+            Comment         = 0x10,
+            Reserved        = 0xE0
         }
         private enum GzipCompression : byte
         {
