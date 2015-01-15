@@ -28,27 +28,27 @@ namespace SynapLink.Zener.Archives
             /// Whether the file is likely to
             /// contain ASCII text.
             /// </summary>
-            AsciiText       = 0 << 0,
+            AsciiText       = 0x01,
             /// <summary>
             /// Whether the archive contains a
             /// Gzip CRC-16 header checksum.
             /// </summary>
-            Checksum        = 1 << 0,
+            Checksum        = 0x02,
             /// <summary>
             /// Whether the archive uses optional
             /// extra flags.
             /// </summary>
-            OptionalExtras  = 1 << 1,
+            OptionalExtras  = 0x04,
             /// <summary>
             /// Whether the archive contains an
             /// original file name for the file.
             /// </summary>
-            OriginalName    = 1 << 2,
+            OriginalName    = 0x08,
             /// <summary>
             /// Whether the archive contains a
             /// human-readable comment.
             /// </summary>
-            Comment         = 1 << 3,
+            Comment         = 0x0F,
             Reserved        = 0xF0
         }
         private enum GzipCompression : byte

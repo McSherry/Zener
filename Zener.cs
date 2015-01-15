@@ -20,7 +20,6 @@ namespace SynapLink.Zener
     /// </summary>
     public static class Zener
     {
-
         /// <summary>
         /// Reads a single line from a stream and returns the ASCII-encoded string.
         /// </summary>
