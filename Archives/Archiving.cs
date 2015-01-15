@@ -77,51 +77,7 @@ namespace SynapLink.Zener.Archives
             bool caseSensitive = false
             )
         {
-            var paramNames = Routing.GetParameters(format);
-
-            if (!paramNames.Contains(RTR_ADDARCHIVE_PARAM))
-                throw new ArgumentException(
-                    String.Format(
-                        @"The provided format does not contain a variable named ""{0}""",
-                        RTR_ADDARCHIVE_PARAM
-                    ));
-
-            Archive tar;
-            try
-            {
-                tar = new UstarArchive(stream);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidDataException(
-                    "The provided data was not a valid tar or ustar archive.",
-                    ex
-                    );
-            }
-
-            router.AddHandler(format, (rq, rs, pr) =>
-            {
-                string fname = (string)pr.file;
-                var cmp = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-                var fmatches = tar.Files
-                    .Where(f => fname.Equals(f, cmp))
-                    .FirstOrDefault();
-
-                if (fmatches == null)
-                {
-                    throw new HttpException(HttpStatus.NotFound);
-                }
-
-                IEnumerable<byte> file;
-                tar.GetFile(fmatches, out file);
-
-                rs.Headers.Add(
-                    "Content-Type",
-                    Routing.MediaTypes.Find(fmatches, FindParameterType.NameOrPath)
-                    );
-
-                rs.Write(file);
-            });
+            router.AddArchive(format, new UstarArchive(stream), caseSensitive);
         }
         /// <summary>
         /// Adds a handler which serves from an archive
