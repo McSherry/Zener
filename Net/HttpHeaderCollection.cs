@@ -36,15 +36,6 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// Used to change the read-only state of the collection.
-        /// </summary>
-        /// <param name="enable">True to make the collection read-only.</param>
-        internal void WriteProtect(bool enable)
-        {
-            _readOnly = enable;
-        }
-
-        /// <summary>
         /// Creates an empty collection of HTTP headers.
         /// </summary>
         public HttpHeaderCollection()
@@ -124,7 +115,8 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public bool IsReadOnly
         {
-            get { return _readOnly; }
+            get;
+            internal set;
         }
         /// <summary>
         /// The number of headers the collection currently holds.

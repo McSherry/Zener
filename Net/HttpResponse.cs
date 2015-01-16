@@ -339,6 +339,9 @@ namespace SynapLink.Zener.Net
                     this.Headers.Add("Server", "Zener/" + ZenerCore.Version.ToString(3), true);
                 }
 
+                // As with cookies, headers cannot be modified once we
+                // start sending the response body.
+                this.Headers.IsReadOnly = true;
                 _nsw.Write(this.Headers.ToString());
                 // The end of the header block is indicated by using two CRLFs,
                 // so we need to write an extra one to our stream before the
