@@ -215,6 +215,14 @@ namespace SynapLink.Zener.Archives
             _flags = (CabinetHeaderFlags)BitConverter.ToUInt16(flagBytes.ToArray(), 0);
             #endregion
 
+            // Check to see if optional variable-length fields are present
+            // within the archive's header.
+            if ((_flags & CabinetHeaderFlags.ReservedPresent) == CabinetHeaderFlags.ReservedPresent)
+            {
+                #region Set abReserve lengths
+
+                #endregion
+            }
         }
     }
 }
