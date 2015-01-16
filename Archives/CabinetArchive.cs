@@ -125,6 +125,10 @@ namespace SynapLink.Zener.Archives
         /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the stream's data does not pass verification.
         /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when the file format version of the provided cabinet
+        ///     file is not supported by the class.
+        /// </exception>
         public CabinetArchive(Stream stream)
         {
             if (stream == null)
@@ -145,10 +149,14 @@ namespace SynapLink.Zener.Archives
 
             stream.Position = 0;
 
-            byte[] buffer = new byte[HEADER_MIN_LENGTH];
-            stream.Read(buffer, 0, HEADER_MIN_LENGTH);
+            // We know that these headers will be present
+            // in every cabinet file, so we can just read
+            // them.
+            byte[] hdrBuf = new byte[HEADER_MIN_LENGTH];
+            stream.Read(hdrBuf, 0, HEADER_MIN_LENGTH);
+
             #region Verify cabinet signature
-            if (!buffer.Take(SIGNATURE_LEN).SequenceEqual(Signature))
+            if (!hdrBuf.Take(SIGNATURE_LEN).SequenceEqual(Signature))
                 throw new InvalidDataException(
                     "The stream does not represent a cabinet archive."
                     );
@@ -158,14 +166,14 @@ namespace SynapLink.Zener.Archives
             if (BitConverter.IsLittleEndian)
             {
                 cabLength = BitConverter.ToUInt32(
-                    buffer.Skip(SIZE_OFFSET).Take(SIZE_LEN).ToArray(),
+                    hdrBuf.Skip(SIZE_OFFSET).Take(SIZE_LEN).ToArray(),
                     0
                     );
             }
             else
             {
                 cabLength = BitConverter.ToUInt32(
-                    buffer.Skip(SIZE_OFFSET).Take(SIZE_LEN).Reverse().ToArray(),
+                    hdrBuf.Skip(SIZE_OFFSET).Take(SIZE_LEN).Reverse().ToArray(),
                     0
                     );
             }
@@ -174,6 +182,33 @@ namespace SynapLink.Zener.Archives
                 throw new InvalidDataException(
                     "The stream's length does not match the cabinet's length."
                     );
+            #endregion
+            #region Verify cabinet version
+            if (
+                hdrBuf[VERSION_MIN_OFFSET] != VERSION_MIN_SUPPORTED ||
+                hdrBuf[VERSION_MAJ_OFFSET] != VERSION_MAJ_SUPPORTED
+                )
+            {
+                throw new NotSupportedException(
+                    "The class does not support the provided file format version."
+                    );
+            }
+            #endregion
+            #region Set first file offset / file count / folder count
+            var fileOffsetBytes = hdrBuf.Skip(FILE_OFFSET_OFFSET).Take(FILE_OFFSET_LEN);
+            var fileCountBytes = hdrBuf.Skip(FILE_COUNT_OFFSET).Take(FILE_COUNT_LEN);
+            var fdrCountBytes = hdrBuf.Skip(FOLDER_COUNT_OFFSET).Take(FOLDER_COUNT_LEN);
+
+            if (!BitConverter.IsLittleEndian)
+            {
+                fileOffsetBytes = fileOffsetBytes.Reverse();
+                fileCountBytes = fileCountBytes.Reverse();
+                fdrCountBytes = fdrCountBytes.Reverse();
+            }
+
+            _filesFirstOffset = BitConverter.ToUInt32(fileOffsetBytes.ToArray(), 0);
+            _filesCount = BitConverter.ToUInt16(fileCountBytes.ToArray(), 0);
+            _foldersCount = BitConverter.ToUInt16(fdrCountBytes.ToArray(), 0);
             #endregion
         }
     }
