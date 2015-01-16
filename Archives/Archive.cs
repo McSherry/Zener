@@ -48,9 +48,11 @@ namespace SynapLink.Zener.Archives
         {
             IEnumerable<byte> ctns;
             if (!this.GetFile(name, out ctns))
+            {
                 throw new KeyNotFoundException(
                     "No file with the specified name exists."
                     );
+            }
 
             return ctns;
         }
@@ -78,6 +80,29 @@ namespace SynapLink.Zener.Archives
             else str = null;
 
             return success;
+        }
+        /// <summary>
+        /// Retrieves a file from the archive based on its name, and
+        /// returns its contents as a string with the specified encoding.
+        /// </summary>
+        /// <param name="name">The name of the file to retrieve.</param>
+        /// <param name="encoding">The encoding to apply to the contents.</param>
+        /// <returns>A string containing the file's contents in the specified encoding.</returns>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">
+        ///     Thrown when no file with the name passed to the method can
+        ///     be found within the archive.
+        /// </exception>
+        public virtual string GetFile(string name, Encoding encoding)
+        {
+            string str;
+            if (!this.GetFile(name, encoding, out str))
+            {
+                throw new KeyNotFoundException(
+                    "No file with the specified name exists."
+                    );
+            }
+
+            return str;
         }
         /// <summary>
         /// Releases any resources in use by the class.
