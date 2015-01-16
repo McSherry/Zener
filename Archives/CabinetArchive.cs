@@ -21,58 +21,61 @@ namespace SynapLink.Zener.Archives
     {
         private static readonly IEnumerable<byte> Signature;
         private const int
-            U1 = 1,
-            U2 = 2,
-            U4 = 4,
-            HEADER_MIN_LENGTH = 36,
+            U1                      = 1,
+            U2                      = 2,
+            U4                      = 4,
+            HEADER_MIN_LENGTH       = 36,
             // Mandatory header field offsets. These
             // header fields will always be present within
             // a cabinet file.
-            SIGNATURE_OFFSET = 0,
-            SIGNATURE_LEN = U4,
+            SIGNATURE_OFFSET        = 0,
+            SIGNATURE_LEN           = U4,
 
-            SIZE_OFFSET = 8,
-            SIZE_LEN = U4,
+            SIZE_OFFSET             = 8,
+            SIZE_LEN                = U4,
 
-            FILE_OFFSET_OFFSET = 16,
-            FILE_OFFSET_LEN = U4,
+            FILE_OFFSET_OFFSET      = 16,
+            FILE_OFFSET_LEN         = U4,
 
-            VERSION_MIN_OFFSET = 24,
-            VERSION_MIN_LEN = U1,
-            VERSION_MAJ_OFFSET = 25,
-            VERSION_MAJ_LEN = U1,
+            VERSION_MIN_OFFSET      = 24,
+            VERSION_MIN_LEN         = U1,
+            VERSION_MAJ_OFFSET      = 25,
+            VERSION_MAJ_LEN         = U1,
 
-            FOLDER_COUNT_OFFSET = 26,
-            FOLDER_COUNT_LEN = U2,
-            FILE_COUNT_OFFSET = 28,
-            FILE_COUNT_LEN = U2,
+            VERSION_MAJ_SUPPORTED   = 1,
+            VERSION_MIN_SUPPORTED   = 3,
 
-            HEADER_FLAGS_OFFSET = 30,
-            HEADER_FLAGS_LEN = U2,
+            FOLDER_COUNT_OFFSET     = 26,
+            FOLDER_COUNT_LEN        = U2,
+            FILE_COUNT_OFFSET       = 28,
+            FILE_COUNT_LEN          = U2,
 
-            CABINET_SETID_OFFSET = 32,
-            CABINET_SETID_LEN = U2,
-            CABINET_SETLEN_OFFSET = 34,
-            CABINET_SETLEN_LEN = U2,
+            HEADER_FLAGS_OFFSET     = 30,
+            HEADER_FLAGS_LEN        = U2,
+
+            CABINET_SETID_OFFSET    = 32,
+            CABINET_SETID_LEN       = U2,
+            CABINET_SETLEN_OFFSET   = 34,
+            CABINET_SETLEN_LEN      = U2,
 
             // The offset of the field containing
             // the length of the abReserve field in this
             // CFHEADER block.
-            HDR_ABRLEN_OFFSET = 36,
-            HDR_ABRLEN_LEN = U2,
+            HDR_ABRLEN_OFFSET       = 36,
+            HDR_ABRLEN_LEN          = U2,
             // The offset of the abReserve field in this
             // CFHEADER block.
-            HDR_ABR_OFFSET = 40,
+            HDR_ABR_OFFSET          = 40,
             // The offset of the field containing the
             // length of the abReserve field in each
             // CFFOLDER block.
-            FDR_ABRLEN_OFFSET = 38,
-            FDR_ABRLEN_LEN = U1,
+            FDR_ABRLEN_OFFSET       = 38,
+            FDR_ABRLEN_LEN          = U1,
             // The offset of the field containing the
             // length of the abReserve field in each
             // CFDATA block.
-            DATA_ABRLEN_OFFSET = 39,
-            DATA_ABRLEN_LEN = U1
+            DATA_ABRLEN_OFFSET      = 39,
+            DATA_ABRLEN_LEN         = U1
             ;
 
         /// <summary>
