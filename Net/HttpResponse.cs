@@ -491,6 +491,15 @@ namespace SynapLink.Zener.Net
             _nsw.WriteLine(value);
         }
         /// <summary>
+        /// Writes the provided string to the response,
+        /// followed by a new-line.
+        /// </summary>
+        /// <param name="value">The string to write.</param>
+        public void WriteLine(string value)
+        {
+            this.WriteLine(value as object);
+        }
+        /// <summary>
         /// Writes the provided values to the response in the
         /// specified format, followed by a new-line.
         /// </summary>
