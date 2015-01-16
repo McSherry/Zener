@@ -352,10 +352,22 @@ namespace SynapLink.Zener.Net
         /// Checks if the connection between client and server has
         /// been closed, and throws an exception if it has.
         /// </summary>
+        /// <exception cref="System.InvalidOperationException"></exception>
         private void _CheckClosed()
         {
             if (_closed) throw new InvalidOperationException
             ("Cannot modify the response after the connection has been closed.");
+        }
+        /// <summary>
+        /// Checks if the server has begun responding to the client,
+        /// and throws if it has.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException"></exception>
+        private void _CheckResponding()
+        {
+            if (_beginRespond) throw new InvalidOperationException(
+                "Cannot modify the status code after the response body has been written to."
+                );
         }
 
         /// <summary>
@@ -407,6 +419,9 @@ namespace SynapLink.Zener.Net
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the response body has already been sent
         ///     to the client.
+        ///     
+        ///     Throws when the connection between the client and
+        ///     server has been closed.
         /// </exception>
         public HttpStatus StatusCode
         {
@@ -414,9 +429,7 @@ namespace SynapLink.Zener.Net
             set
             {
                 this._CheckClosed();
-
-                if (_beginRespond) throw new InvalidOperationException
-                ("Cannot modify status code after the response body has been written to.");
+                this._CheckResponding();
 
                 _httpStatus = value;
             }
@@ -518,7 +531,11 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public void Close()
         {
-            if (!_closed) _closeCallback();
+            if (!_closed)
+            {
+                _closeCallback();
+                _closed = true;
+            }
         }
          
     }
