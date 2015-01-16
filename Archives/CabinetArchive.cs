@@ -110,6 +110,7 @@ namespace SynapLink.Zener.Archives
 
         private readonly uint _filesFirstOffset;
         private readonly ushort _filesCount, _foldersCount;
+        private readonly CabinetHeaderFlags _flags;
 
         /// <summary>
         /// Creates a new CabinetArchive.
@@ -194,22 +195,26 @@ namespace SynapLink.Zener.Archives
                     );
             }
             #endregion
-            #region Set first file offset / file count / folder count
+            #region Set first file offset / file count / folder count / flags
             var fileOffsetBytes = hdrBuf.Skip(FILE_OFFSET_OFFSET).Take(FILE_OFFSET_LEN);
             var fileCountBytes = hdrBuf.Skip(FILE_COUNT_OFFSET).Take(FILE_COUNT_LEN);
             var fdrCountBytes = hdrBuf.Skip(FOLDER_COUNT_OFFSET).Take(FOLDER_COUNT_LEN);
+            var flagBytes = hdrBuf.Skip(HEADER_FLAGS_OFFSET).Take(HEADER_FLAGS_LEN);
 
             if (!BitConverter.IsLittleEndian)
             {
                 fileOffsetBytes = fileOffsetBytes.Reverse();
                 fileCountBytes = fileCountBytes.Reverse();
                 fdrCountBytes = fdrCountBytes.Reverse();
+                flagBytes = flagBytes.Reverse();
             }
 
             _filesFirstOffset = BitConverter.ToUInt32(fileOffsetBytes.ToArray(), 0);
             _filesCount = BitConverter.ToUInt16(fileCountBytes.ToArray(), 0);
             _foldersCount = BitConverter.ToUInt16(fdrCountBytes.ToArray(), 0);
+            _flags = (CabinetHeaderFlags)BitConverter.ToUInt16(flagBytes.ToArray(), 0);
             #endregion
+
         }
     }
 }
