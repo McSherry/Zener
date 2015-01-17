@@ -164,22 +164,16 @@ namespace SynapLink.Zener.Archives
             #endregion
             #region Verify cabinet length
             uint cabLength;
-            if (BitConverter.IsLittleEndian)
+            var sizeBytes = hdrBuf.Skip(SIZE_OFFSET).Take(SIZE_LEN);
+
+            if (!BitConverter.IsLittleEndian)
             {
-                cabLength = BitConverter.ToUInt32(
-                    hdrBuf.Skip(SIZE_OFFSET).Take(SIZE_LEN).ToArray(),
-                    0
-                    );
-            }
-            else
-            {
-                cabLength = BitConverter.ToUInt32(
-                    hdrBuf.Skip(SIZE_OFFSET).Take(SIZE_LEN).Reverse().ToArray(),
-                    0
-                    );
+                sizeBytes = sizeBytes.Reverse();
             }
 
-            if (stream.Length != cabLength)
+            cabLength = BitConverter.ToUInt32(sizeBytes.ToArray(), 0);
+
+            if (stream.Length < cabLength)
                 throw new InvalidDataException(
                     "The stream's length does not match the cabinet's length."
                     );
@@ -223,6 +217,26 @@ namespace SynapLink.Zener.Archives
 
                 #endregion
             }
+        }
+
+        public override int Count
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public override IEnumerable<string> Files
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public override bool GetFile(string name, out IEnumerable<byte> contents)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Dispose()
+        {
+            throw new NotImplementedException();
         }
     }
 }
