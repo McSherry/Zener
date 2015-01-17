@@ -135,9 +135,27 @@ namespace SynapLink.Zener.Archives
         // A FileStream with the temporary file open and
         // ready for reading/writing.
         private FileStream _dataDump;
-        // Object to use in locks when reading from the
-        // _dataDump FileStream.
+        // Object to use in locks when reading/writing
+        // from the _dataDump FileStream.
         private object _dataLock;
+
+        /// <summary>
+        /// Writes a set of bytes to the dump file.
+        /// </summary>
+        /// <param name="name">The name of the file being written.</param>
+        /// <param name="bytes">The contents of the file.</param>
+        /// <param name="seekToEnd">Whether to seek to the end of the dump.</param>
+        private void _writeToDump(string name, byte[] bytes, bool seekToEnd = true)
+        {
+            lock (_dataLock)
+            {
+                if (seekToEnd) _dataDump.Seek(0, SeekOrigin.End);
+
+                _names.Add(name);
+                _marks.Add(new Filemark(bytes.LongLength, _dataDump.Position));
+                _dataDump.Write(bytes, 0, bytes.Length);
+            }
+        }
 
         /// <summary>
         /// Creates a new CabinetArchive.
@@ -159,6 +177,9 @@ namespace SynapLink.Zener.Archives
         /// </exception>
         public CabinetArchive(Stream stream)
         {
+            /* * * * * * * * * *
+             * Set up the class to make it ready for cabinet parsing
+             * * * * * * * * * */
             if (stream == null)
                 throw new ArgumentNullException(
                     "The provided stream cannot be null.",
@@ -175,6 +196,39 @@ namespace SynapLink.Zener.Archives
                     "The provided stream does not support reading."
                     );
 
+            _names = new List<string>();
+            _marks = new List<Filemark>();
+            _dataLock = new object();
+
+            try
+            {
+                _dataDump = new FileStream(
+                    Path.GetTempFileName(),
+                    FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    4096, // The default buffer size
+                    FileOptions.DeleteOnClose | FileOptions.RandomAccess
+                    );
+            }
+            catch (IOException ioex)
+            {
+                throw new IOException(
+                    "Could not open a temporary file.",
+                    ioex
+                    );
+            }
+            catch (UnauthorizedAccessException uaex)
+            {
+                throw new IOException(
+                    "Could not open a temporary file.",
+                    uaex
+                    );
+            }
+
+            /* * * * * * * * * *
+             * Parse the cabinet file
+             * * * * * * * * * */
             stream.Position = 0;
 
             // We know that these headers will be present
