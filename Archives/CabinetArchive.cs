@@ -109,7 +109,10 @@ namespace SynapLink.Zener.Archives
         }
 
         private readonly uint _filesFirstOffset;
-        private readonly ushort _filesCount, _foldersCount;
+        private readonly ushort 
+            _filesCount, _foldersCount,
+            _headerAbLength;
+        private readonly byte _folderAbLength, _dataAbLength;
         private readonly CabinetHeaderFlags _flags;
 
         /// <summary>
@@ -214,8 +217,30 @@ namespace SynapLink.Zener.Archives
             if ((_flags & CabinetHeaderFlags.ReservedPresent) == CabinetHeaderFlags.ReservedPresent)
             {
                 #region Set abReserve lengths
+                // Byte buffer for optional fields that are only included
+                // if the flag in the above condition is present and set.
+                byte[]
+                    headerAbLenBytes = new byte[HDR_ABRLEN_LEN],
+                    folderAbLenBytes = new byte[FDR_ABRLEN_LEN],
+                    dataAbLenBytes = new byte[DATA_ABRLEN_LEN];
+                stream.Read(headerAbLenBytes, 0, HDR_ABRLEN_LEN);
+                stream.Read(folderAbLenBytes, 0, FDR_ABRLEN_LEN);
+                stream.Read(dataAbLenBytes, 0, DATA_ABRLEN_LEN);
 
+                if (!BitConverter.IsLittleEndian)
+                {
+                    headerAbLenBytes = headerAbLenBytes.Reverse().ToArray();
+                }
+
+                _headerAbLength = BitConverter.ToUInt16(headerAbLenBytes, 0);
+                _folderAbLength = folderAbLenBytes.First();
+                _dataAbLength = dataAbLenBytes.First();
                 #endregion
+
+                // We don't care about what's in the abReserve field, since
+                // it's application-specific, so we'll just skip past it.
+                if (_headerAbLength != 0)
+                    stream.Seek(_headerAbLength, SeekOrigin.Current);
             }
         }
 
@@ -223,7 +248,6 @@ namespace SynapLink.Zener.Archives
         {
             get { throw new NotImplementedException(); }
         }
-
         public override IEnumerable<string> Files
         {
             get { throw new NotImplementedException(); }
@@ -233,7 +257,6 @@ namespace SynapLink.Zener.Archives
         {
             throw new NotImplementedException();
         }
-
         public override void Dispose()
         {
             throw new NotImplementedException();
