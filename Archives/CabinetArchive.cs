@@ -175,6 +175,9 @@ namespace SynapLink.Zener.Archives
         ///     Thrown when the file format version of the provided cabinet
         ///     file is not supported by the class.
         /// </exception>
+        /// <exception cref="System.IO.IOException">
+        ///     Thrown when a temporary file could not be opened.
+        /// </exception>
         public CabinetArchive(Stream stream)
         {
             /* * * * * * * * * *
