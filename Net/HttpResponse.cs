@@ -238,7 +238,8 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpResponse
     {
-        private const string HDR_SETCOOKIE = "Set-Cookie";
+        private const string HDR_SETCOOKIE  = "Set-Cookie";
+        private const string HTTP_VERSION   = "1.1";
 
         private HttpStatus _httpStatus;
         private HttpHeaderCollection _headers;
@@ -262,7 +263,7 @@ namespace SynapLink.Zener.Net
                 // e.g. "HTTP/1.1 404 Not Found"
                 _nsw.WriteLine(
                     "HTTP/{0} {1} {2}",
-                        HttpServer.HTTP_VERSION, (int)this.StatusCode,
+                        HTTP_VERSION, (int)this.StatusCode,
                         this.StatusCode.GetMessage()
                 );
 

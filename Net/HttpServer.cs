@@ -111,14 +111,9 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpServer
     {
-        private const string HTTP_MTD_HEAD = "HEAD";
-        private const string HTTP_HDR_CTNLEN = "Content-Length";
         private const string CRLF = "\r\n";
-        private const int REQ_READTIMEOUT = 60000; // 60s
-        private const int MAX_REQUEST_BODY = (1024 * 1024) * 16; // 16 MiB
         private const int TCP_EPHEMERAL_MIN = 49152;
         private const int TCP_EPHEMERAL_MAX = 65535;
-        internal const string HTTP_VERSION = "1.1";
         private static Random _rng;
 
         /// <summary>
@@ -175,45 +170,6 @@ namespace SynapLink.Zener.Net
             try
             {
                 req = HttpRequest.Create(ns);
-
-                // If we've received a HEAD request, we are
-                // to send only the headers, and not the
-                // response body.
-                //
-                // To do this, we pass the HttpResponse a
-                // MemoryStream instead of a NetworkStream.
-                if (req.Method.Equals(HTTP_MTD_HEAD))
-                {
-                    MemoryStream resMS = new MemoryStream();
-
-                    res = new HttpResponse(resMS, () =>
-                    {
-                        // We want to read the first line of the
-                        // response, and the stream's position will
-                        // be at the end, so we need to go back to
-                        // the start.
-                        resMS.Position = 0;
-                        string headerSection = String.Format(
-                            "{0}\r\n{1}\r\n",
-                            // Gets the first line of the response,
-                            // or the "response line" (analogous to
-                            // the client's request line)
-                            resMS.ReadAsciiLine(),
-                            // The headers, correctly formatted
-                            res.Headers.ToString()
-                            );
-                        byte[] resBytes = Encoding.ASCII
-                            .GetBytes(headerSection);
-                        // When Close() is called, we know that the response
-                        // is over. Since we know that no new data will be
-                        // written, we can take the headers and write them
-                        // to the network stream.
-                        //
-                        // We can discard the body, as it shouldn't be sent
-                        // with a HEAD request.
-                        ns.Write(resBytes, 0, resBytes.Length);
-                    });
-                }
 
                 if (this.RequestHandler != null)
                 {
