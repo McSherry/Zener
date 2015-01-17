@@ -19,6 +19,38 @@ namespace SynapLink.Zener.Archives
     public sealed class CabinetArchive
         : Archive, IDisposable
     {
+        private enum CFFOLDERCompressionType
+            : ushort
+        {
+            None        = 0x0000,
+            MSZIP       = 0x0001,
+            Quantum     = 0x0002,
+            LZX         = 0x0003
+        }
+        private struct CFFOLDER
+        {
+            public CFFOLDER(Stream source)
+            {
+                using (var br = new BinaryReader(source))
+                {
+                    coffCabStart = br.ReadUInt32();
+                    cCFData = br.ReadUInt16();
+                    ushort uCType = br.ReadUInt16();
+
+                    if (!Enum.IsDefined(typeof(CFFOLDERCompressionType), uCType))
+                        throw new InvalidDataException(
+                            "The cabinet's specified compression method is not recognised."
+                            );
+
+                    cType = (CFFOLDERCompressionType)uCType;
+                }
+            }
+
+            public readonly uint coffCabStart;
+            public readonly ushort cCFData;
+            public readonly CFFOLDERCompressionType cType;
+        }
+
         private static readonly IEnumerable<byte> Signature;
         private const int
             ASCII_NUL               = 0x00,
