@@ -207,7 +207,7 @@ namespace SynapLink.Zener.Archives
         /// </summary>
         /// <param name="stream">The stream containing the archive's bytes.</param>
         /// <exception cref="System.IO.IOException">
-        ///     Thrown when a temporary file could not be opened for writing.
+        ///     Thrown when a temporary file could not be opened.
         /// </exception>
         /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the stream's length is shorter than the length of
@@ -250,8 +250,15 @@ namespace SynapLink.Zener.Archives
             catch (IOException ioex)
             {
                 throw new IOException(
-                    "Could not open temporary file.",
+                    "Could not open a temporary file.",
                     ioex
+                    );
+            }
+            catch (UnauthorizedAccessException uaex)
+            {
+                throw new IOException(
+                    "Could not open a temporary file.",
+                    uaex
                     );
             }
 
