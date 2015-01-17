@@ -239,54 +239,6 @@ namespace SynapLink.Zener.Net
     public class HttpResponse
     {
         private const string HDR_SETCOOKIE = "Set-Cookie";
-        private static readonly Dictionary<HttpStatus, string> STAT_MSGS
-            = new Dictionary<HttpStatus, string>()
-            {
-                { (HttpStatus)100, "Continue" },
-                { (HttpStatus)101, "Switching Protocols" },
-                
-                { (HttpStatus)200, "OK" },
-                { (HttpStatus)201, "Created" },
-                { (HttpStatus)202, "Accepted" },
-                { (HttpStatus)203, "Non-Authoritative Information" },
-                { (HttpStatus)204, "No Content" },
-                { (HttpStatus)205, "Reset Content" },
-                { (HttpStatus)206, "Partial Content" },
-                
-                { (HttpStatus)300, "Multiple Choices" },
-                { (HttpStatus)301, "Moved Permanently" },
-                { (HttpStatus)302, "Found" },
-                { (HttpStatus)303, "See Other" },
-                { (HttpStatus)304, "Not Modified" },
-                { (HttpStatus)305, "Use Proxy" },
-                { (HttpStatus)307, "Temporary Redirect" },
-
-                { (HttpStatus)400, "Bad Request" },
-                { (HttpStatus)401, "Unauthorized" },
-                { (HttpStatus)402, "Payment Required" },
-                { (HttpStatus)403, "Forbidden" },
-                { (HttpStatus)404, "Not Found" },
-                { (HttpStatus)405, "Method Not Allowed" },
-                { (HttpStatus)406, "Not Acceptable" },
-                { (HttpStatus)407, "Proxy Authentication Required" },
-                { (HttpStatus)408, "Request Time-out" },
-                { (HttpStatus)409, "Conflict" },
-                { (HttpStatus)410, "Gone" },
-                { (HttpStatus)411, "Length Required" },
-                { (HttpStatus)412, "Precondition Failed" },
-                { (HttpStatus)413, "Request Entity Too Large" },
-                { (HttpStatus)414, "Request URI Too Large" },
-                { (HttpStatus)415, "Unsupported Media Type" },
-                { (HttpStatus)416, "Request range not satisfiable" },
-                { (HttpStatus)417, "Expectation Failed" },
-
-                { (HttpStatus)500, "Internal Server Error" },
-                { (HttpStatus)501, "Not Implemented" },
-                { (HttpStatus)502, "Bad Gateway" },
-                { (HttpStatus)503, "Service Unavailable" },
-                { (HttpStatus)504, "Gateway Time-out" },
-                { (HttpStatus)505, "HTTP Version not supported" }
-            };
 
         private HttpStatus _httpStatus;
         private HttpHeaderCollection _headers;
@@ -311,7 +263,7 @@ namespace SynapLink.Zener.Net
                 _nsw.WriteLine(
                     "HTTP/{0} {1} {2}",
                         HttpServer.HTTP_VERSION, (int)this.StatusCode,
-                        STAT_MSGS[this.StatusCode]
+                        this.StatusCode.GetMessage()
                 );
 
                 // Ensures that the content is transferred with a media type.
@@ -371,17 +323,6 @@ namespace SynapLink.Zener.Net
             if (_beginRespond) throw new InvalidOperationException(
                 "Cannot modify the status code after the response body has been written to."
                 );
-        }
-
-        /// <summary>
-        /// Retrieves the HTTP status message for the provided status
-        /// code.
-        /// </summary>
-        /// <param name="status">The status code to retrieve the message for.</param>
-        /// <returns>The status message associated with the status code (e.g. 200 = "OK").</returns>
-        public static string GetStatusMessage(HttpStatus status)
-        {
-            return STAT_MSGS[status];
         }
 
         /// <summary>
@@ -540,6 +481,5 @@ namespace SynapLink.Zener.Net
                 _closed = true;
             }
         }
-         
     }
 }

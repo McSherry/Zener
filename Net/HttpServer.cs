@@ -130,7 +130,7 @@ namespace SynapLink.Zener.Net
             response.Write(
                 "{0} {1}\n\n",
                 (int)exception.StatusCode,
-                HttpResponse.GetStatusMessage(exception.StatusCode)
+                exception.StatusCode.GetMessage()
                 );
 
             response.WriteLine("{0}\n", exception.ToString());
