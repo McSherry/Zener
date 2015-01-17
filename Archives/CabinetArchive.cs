@@ -110,12 +110,34 @@ namespace SynapLink.Zener.Archives
             Signature = new byte[4] { 0x4d, 0x53, 0x43, 0x46 };
         }
 
+        // The absolute offset of the first CFFILE block.
         private readonly uint _filesFirstOffset;
         private readonly ushort 
+            // The number of files/folders stored within
+            // the archive.
             _filesCount, _foldersCount,
+            // The length of the CFHEADER block's abReserve
+            // field.
             _headerAbLength;
+        // The lengths of the abReserve fields in CFFOLDER
+        // and CFDATA blocks, respectively.
         private readonly byte _folderAbLength, _dataAbLength;
+        // Flags indicating the presence of optional fields
+        // within the cabinet's main header.
         private readonly CabinetHeaderFlags _flags;
+
+        // The names of the files stored within the archive.
+        private List<string> _names;
+        // A set of Filemark structs indicating the positions
+        // of each file within the temporary file storing
+        // their uncompressed representations.
+        private List<Filemark> _marks;
+        // A FileStream with the temporary file open and
+        // ready for reading/writing.
+        private FileStream _dataDump;
+        // Object to use in locks when reading from the
+        // _dataDump FileStream.
+        private object _dataLock;
 
         /// <summary>
         /// Creates a new CabinetArchive.
