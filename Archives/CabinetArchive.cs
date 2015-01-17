@@ -21,6 +21,8 @@ namespace SynapLink.Zener.Archives
     {
         private static readonly IEnumerable<byte> Signature;
         private const int
+            ASCII_NUL               = 0x00,
+
             U1                      = 1,
             U2                      = 2,
             U4                      = 4,
@@ -242,6 +244,29 @@ namespace SynapLink.Zener.Archives
                 if (_headerAbLength != 0)
                     stream.Seek(_headerAbLength, SeekOrigin.Current);
             }
+
+            #region Skip past optional headers
+            // If this isn't the first archive in a set, there'll be additional
+            // header fields providing information about any previous archives.
+            if ((_flags & CabinetHeaderFlags.IsNotFirst) == CabinetHeaderFlags.IsNotFirst)
+            {
+                // There are two null-terminated fields giving information
+                // about previous archives. This makes it fairly simple to
+                // skip past them.
+                stream.ReadUntilFound(ASCII_NUL, b => { });
+                stream.ReadUntilFound(ASCII_NUL, b => { });
+            }
+            // As with not being the first in a set, not being the last in a set
+            // means that there are additional fields present within the archive's
+            // headers.
+            if ((_flags & CabinetHeaderFlags.IsNotLast) == CabinetHeaderFlags.IsNotLast)
+            {
+                // And, as with information about previous archives, information
+                // about archives to come is null-terminated.
+                stream.ReadUntilFound(ASCII_NUL, b => { });
+                stream.ReadUntilFound(ASCII_NUL, b => { });
+            }
+            #endregion
         }
 
         public override int Count
