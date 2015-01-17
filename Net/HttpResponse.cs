@@ -259,13 +259,7 @@ namespace SynapLink.Zener.Net
         {
             if (!_beginRespond)
             {
-                // Response line
-                // e.g. "HTTP/1.1 404 Not Found"
-                _nsw.WriteLine(
-                    "HTTP/{0} {1} {2}",
-                        HTTP_VERSION, (int)this.StatusCode,
-                        this.StatusCode.GetMessage()
-                );
+                _nsw.Write(this.ResponseLine);
 
                 // Ensures that the content is transferred with a media type.
                 // Defaults to HTML, since what else is an HTTP server most likely
@@ -358,6 +352,21 @@ namespace SynapLink.Zener.Net
             _closed = false;
         }
 
+        /// <summary>
+        /// The response line that will be sent with the server's response.
+        /// </summary>
+        public string ResponseLine
+        {
+            get
+            {
+                return String.Format(
+                    "HTTP/{0} {1} {2}\r\n",
+                    HTTP_VERSION,
+                    this.StatusCode.GetCode(),
+                    this.StatusCode.GetMessage()
+                    );
+            }
+        }
         /// <summary>
         /// The HTTP status code to be returned by the server.
         /// </summary>

@@ -70,5 +70,14 @@ namespace SynapLink.Zener.Net
         {
             return HttpStatusMessages[status];
         }
+        /// <summary>
+        /// Gets the numeric code associated with the HTTP status.
+        /// </summary>
+        /// <param name="status">The status to get the code for.</param>
+        /// <returns>An integer with the status code's value.</returns>
+        public static int GetCode(this HttpStatus status)
+        {
+            return (int)status;
+        }
     }
 }
