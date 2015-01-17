@@ -20,6 +20,41 @@ using WebUtility = System.Web.HttpUtility;
 namespace SynapLink.Zener.Net
 {
     /// <summary>
+    /// The exception thrown when there is an error with an HTTP
+    /// request.
+    /// </summary>
+    public sealed class HttpRequestException : HttpException
+    {
+        /// <summary>
+        /// Creates a new HttpRequestException.
+        /// </summary>
+        public HttpRequestException()
+            : base(HttpStatus.BadRequest)
+        {
+
+        }
+        /// <summary>
+        /// Creates a new HttpRequestException.
+        /// </summary>
+        /// <param name="message">The message to send with the exception.</param>
+        public HttpRequestException(string message)
+            : base(HttpStatus.BadRequest, message)
+        {
+
+        }
+        /// <summary>
+        /// Creates a new HttpRequestException.
+        /// </summary>
+        /// <param name="message">The message to send with the exception.</param>
+        /// <param name="innerException">The exception that is the cause of this exception.</param>
+        public HttpRequestException(string message, Exception innerException)
+            : base(HttpStatus.BadRequest, message, innerException)
+        {
+
+        }
+    }
+
+    /// <summary>
     /// A class encapsulating an HTTP request from the client.
     /// </summary>
     public class HttpRequest
@@ -44,12 +79,15 @@ namespace SynapLink.Zener.Net
         private const string MT_FORMURLENCODED = "application/x-www-form-urlencoded";
         private const string MT_FORMMULTIPART = "multipart/form-data";
         private const string HDR_CDISPOSITION = "Content-Disposition";
+        private const string HDR_CLENGTH = "Content-Length";
         private const string HDR_COOKIES = "Cookie";
         private const string CDIS_FORMDATA = "form-data";
         private const string HDR_CTYPE = "Content-Type";
         private const string HDR_CTYPE_KCHAR = "charset";
         private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
         private const string VAR_NOSTART = "0123456789";
+        private const int REQUEST_MAXLENGTH = (1024 * 1024) * 32; // 32 MiB
+        private const int REQUEST_TIMEOUT = 1000 * 60; // 60 seconds
 
         private static Dictionary<string, Encoding> _encodersByName
             = new Dictionary<string, Encoding>()
@@ -377,13 +415,175 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
+        /// Creates a new HttpRequest from a stream.
+        /// </summary>
+        /// <param name="stream">The stream containing the raw request.</param>
+        /// <returns>An HttpRequest equivalent to the provided stream.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided stream is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided stream does not support the
+        ///     required operations.
+        /// </exception>
+        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
+        ///     Thrown when the request is malformed and cannot be parsed.
+        /// </exception>
+        /// <exception cref="SynapLink.Zener.Net.HttpLengthRequiredException">
+        ///     Thrown when the request does not include a Content-Length header.
+        /// </exception>
+        public static HttpRequest Create(Stream stream)
+        {
+            if (stream == null)
+                throw new ArgumentNullException(
+                    "The provided stream cannot be null."
+                    );
+
+            if (!stream.CanRead)
+                throw new ArgumentException(
+                    "The provided stream does not support reading.",
+                    "stream"
+                    );
+
+            string line;
+            // Lines before the request line can be blank.
+            // We want to skip these since there's nothing
+            // to parse.
+            do { line = stream.ReadAsciiLine(); }
+            while (String.IsNullOrEmpty(line));
+
+            // We've now hit the first line with content. In
+            // a compliant HTTP request, this is the request
+            // line.
+            string requestLine = line;
+            // Move past the request line in to what is likely
+            // to be the first HTTP header in the request.
+            line = stream.ReadAsciiLine();
+
+            StringBuilder headerBuilder = new StringBuilder();
+            // Now that we have the start of the header section,
+            // we need to keep reading lines until we find a blank
+            // one, which indicates the end of the header section.
+            while (!String.IsNullOrEmpty(line))
+            {
+                headerBuilder.AppendLine(line);
+                line = stream.ReadAsciiLine();
+            }
+
+            // We now have all the HTTP headers in the request.
+            // To determine the content length, which we need for
+            // reading the rest of the request, we need to parse
+            // the headers.
+            HttpHeaderCollection headers;
+            try
+            {
+                using (StringReader sr = new StringReader(headerBuilder.ToString()))
+                {
+                    headers = new HttpHeaderCollection(BasicHttpHeader.ParseMany(sr));
+                }
+            }
+            catch (ArgumentException aex)
+            {
+                throw new HttpRequestException(
+                    "Could not parse HTTP headers.", aex
+                    );
+            }
+
+
+            // If there isn't a Content-Length header, we can't
+            // know how much data we have to wait for. This means
+            // that we can't know if there is a request body or
+            // not.
+            //
+            // To ensure maximum functionality (some browsers
+            // don't send Content-Length when there is no body),
+            // we will assume that, when no Content-Length header
+            // is present, there is no request body. Only the
+            // request line and headers will be passed to the
+            // request handler.
+            using (MemoryStream ms = new MemoryStream())
+            {
+                if (headers.Contains(HDR_CLENGTH))
+                {
+                    var cLen = headers[HDR_CLENGTH].Last();
+
+                    Int32 cLenOctets;
+                    // Make sure that the value of the Content-Length
+                    // header is a valid integer.
+                    if (!Int32.TryParse(cLen.Value, out cLenOctets))
+                    {
+                        throw new HttpRequestException(
+                            "Invalid Content-Length header (non-integral value)."
+                            );
+                    }
+
+                    // The Content-Length cannot be negative.
+                    if (cLenOctets < 0)
+                    {
+                        throw new HttpRequestException(
+                            "Invalid Content-Length header (negative value)."
+                            );
+                    }
+
+                    // Make sure the Content-Length isn't longer
+                    // than our maximum length.
+                    if (cLenOctets > REQUEST_MAXLENGTH)
+                    {
+                        throw new HttpException(
+                            HttpStatus.RequestEntityTooLarge,
+                            "The request body was too large."
+                            );
+                    }
+
+                    // Read the bytes from the network.
+                    byte[] bodyBytes = new byte[cLenOctets];
+
+                    // If the stream is a NetworkStream, we have to handle it
+                    // differently. NetworkStreams lie, and if you attempt to
+                    // read more data than is currently available in the network
+                    // stack's buffer, it won't block unless we set a time-out.
+                    //
+                    // If no time-out is set, the NetworkStream will return what
+                    // it has, padded with null bytes to make up the length.
+                    if (stream is System.Net.Sockets.NetworkStream)
+                    {
+                        ((System.Net.Sockets.NetworkStream)stream).ReadTimeout = REQUEST_TIMEOUT;
+
+                        //while (index < bodyBytes.Length)
+                        //{
+                        //    if (ns.DataAvailable)
+                        //    {
+                        //        bodyBytes[index++] = (byte)stream.ReadByte();
+                        //    }
+                        //}
+                    }
+
+                    int totalRead = 0;
+                    while (totalRead != bodyBytes.Length)
+                    {
+                        totalRead += stream.Read(
+                            bodyBytes, 
+                            totalRead,
+                            bodyBytes.Length - totalRead
+                            );
+                    }
+
+                    ms.Write(bodyBytes, 0, bodyBytes.Length);
+                }
+
+                return new HttpRequest(requestLine, headers, ms);
+            }
+
+        }
+
+        /// <summary>
         /// Creates an HttpRequest from a request line, set of headers,
         /// and a stream containing the body.
         /// </summary>
         /// <param name="requestLine">The HTTP request line (e.g. GET / HTTP/1.1).</param>
         /// <param name="headers">The headers sent with the request.</param>
         /// <param name="body">A stream containing the request body's bytes.</param>
-        internal HttpRequest(string requestLine, HttpHeaderCollection headers, Stream body)
+        private HttpRequest(string requestLine, HttpHeaderCollection headers, Stream body)
         {
             this.SetPropertiesFromRequestLine(requestLine);
             _headers = headers;
