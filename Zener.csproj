@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Archives\Archiving.cs" />
+    <Compile Include="Archives\CabinetArchive.cs" />
     <Compile Include="Archives\Filemark.cs" />
     <Compile Include="Archives\Archive.cs" />
     <Compile Include="Archives\GzipArchive.cs" />
