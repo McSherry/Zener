@@ -130,6 +130,38 @@ namespace SynapLink.Zener.Archives
             public readonly CFFILEAttributes attribs;
             public readonly string szName;
         }
+        private struct CFDATA
+        {
+            public CFDATA(Stream source, int abReserveLength)
+            {
+                byte[] minHdr = byte[CFDATA_MIN_LENGTH];
+                source.Read(minHdr, 0, CFDATA_MIN_LENGTH);
+
+                var cBytes = minHdr.Skip(0).Take(4);
+                var cdBytes = minHdr.Skip(4).Take(2);
+                var cuBytes = minHdr.Skip(8).Take(2);
+
+                if (!BitConverter.IsLittleEndian)
+                {
+                    cBytes = cBytes.Reverse();
+                    cdBytes = cdBytes.Reverse();
+                    cuBytes = cuBytes.Reverse();
+                }
+
+                csum = BitConverter.ToUInt32(cBytes.ToArray(), 0);
+                cbData = BitConverter.ToUInt16(cdBytes.ToArray(), 0);
+                cbUncomp = BitConverter.ToUInt16(cuBytes.ToArray(), 0);
+                ab = new byte[cbData];
+
+                source.Seek(abReserveLength, SeekOrigin.Current);
+
+                source.Read(ab, 0, cbData);
+            }
+
+            public readonly uint csum;
+            public readonly ushort cbData, cbUncomp;
+            public readonly byte[] ab;
+        }
 
         private static readonly IEnumerable<byte> Signature;
         private const int
@@ -141,6 +173,7 @@ namespace SynapLink.Zener.Archives
             HEADER_MIN_LENGTH       = 36,
             CFFOLDER_MIN_LENGTH     = 8,
             CFFILE_MIN_LENGTH       = 16,
+            CFDATA_MIN_LENGTH       = 8,
             // Mandatory header field offsets. These
             // header fields will always be present within
             // a cabinet file.
