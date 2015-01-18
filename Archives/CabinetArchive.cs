@@ -29,26 +29,35 @@ namespace SynapLink.Zener.Archives
         }
         private struct CFFOLDER
         {
-            public CFFOLDER(Stream source)
+            public CFFOLDER(Stream source, byte abReserveLength)
             {
-                using (var br = new BinaryReader(source))
+                byte[] cffolderBuf = new byte[CFFOLDER_MIN_LENGTH];
+                source.Read(cffolderBuf, 0, CFFOLDER_MIN_LENGTH);
+                // We don't care about the application-specific bit
+                // after the main CFFOLDER header, but we do need to
+                // skip past it.
+                source.Seek(abReserveLength, SeekOrigin.Current);
+
+                var ccsBytes = cffolderBuf.Take(4);
+                var ccfdBytes = cffolderBuf.Skip(4).Take(2);
+                var tcBytes = cffolderBuf.Skip(6).Take(2);
+
+                if (!BitConverter.IsLittleEndian)
                 {
-                    coffCabStart = br.ReadUInt32();
-                    cCFData = br.ReadUInt16();
-                    ushort uCType = br.ReadUInt16();
-
-                    if (!Enum.IsDefined(typeof(CFFOLDERCompressionType), uCType))
-                        throw new InvalidDataException(
-                            "The cabinet's specified compression method is not recognised."
-                            );
-
-                    cType = (CFFOLDERCompressionType)uCType;
+                    ccsBytes = ccsBytes.Reverse();
+                    ccfdBytes = ccfdBytes.Reverse();
+                    tcBytes = tcBytes.Reverse();
                 }
+
+                coffCabStart = BitConverter.ToUInt32(ccsBytes.ToArray(), 0);
+                cCFData = BitConverter.ToUInt16(ccfdBytes.ToArray(), 0);
+                typeCompress = (CFFOLDERCompressionType)BitConverter
+                    .ToUInt16(tcBytes.ToArray(), 0);
             }
 
             public readonly uint coffCabStart;
             public readonly ushort cCFData;
-            public readonly CFFOLDERCompressionType cType;
+            public readonly CFFOLDERCompressionType typeCompress;
         }
 
         private static readonly IEnumerable<byte> Signature;
@@ -59,6 +68,7 @@ namespace SynapLink.Zener.Archives
             U2                      = 2,
             U4                      = 4,
             HEADER_MIN_LENGTH       = 36,
+            CFFOLDER_MIN_LENGTH     = 8,
             // Mandatory header field offsets. These
             // header fields will always be present within
             // a cabinet file.
