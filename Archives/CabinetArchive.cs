@@ -19,8 +19,7 @@ namespace SynapLink.Zener.Archives
     public sealed class CabinetArchive
         : Archive, IDisposable
     {
-        private enum CFFOLDERCompressionType
-            : ushort
+        private enum CFFOLDERCompressionType : ushort
         {
             None        = 0x0000,
             MSZIP       = 0x0001,
@@ -59,6 +58,78 @@ namespace SynapLink.Zener.Archives
             public readonly ushort cCFData;
             public readonly CFFOLDERCompressionType typeCompress;
         }
+        private enum CFFILEFolderIndex : ushort
+        {
+            ContinuedFromPrevious       = 0xFFFD,
+            ContinuedToNext             = 0xFFFE,
+            ContinuedPreviousAndNext    = 0xFFFF
+        }
+        [Flags]
+        private enum CFFILEAttributes : ushort
+        {
+            ReadOnly    = 1 << 1,
+            Hidden      = 1 << 2,
+            System      = 1 << 3,
+            Modified    = 1 << 6,
+            Execute     = 1 << 7,
+            UtfName     = 1 << 8,
+            Reserved    = 0xFE31
+        }
+        private struct CFFILE
+        {
+            public CFFILE(Stream source)
+            {
+                byte[] minHdrBuf = new byte[CFFILE_MIN_LENGTH];
+                source.Read(minHdrBuf, 0, CFFILE_MIN_LENGTH);
+
+                var cfBytes = minHdrBuf.Skip(0).Take(4);
+                var ufsBytes = minHdrBuf.Skip(4).Take(4);
+                var ifBytes = minHdrBuf.Skip(8).Take(2);
+                var dBytes = minHdrBuf.Skip(10).Take(2);
+                var tBytes = minHdrBuf.Skip(12).Take(2);
+                var aBytes = minHdrBuf.Skip(14).Take(2);
+
+                if (!BitConverter.IsLittleEndian)
+                {
+                    cfBytes = cfBytes.Reverse();
+                    ufsBytes = ufsBytes.Reverse();
+                    ifBytes = ifBytes.Reverse();
+                    dBytes = dBytes.Reverse();
+                    tBytes = tBytes.Reverse();
+                    aBytes = aBytes.Reverse();
+                }
+
+                cbFile = BitConverter.ToUInt32(cfBytes.ToArray(), 0);
+                uoffFolderStart = BitConverter.ToUInt32(ufsBytes.ToArray(), 0);
+                iFolder = (CFFILEFolderIndex)BitConverter.ToUInt16(ifBytes.ToArray(), 0);
+                date = BitConverter.ToUInt16(dBytes.ToArray(), 0);
+                time = BitConverter.ToUInt16(tBytes.ToArray(), 0);
+                attribs = (CFFILEAttributes)BitConverter.ToUInt16(aBytes.ToArray(), 0);
+
+                List<byte> snBytes = new List<byte>();
+                source.ReadUntilFound(ASCII_NUL, snBytes.Add);
+
+                Encoding nameEncoder;
+                if ((attribs & CFFILEAttributes.UtfName) == CFFILEAttributes.UtfName)
+                {
+                    nameEncoder = Encoding.Unicode;
+                }
+                else
+                {
+                    nameEncoder = Encoding.ASCII;
+                }
+
+                szName = nameEncoder.GetString(snBytes.ToArray());
+            }
+
+            public readonly uint cbFile;
+            public readonly uint uoffFolderStart;
+            public readonly CFFILEFolderIndex iFolder;
+            public readonly ushort date;
+            public readonly ushort time;
+            public readonly CFFILEAttributes attribs;
+            public readonly string szName;
+        }
 
         private static readonly IEnumerable<byte> Signature;
         private const int
@@ -69,6 +140,7 @@ namespace SynapLink.Zener.Archives
             U4                      = 4,
             HEADER_MIN_LENGTH       = 36,
             CFFOLDER_MIN_LENGTH     = 8,
+            CFFILE_MIN_LENGTH       = 16,
             // Mandatory header field offsets. These
             // header fields will always be present within
             // a cabinet file.
