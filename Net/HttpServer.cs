@@ -111,7 +111,6 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpServer
     {
-        private const string CRLF = "\r\n";
         private const int TCP_EPHEMERAL_MIN = 49152;
         private const int TCP_EPHEMERAL_MAX = 65535;
         private static Random _rng;
