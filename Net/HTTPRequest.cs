@@ -280,7 +280,7 @@ namespace SynapLink.Zener.Net
                 using (StringReader sr = new StringReader(partHdrBuilder.ToString()))
                 {
                     partHeaders = new HttpHeaderCollection(
-                        BasicHttpHeader.ParseMany(sr)
+                        HttpHeader.ParseMany(sr)
                         );
                 }
 
@@ -479,7 +479,7 @@ namespace SynapLink.Zener.Net
             {
                 using (StringReader sr = new StringReader(headerBuilder.ToString()))
                 {
-                    headers = new HttpHeaderCollection(BasicHttpHeader.ParseMany(sr));
+                    headers = new HttpHeaderCollection(HttpHeader.ParseMany(sr));
                 }
             }
             catch (ArgumentException aex)

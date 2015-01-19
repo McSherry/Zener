@@ -16,7 +16,7 @@ namespace SynapLink.Zener.Net
     /// <summary>
     /// Implements a basic HTTP header.
     /// </summary>
-    public class BasicHttpHeader
+    public class HttpHeader
     {
         /// <summary>
         /// The characters to be trimmed from the start and end of
@@ -39,7 +39,7 @@ namespace SynapLink.Zener.Net
         ///         3. The field name contains a carriage return or line feed character.
         ///         4. The value contains a carriage return or line feed character.
         /// </exception>
-        public BasicHttpHeader(string fieldName, string value)
+        public HttpHeader(string fieldName, string value)
         {
             fieldName = fieldName.Trim(TRIM_CHARS);
             value = value.Trim(TRIM_CHARS);
@@ -100,7 +100,7 @@ namespace SynapLink.Zener.Net
         ///         3. The field name contains a carriage return or line feed character.
         ///         4. The value contains a carriage return or line feed character.
         /// </exception>
-        public static BasicHttpHeader Parse(string headerLine)
+        public static HttpHeader Parse(string headerLine)
         {
             headerLine = headerLine.Trim(
                 TRIM_CHARS
@@ -117,7 +117,7 @@ namespace SynapLink.Zener.Net
                 fieldBuilder.Append(headerLine[i++]);
             }
 
-            return new BasicHttpHeader(fieldBuilder.ToString(), headerLine.Substring(++i));
+            return new HttpHeader(fieldBuilder.ToString(), headerLine.Substring(++i));
         }
         /// <summary>
         /// Converts a sequence of characters to a set of BasicHttpHeaders.
@@ -131,7 +131,7 @@ namespace SynapLink.Zener.Net
         ///         3. A field name contains a carriage return or line feed character.
         ///         4. A value contains a carriage return or line feed character.
         /// </exception>
-        public static IEnumerable<BasicHttpHeader> ParseMany(TextReader text)
+        public static IEnumerable<HttpHeader> ParseMany(TextReader text)
         {
             List<string> lines = new List<string>();
 
@@ -165,7 +165,7 @@ namespace SynapLink.Zener.Net
             }
 
             foreach (string line in lines)
-                yield return BasicHttpHeader.Parse(line);
+                yield return HttpHeader.Parse(line);
         }
     }
 }

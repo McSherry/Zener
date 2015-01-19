@@ -18,7 +18,7 @@ namespace SynapLink.Zener.Net
     /// name-value parameters.
     /// </summary>
     public sealed class NamedParametersHttpHeader 
-        : BasicHttpHeader
+        : HttpHeader
     {
         private Dictionary<string, string> _nvPairs;
 
@@ -58,14 +58,14 @@ namespace SynapLink.Zener.Net
         /// Creates a new NamedParametersHttpHeader from a BasicHttpHeader.
         /// </summary>
         /// <param name="header">The header to create from.</param>
-        public NamedParametersHttpHeader(BasicHttpHeader header)
+        public NamedParametersHttpHeader(HttpHeader header)
             : this(header.Field, header.Value) { }
         /// <summary>
         /// Creates a NamedParametersHttpHeader from a raw header string.
         /// </summary>
         /// <param name="httpHeader">The header string to parse.</param>
         public NamedParametersHttpHeader(string httpHeader)
-            : this(BasicHttpHeader.Parse(httpHeader)) { }
+            : this(HttpHeader.Parse(httpHeader)) { }
 
         /// <summary>
         /// Returns a string that represents the NamedParametersHttpHeader instance.

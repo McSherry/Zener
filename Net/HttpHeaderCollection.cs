@@ -19,9 +19,9 @@ namespace SynapLink.Zener.Net
     /// A class used to store HTTP header values.
     /// </summary>
     public sealed class HttpHeaderCollection 
-        : ICollection<BasicHttpHeader>
+        : ICollection<HttpHeader>
     {
-        private List<BasicHttpHeader> _headerList;
+        private List<HttpHeader> _headerList;
         private bool _readOnly;
 
         /// <summary>
@@ -40,36 +40,36 @@ namespace SynapLink.Zener.Net
         /// </summary>
         public HttpHeaderCollection()
         {
-            _headerList = new List<BasicHttpHeader>();
+            _headerList = new List<HttpHeader>();
             _readOnly = false;
         }
         /// <summary>
         /// Creates a collection of HTTP headers from the provided enumerable.
         /// </summary>
         /// <param name="enumerable">The enumerable to create from.</param>
-        public HttpHeaderCollection(IEnumerable<BasicHttpHeader> enumerable)
+        public HttpHeaderCollection(IEnumerable<HttpHeader> enumerable)
             : this(enumerable.ToList()) { }
         /// <summary>
         /// Creates a collection of HTTP headers from the provided enumerable.
         /// </summary>
         /// <param name="enumerable">The enumerable to create from.</param>
         /// <param name="readOnly">Whether the collection should be read-only.</param>
-        public HttpHeaderCollection(IEnumerable<BasicHttpHeader> enumerable, bool readOnly)
+        public HttpHeaderCollection(IEnumerable<HttpHeader> enumerable, bool readOnly)
             : this(enumerable.ToList(), readOnly) { }
         /// <summary>
         /// Creates a collection of HTTP headers from the provided collection.
         /// </summary>
         /// <param name="collection">The collection to create the header collection from.</param>
-        public HttpHeaderCollection(ICollection<BasicHttpHeader> collection)
+        public HttpHeaderCollection(ICollection<HttpHeader> collection)
             : this(collection, false) { }
         /// <summary>
         /// Creates a collection of HTTP headers from the provided enumerable.
         /// </summary>
         /// <param name="collection">The collection to create the header collection from.</param>
         /// <param name="readOnly">Whether the collection should be read-only.</param>
-        public HttpHeaderCollection(ICollection<BasicHttpHeader> collection, bool readOnly)
+        public HttpHeaderCollection(ICollection<HttpHeader> collection, bool readOnly)
         {
-            _headerList = new List<BasicHttpHeader>(collection);
+            _headerList = new List<HttpHeader>(collection);
             _readOnly = readOnly;
         }
 
@@ -81,7 +81,7 @@ namespace SynapLink.Zener.Net
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the collection is read-only.
         /// </exception>
-        public List<BasicHttpHeader> this[string fieldName]
+        public List<HttpHeader> this[string fieldName]
         {
             get
             {
@@ -104,7 +104,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="index">The index of the header.</param>
         /// <returns>The header at the specified index.</returns>
-        internal BasicHttpHeader this[int index]
+        internal HttpHeader this[int index]
         {
             get { return _headerList[index]; }
             set { _headerList[index] = value; }
@@ -167,13 +167,13 @@ namespace SynapLink.Zener.Net
 
             if (overwrite) this.Remove(fieldName);
 
-            _headerList.Add(new BasicHttpHeader(fieldName, fieldValue));
+            _headerList.Add(new HttpHeader(fieldName, fieldValue));
         }
         /// <summary>
         /// Adds a header to the collection.
         /// </summary>
         /// <param name="header">The header to add to the collection.</param>
-        public void Add(BasicHttpHeader header)
+        public void Add(HttpHeader header)
         {
             _readOnlyCheck();
 
@@ -200,7 +200,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="header">The header to search for.</param>
         /// <returns>True if an equivalent header exists.</returns>
-        public bool Contains(BasicHttpHeader header)
+        public bool Contains(HttpHeader header)
         {
             return _headerList.Contains(header);
         }
@@ -225,17 +225,17 @@ namespace SynapLink.Zener.Net
             _headerList.Clear();
         }
 
-        void ICollection<BasicHttpHeader>.CopyTo(BasicHttpHeader[] array, int arrayIndex)
+        void ICollection<HttpHeader>.CopyTo(HttpHeader[] array, int arrayIndex)
         {
             _headerList.CopyTo(array, arrayIndex);
         }
-        bool ICollection<BasicHttpHeader>.Remove(BasicHttpHeader header)
+        bool ICollection<HttpHeader>.Remove(HttpHeader header)
         {
             _readOnlyCheck();
 
             return _headerList.Remove(header);
         }
-        IEnumerator<BasicHttpHeader> IEnumerable<BasicHttpHeader>.GetEnumerator()
+        IEnumerator<HttpHeader> IEnumerable<HttpHeader>.GetEnumerator()
         {
             return _headerList.GetEnumerator();
         }

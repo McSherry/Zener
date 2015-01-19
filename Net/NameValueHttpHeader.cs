@@ -18,7 +18,7 @@ namespace SynapLink.Zener.Net
     /// of name-value pairs.
     /// </summary>
     public sealed class NameValueHttpHeader 
-        : BasicHttpHeader
+        : HttpHeader
     {
         private static Dictionary<char, char> EscapeCodes
             = new Dictionary<char, char>()
@@ -139,7 +139,7 @@ namespace SynapLink.Zener.Net
         /// Creates a NameValueHttpHeader from a BasicHttpHeader.
         /// </summary>
         /// <param name="header">The BasicHttpHeader to create from.</param>
-        public NameValueHttpHeader(BasicHttpHeader header)
+        public NameValueHttpHeader(HttpHeader header)
             : this(header.Field, header.Value)
         {
 
@@ -149,7 +149,7 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="httpHeader">The header string, containing the field and content.</param>
         public NameValueHttpHeader(string httpHeader)
-            : this(BasicHttpHeader.Parse(httpHeader))
+            : this(HttpHeader.Parse(httpHeader))
         {
 
         }
