@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.IO.Compression;
 
 namespace SynapLink.Zener.Archives
 {
@@ -139,7 +140,7 @@ namespace SynapLink.Zener.Archives
 
                 var cBytes = minHdr.Skip(0).Take(4);
                 var cdBytes = minHdr.Skip(4).Take(2);
-                var cuBytes = minHdr.Skip(8).Take(2);
+                var cuBytes = minHdr.Skip(6).Take(2);
 
                 if (!BitConverter.IsLittleEndian)
                 {
@@ -317,6 +318,9 @@ namespace SynapLink.Zener.Archives
         /// </exception>
         /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the stream's data does not pass verification.
+        ///     
+        ///     Thrown when the cabinet makes references to an invalid
+        ///     folder.
         /// </exception>
         /// <exception cref="System.NotSupportedException">
         ///     Thrown when the file format version of the provided cabinet
@@ -520,6 +524,8 @@ namespace SynapLink.Zener.Archives
                             i
                         ));
                 }
+
+                folders.Add(fdr);
             }
 
             // The first CFFILE entry is at an offset given within the
@@ -543,6 +549,19 @@ namespace SynapLink.Zener.Archives
                 {
                     continue;
                 }
+
+                files.Add(file);
+            }
+
+            List<List<CFDATA>> dataBlocks = new List<List<CFDATA>>(folders.Count);
+            foreach (var fdr in folders)
+            {
+                List<CFDATA> dBs = new List<CFDATA>(fdr.cCFData);
+                stream.Position = fdr.coffCabStart;
+                for (int i = 0; i < fdr.cCFData; i++)
+                    dBs.Add(new CFDATA(stream, _dataAbLength));
+
+                dataBlocks.Add(dBs);
             }
         }
 
