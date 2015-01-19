@@ -325,13 +325,12 @@ namespace SynapLink.Zener.Archives
         /// <exception cref="System.NotSupportedException">
         ///     Thrown when the file format version of the provided cabinet
         ///     file is not supported by the class.
+        ///     
+        ///     Thrown when the archive contained in the passed Stream
+        ///     uses a compression method that is not supported.
         /// </exception>
         /// <exception cref="System.IO.IOException">
         ///     Thrown when a temporary file could not be opened.
-        /// </exception>
-        /// <exception cref="System.NotSupportedException">
-        ///     Thrown when the archive contained in the passed Stream
-        ///     uses a compression method that is not supported.
         /// </exception>
         public CabinetArchive(Stream stream)
         {
