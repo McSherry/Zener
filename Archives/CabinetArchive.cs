@@ -134,7 +134,7 @@ namespace SynapLink.Zener.Archives
         {
             public CFDATA(Stream source, int abReserveLength)
             {
-                byte[] minHdr = byte[CFDATA_MIN_LENGTH];
+                byte[] minHdr = new byte[CFDATA_MIN_LENGTH];
                 source.Read(minHdr, 0, CFDATA_MIN_LENGTH);
 
                 var cBytes = minHdr.Skip(0).Take(4);
@@ -325,6 +325,10 @@ namespace SynapLink.Zener.Archives
         /// <exception cref="System.IO.IOException">
         ///     Thrown when a temporary file could not be opened.
         /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when the archive contained in the passed Stream
+        ///     uses a compression method that is not supported.
+        /// </exception>
         public CabinetArchive(Stream stream)
         {
             /* * * * * * * * * *
@@ -493,6 +497,53 @@ namespace SynapLink.Zener.Archives
                 stream.ReadUntilFound(ASCII_NUL, b => { });
             }
             #endregion
+
+            List<CFFOLDER> folders = new List<CFFOLDER>(_foldersCount);
+            List<CFFILE> files = new List<CFFILE>(_filesCount);
+            // CFFOLDER entries are sequential within the cabinet
+            // archive, and the first immediately follows the end
+            // of the CFHEADER block.
+            for (int i = 0; i < _foldersCount; i++)
+            {
+                var fdr = new CFFOLDER(stream, _folderAbLength);
+
+                if (
+                    fdr.typeCompress == CFFOLDERCompressionType.Quantum ||
+                    fdr.typeCompress == CFFOLDERCompressionType.LZX
+                    )
+                {
+                    throw new NotSupportedException(
+                        String.Format(
+                            "{0}{1} (folder {2}).",
+                            "The cabinet contains data compressed with an",
+                            "unsupported algorithm",
+                            i
+                        ));
+                }
+            }
+
+            // The first CFFILE entry is at an offset given within the
+            // CFHEADER block. We need to skip to this offset before
+            // we start reading.
+            stream.Position = _filesFirstOffset;
+            // Once at the specified offset, CFFILE blocks are 
+            // contiguous.
+            for (int i = 0; i < _filesCount; i++)
+            {
+                var file = new CFFILE(stream);
+
+                // We're not going to bother to support multi-cabinet
+                // archives right now. If the file indicates that it
+                // spans multiple archives, skip it.
+                if (
+                    file.iFolder == CFFILEFolderIndex.ContinuedFromPrevious ||
+                    file.iFolder == CFFILEFolderIndex.ContinuedPreviousAndNext ||
+                    file.iFolder == CFFILEFolderIndex.ContinuedToNext
+                    )
+                {
+                    continue;
+                }
+            }
         }
 
         public override int Count
