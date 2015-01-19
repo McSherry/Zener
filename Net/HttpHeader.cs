@@ -89,10 +89,10 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// Converts a string to a BasicHttpHeader.
+        /// Converts a string to an HttpHeader.
         /// </summary>
         /// <param name="headerLine">A single line containing the header text.</param>
-        /// <returns>A BasicHttpHeader equivalent to the provided string.</returns>
+        /// <returns>An HttpHeader equivalent to the provided string.</returns>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when:
         ///         1. The provided field name is null, zero-length, or whitespace.
@@ -120,7 +120,7 @@ namespace SynapLink.Zener.Net
             return new HttpHeader(fieldBuilder.ToString(), headerLine.Substring(++i));
         }
         /// <summary>
-        /// Converts a sequence of characters to a set of BasicHttpHeaders.
+        /// Converts a sequence of characters to a set of HttpHeaders.
         /// </summary>
         /// <param name="text">The text containing the headers.</param>
         /// <returns>An enumerable containing parsed headers.</returns>

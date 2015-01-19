@@ -55,7 +55,7 @@ namespace SynapLink.Zener.Net
             else _nvPairs = new Dictionary<string, string>();
         }
         /// <summary>
-        /// Creates a new NamedParametersHttpHeader from a BasicHttpHeader.
+        /// Creates a new NamedParametersHttpHeader from an HttpHeader.
         /// </summary>
         /// <param name="header">The header to create from.</param>
         public NamedParametersHttpHeader(HttpHeader header)

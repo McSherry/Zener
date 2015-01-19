@@ -136,9 +136,9 @@ namespace SynapLink.Zener.Net
             _nvPairs = NameValueHttpHeader.ParsePairs(value);
         }
         /// <summary>
-        /// Creates a NameValueHttpHeader from a BasicHttpHeader.
+        /// Creates a NameValueHttpHeader from an HttpHeader.
         /// </summary>
-        /// <param name="header">The BasicHttpHeader to create from.</param>
+        /// <param name="header">The HttpHeader to create from.</param>
         public NameValueHttpHeader(HttpHeader header)
             : this(header.Field, header.Value)
         {
