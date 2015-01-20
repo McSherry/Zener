@@ -483,7 +483,7 @@ namespace SynapLink.Zener.Archives
 
                     if (fdr.typeCompress == CFFOLDERCompressionType.None)
                     {
-                        // todo
+                        _uncompGet(data, dataBuf);
                     }
                     else if (fdr.typeCompress == CFFOLDERCompressionType.MSZIP)
                     {
@@ -558,6 +558,10 @@ namespace SynapLink.Zener.Archives
                 // this folder.
                 ds.CopyTo(dump);
             }
+        }
+        private void _uncompGet(CFDATA data, Stream dump)
+        {
+            dump.Write(data.ab, 0, data.ab.Length);
         }
 
         /// <summary>
