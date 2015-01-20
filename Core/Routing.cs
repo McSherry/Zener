@@ -39,11 +39,23 @@ namespace SynapLink.Zener.Core
 
             bool inParam = false;
             StringBuilder nameBuilder = new StringBuilder();
-            foreach (char c in format)
+            for (int i = 0; i < format.Length; i++)
             {
+                char c = format[i];
+
                 if (!inParam && c == '[')
                 {
                     inParam = true;
+
+                    // If this is an unbounded parameter,
+                    // it will have an asterisk before its
+                    // name. This isn't part of the name,
+                    // so we need to skip it.
+                    if (format[i + 1] == '*')
+                    {
+                        i++;
+                    }
+
                     continue;
                 }
                 else if (inParam && c == ']')
