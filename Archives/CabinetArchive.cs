@@ -307,6 +307,32 @@ namespace SynapLink.Zener.Archives
                 _dataDump.Write(bytes, 0, bytes.Length);
             }
         }
+        private void _mszipInflate(CFDATA data, Stream dump)
+        {
+            // MSZIP block have a 2-byte signature. If the signature
+            // isn't present, either we're not dealing with an MSZIP
+            // block, or the block is corrupt.
+            if (
+                data.ab[0] != MSZIP_SIGBYTE_0 ||
+                data.ab[1] != MSZIP_SIGBYTE_1
+                )
+            {
+                throw new InvalidDataException(
+                    "The cabinet contains an invalid MSZIP block."
+                    );
+            }
+
+            // Each CFDATA block is compressed, so we need
+            // to decompress them.
+            using (var ms = new MemoryStream(data.ab, 2, data.ab.Length - 2))
+            using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
+            {
+                // We then copy the decompressed contents to the buffer
+                // we're using to contain all data from CFDATA blocks for
+                // this folder.
+                ds.CopyTo(dump);
+            }
+        }
 
         /// <summary>
         /// Creates a new CabinetArchive.
@@ -340,6 +366,7 @@ namespace SynapLink.Zener.Archives
             /* * * * * * * * * *
              * Set up the class to make it ready for cabinet parsing
              * * * * * * * * * */
+            #region Ensure stream usable
             if (stream == null)
                 throw new ArgumentNullException(
                     "The provided stream cannot be null.",
@@ -355,11 +382,13 @@ namespace SynapLink.Zener.Archives
                 throw new ArgumentException(
                     "The provided stream does not support reading."
                     );
+            #endregion
 
             _names = new List<string>();
             _filemarks = new List<Filemark>();
             _dataLock = new object();
 
+            #region Attempt to open temporary file
             try
             {
                 _dataDump = new FileStream(
@@ -385,6 +414,7 @@ namespace SynapLink.Zener.Archives
                     uaex
                     );
             }
+            #endregion
 
             /* * * * * * * * * *
              * Parse the cabinet file
@@ -503,7 +533,7 @@ namespace SynapLink.Zener.Archives
                 stream.ReadUntilFound(ASCII_NUL, b => { });
             }
             #endregion
-
+            #region Read all folder details from the cabinet
             List<CFFOLDER> folders = new List<CFFOLDER>(_foldersCount);
             // CFFOLDER entries are sequential within the cabinet
             // archive, and the first immediately follows the end
@@ -528,7 +558,8 @@ namespace SynapLink.Zener.Archives
 
                 folders.Add(fdr);
             }
-
+            #endregion
+            #region Read all file details from the cabinet
             List<CFFILE> files = new List<CFFILE>();
             // The first CFFILE entry is at an offset given within the
             // CFHEADER block. We need to skip to this offset before
@@ -561,8 +592,9 @@ namespace SynapLink.Zener.Archives
 
                 files.Add(file);
             }
+            #endregion
 
-            //long runningOffset = 0;
+            #region Read file data, add to CabinetArchive's list
             MemoryStream dataBuf = new MemoryStream();
             for (int i = 0; i < folders.Count; i++)
             {
@@ -582,29 +614,7 @@ namespace SynapLink.Zener.Archives
                     }
                     else if (fdr.typeCompress == CFFOLDERCompressionType.MSZIP)
                     {
-                        // MSZIP block have a 2-byte signature. If the signature
-                        // isn't present, either we're not dealing with an MSZIP
-                        // block, or the block is corrupt.
-                        if (
-                            data.ab[0] != MSZIP_SIGBYTE_0 ||
-                            data.ab[1] != MSZIP_SIGBYTE_1
-                            )
-                        {
-                            throw new InvalidDataException(
-                                "The cabinet contains an invalid MSZIP block."
-                                );
-                        }
-
-                        // Each CFDATA block is compressed, so we need
-                        // to decompress them.
-                        using (var ms = new MemoryStream(data.ab.Skip(2).ToArray()))
-                        using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
-                        {
-                            // We then copy the decompressed contents to the buffer
-                            // we're using to contain all data from CFDATA blocks for
-                            // this folder.
-                            ds.CopyTo(dataBuf);
-                        }
+                        _mszipInflate(data, dataBuf);
                     }
                     else
                     {
@@ -623,6 +633,7 @@ namespace SynapLink.Zener.Archives
                     _writeToDump(file.szName, fileBytes);
                 }
             }
+            #endregion
         }
 
         public override int Count
