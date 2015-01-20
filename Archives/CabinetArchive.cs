@@ -262,8 +262,8 @@ namespace SynapLink.Zener.Archives
         }
 
         // The absolute offset of the first CFFILE block.
-        private readonly uint _filesFirstOffset;
-        private readonly ushort 
+        private uint _filesFirstOffset;
+        private ushort 
             // The number of files/folders stored within
             // the archive.
             _filesCount, _foldersCount,
@@ -272,10 +272,10 @@ namespace SynapLink.Zener.Archives
             _headerAbLength;
         // The lengths of the abReserve fields in CFFOLDER
         // and CFDATA blocks, respectively.
-        private readonly byte _folderAbLength, _dataAbLength;
+        private byte _folderAbLength, _dataAbLength;
         // Flags indicating the presence of optional fields
         // within the cabinet's main header.
-        private readonly CabinetHeaderFlags _flags;
+        private CabinetHeaderFlags _flags;
 
         // The names of the files stored within the archive.
         private List<string> _names;
@@ -290,135 +290,8 @@ namespace SynapLink.Zener.Archives
         // from the _dataDump FileStream.
         private object _dataLock;
 
-        /// <summary>
-        /// Writes a set of bytes to the dump file.
-        /// </summary>
-        /// <param name="name">The name of the file being written.</param>
-        /// <param name="bytes">The contents of the file.</param>
-        /// <param name="seekToEnd">Whether to seek to the end of the dump.</param>
-        private void _writeToDump(string name, byte[] bytes, bool seekToEnd = true)
+        private void _parseCabStream(Stream stream)
         {
-            lock (_dataLock)
-            {
-                if (seekToEnd) _dataDump.Seek(0, SeekOrigin.End);
-
-                _names.Add(name);
-                _filemarks.Add(new Filemark(bytes.LongLength, _dataDump.Position));
-                _dataDump.Write(bytes, 0, bytes.Length);
-            }
-        }
-        private void _mszipInflate(CFDATA data, Stream dump)
-        {
-            // MSZIP block have a 2-byte signature. If the signature
-            // isn't present, either we're not dealing with an MSZIP
-            // block, or the block is corrupt.
-            if (
-                data.ab[0] != MSZIP_SIGBYTE_0 ||
-                data.ab[1] != MSZIP_SIGBYTE_1
-                )
-            {
-                throw new InvalidDataException(
-                    "The cabinet contains an invalid MSZIP block."
-                    );
-            }
-
-            // Each CFDATA block is compressed, so we need
-            // to decompress them.
-            using (var ms = new MemoryStream(data.ab, 2, data.ab.Length - 2))
-            using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
-            {
-                // We then copy the decompressed contents to the buffer
-                // we're using to contain all data from CFDATA blocks for
-                // this folder.
-                ds.CopyTo(dump);
-            }
-        }
-
-        /// <summary>
-        /// Creates a new CabinetArchive.
-        /// </summary>
-        /// <param name="stream">The stream containing the archive's bytes.</param>
-        /// <exception cref="System.ArgumentNullException">
-        ///     Thrown when the provided stream is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        ///     Thrown when the provided stream does not support the
-        ///     required operations.
-        /// </exception>
-        /// <exception cref="System.IO.InvalidDataException">
-        ///     Thrown when the stream's data does not pass verification.
-        ///     
-        ///     Thrown when the cabinet makes references to an invalid
-        ///     folder.
-        /// </exception>
-        /// <exception cref="System.NotSupportedException">
-        ///     Thrown when the file format version of the provided cabinet
-        ///     file is not supported by the class.
-        ///     
-        ///     Thrown when the archive contained in the passed Stream
-        ///     uses a compression method that is not supported.
-        /// </exception>
-        /// <exception cref="System.IO.IOException">
-        ///     Thrown when a temporary file could not be opened.
-        /// </exception>
-        public CabinetArchive(Stream stream)
-        {
-            /* * * * * * * * * *
-             * Set up the class to make it ready for cabinet parsing
-             * * * * * * * * * */
-            #region Ensure stream usable
-            if (stream == null)
-                throw new ArgumentNullException(
-                    "The provided stream cannot be null.",
-                    "stream"
-                    );
-
-            if (!stream.CanSeek)
-                throw new ArgumentException(
-                    "The provided stream does not support seeking."
-                    );
-
-            if (!stream.CanRead)
-                throw new ArgumentException(
-                    "The provided stream does not support reading."
-                    );
-            #endregion
-
-            _names = new List<string>();
-            _filemarks = new List<Filemark>();
-            _dataLock = new object();
-
-            #region Attempt to open temporary file
-            try
-            {
-                _dataDump = new FileStream(
-                    Path.GetTempFileName(),
-                    FileMode.OpenOrCreate,
-                    FileAccess.ReadWrite,
-                    FileShare.None,
-                    4096, // The default buffer size
-                    FileOptions.DeleteOnClose | FileOptions.RandomAccess
-                    );
-            }
-            catch (IOException ioex)
-            {
-                throw new IOException(
-                    "Could not open a temporary file.",
-                    ioex
-                    );
-            }
-            catch (UnauthorizedAccessException uaex)
-            {
-                throw new IOException(
-                    "Could not open a temporary file.",
-                    uaex
-                    );
-            }
-            #endregion
-
-            /* * * * * * * * * *
-             * Parse the cabinet file
-             * * * * * * * * * */
             stream.Position = 0;
 
             // We know that these headers will be present
@@ -629,29 +502,184 @@ namespace SynapLink.Zener.Archives
                     byte[] fileBytes = new byte[file.cbFile];
                     dataBuf.Position = file.uoffFolderStart;
                     dataBuf.Read(fileBytes, 0, fileBytes.Length);
-                    
+
                     _writeToDump(file.szName, fileBytes);
                 }
             }
             #endregion
         }
+        private void _writeToDump(string name, byte[] bytes, bool seekToEnd = true)
+        {
+            lock (_dataLock)
+            {
+                if (seekToEnd) _dataDump.Seek(0, SeekOrigin.End);
 
+                _names.Add(name);
+                _filemarks.Add(new Filemark(bytes.LongLength, _dataDump.Position));
+                _dataDump.Write(bytes, 0, bytes.Length);
+            }
+        }
+        private IEnumerable<byte> _readFromDump(string name)
+        {
+            int index = _names.IndexOf(name);
+            var mark = _filemarks[index];
+            byte[] fileBytes = new byte[mark.Length];
+
+            lock (_dataLock)
+            {
+                _dataDump.Position = mark.Offset;
+                _dataDump.Read(fileBytes, 0, fileBytes.Length);
+            }
+
+            return fileBytes;
+        }
+        private void _mszipInflate(CFDATA data, Stream dump)
+        {
+            // MSZIP block have a 2-byte signature. If the signature
+            // isn't present, either we're not dealing with an MSZIP
+            // block, or the block is corrupt.
+            if (
+                data.ab[0] != MSZIP_SIGBYTE_0 ||
+                data.ab[1] != MSZIP_SIGBYTE_1
+                )
+            {
+                throw new InvalidDataException(
+                    "The cabinet contains an invalid MSZIP block."
+                    );
+            }
+
+            // Each CFDATA block is compressed, so we need
+            // to decompress them.
+            using (var ms = new MemoryStream(data.ab, 2, data.ab.Length - 2))
+            using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
+            {
+                // We then copy the decompressed contents to the buffer
+                // we're using to contain all data from CFDATA blocks for
+                // this folder.
+                ds.CopyTo(dump);
+            }
+        }
+
+        /// <summary>
+        /// Creates a new CabinetArchive.
+        /// </summary>
+        /// <param name="stream">The stream containing the archive's bytes.</param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided stream is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided stream does not support the
+        ///     required operations.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the stream's data does not pass verification.
+        ///     
+        ///     Thrown when the cabinet makes references to an invalid
+        ///     folder.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when the file format version of the provided cabinet
+        ///     file is not supported by the class.
+        ///     
+        ///     Thrown when the archive contained in the passed Stream
+        ///     uses a compression method that is not supported.
+        /// </exception>
+        /// <exception cref="System.IO.IOException">
+        ///     Thrown when a temporary file could not be opened.
+        /// </exception>
+        public CabinetArchive(Stream stream)
+        {
+            if (stream == null)
+                throw new ArgumentNullException(
+                    "The provided stream cannot be null.",
+                    "stream"
+                    );
+
+            if (!stream.CanSeek)
+                throw new ArgumentException(
+                    "The provided stream does not support seeking."
+                    );
+
+            if (!stream.CanRead)
+                throw new ArgumentException(
+                    "The provided stream does not support reading."
+                    );
+
+            _names = new List<string>();
+            _filemarks = new List<Filemark>();
+            _dataLock = new object();
+
+            try
+            {
+                _dataDump = new FileStream(
+                    Path.GetTempFileName(),
+                    FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    4096, // The default buffer size
+                    FileOptions.DeleteOnClose | FileOptions.RandomAccess
+                    );
+            }
+            catch (IOException ioex)
+            {
+                throw new IOException(
+                    "Could not open a temporary file.",
+                    ioex
+                    );
+            }
+            catch (UnauthorizedAccessException uaex)
+            {
+                throw new IOException(
+                    "Could not open a temporary file.",
+                    uaex
+                    );
+            }
+
+            _parseCabStream(stream);
+        }
+
+        /// <summary>
+        /// The number of files contained within the cabinet.
+        /// </summary>
         public override int Count
         {
-            get { throw new NotImplementedException(); }
+            get { return _names.Count; }
         }
+        /// <summary>
+        /// The names of the files contained within the cabinet.
+        /// </summary>
         public override IEnumerable<string> Files
         {
-            get { throw new NotImplementedException(); }
+            get { return _names; }
         }
 
+        /// <summary>
+        /// Retrieves a file based on its name.
+        /// </summary>
+        /// <param name="name">The name of the file to retrieve.</param>
+        /// <param name="contents">The contents of the retrieved file.</param>
+        /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {
-            throw new NotImplementedException();
+            bool ctns = _names.Contains(name);
+            if (ctns)
+            {
+                contents = _readFromDump(name);
+            }
+            else
+            {
+                contents = null;
+            }
+
+            return ctns;
         }
+        /// <summary>
+        /// Releases the resources used by this class.
+        /// </summary>
         public override void Dispose()
         {
-            throw new NotImplementedException();
+            _dataDump.Close();
+            _dataDump.Dispose();
         }
     }
 }
