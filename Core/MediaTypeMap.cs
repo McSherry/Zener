@@ -106,6 +106,13 @@ namespace SynapLink.Zener.Core
                             ".gif"
                         }
                     },
+                    {
+                        "image/bmp",
+                        new List<string>()
+                        {
+                            ".bmp", ".dib"
+                        }
+                    },
                     #endregion
                     #region video/* Media Types
                     {
