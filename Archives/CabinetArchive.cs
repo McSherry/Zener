@@ -303,7 +303,7 @@ namespace SynapLink.Zener.Archives
                 if (seekToEnd) _dataDump.Seek(0, SeekOrigin.End);
 
                 _names.Add(name);
-                _marks.Add(new Filemark(bytes.LongLength, _dataDump.Position));
+                _filemarks.Add(new Filemark(bytes.LongLength, _dataDump.Position));
                 _dataDump.Write(bytes, 0, bytes.Length);
             }
         }
@@ -505,7 +505,6 @@ namespace SynapLink.Zener.Archives
             #endregion
 
             List<CFFOLDER> folders = new List<CFFOLDER>(_foldersCount);
-            List<CFFILE> files = new List<CFFILE>(_filesCount);
             // CFFOLDER entries are sequential within the cabinet
             // archive, and the first immediately follows the end
             // of the CFHEADER block.
@@ -530,6 +529,7 @@ namespace SynapLink.Zener.Archives
                 folders.Add(fdr);
             }
 
+            List<CFFILE> files = new List<CFFILE>();
             // The first CFFILE entry is at an offset given within the
             // CFHEADER block. We need to skip to this offset before
             // we start reading.
@@ -552,18 +552,76 @@ namespace SynapLink.Zener.Archives
                     continue;
                 }
 
+                if (folders.Count <= (ushort)file.iFolder)
+                    throw new InvalidDataException(
+                        String.Format(
+                            "The cabinet references an invalid folder (folder {0}).",
+                            file.iFolder
+                        ));
+
                 files.Add(file);
             }
 
-            List<List<CFDATA>> dataBlocks = new List<List<CFDATA>>(folders.Count);
-            foreach (var fdr in folders)
+            //long runningOffset = 0;
+            MemoryStream dataBuf = new MemoryStream();
+            for (int i = 0; i < folders.Count; i++)
             {
-                List<CFDATA> dBs = new List<CFDATA>(fdr.cCFData);
-                stream.Position = fdr.coffCabStart;
-                for (int i = 0; i < fdr.cCFData; i++)
-                    dBs.Add(new CFDATA(stream, _dataAbLength));
+                var fdr = folders[i];
 
-                dataBlocks.Add(dBs);
+                var fdrFiles = files.Where(f => (int)f.iFolder == i);
+
+                dataBuf.Position = 0;
+                stream.Position = fdr.coffCabStart;
+                for (int j = 0; j < fdr.cCFData; j++)
+                {
+                    var data = new CFDATA(stream, _dataAbLength);
+
+                    if (fdr.typeCompress == CFFOLDERCompressionType.None)
+                    {
+                        // todo
+                    }
+                    else if (fdr.typeCompress == CFFOLDERCompressionType.MSZIP)
+                    {
+                        // MSZIP block have a 2-byte signature. If the signature
+                        // isn't present, either we're not dealing with an MSZIP
+                        // block, or the block is corrupt.
+                        if (
+                            data.ab[0] != MSZIP_SIGBYTE_0 ||
+                            data.ab[1] != MSZIP_SIGBYTE_1
+                            )
+                        {
+                            throw new InvalidDataException(
+                                "The cabinet contains an invalid MSZIP block."
+                                );
+                        }
+
+                        // Each CFDATA block is compressed, so we need
+                        // to decompress them.
+                        using (var ms = new MemoryStream(data.ab.Skip(2).ToArray()))
+                        using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
+                        {
+                            // We then copy the decompressed contents to the buffer
+                            // we're using to contain all data from CFDATA blocks for
+                            // this folder.
+                            ds.CopyTo(dataBuf);
+                        }
+                    }
+                    else
+                    {
+                        throw new NotSupportedException(
+                            "The cabinet contains data compressed with an unsupported algorithm."
+                            );
+                    }
+                }
+
+                foreach (var file in fdrFiles)
+                {
+                    byte[] fileBytes = new byte[file.cbFile];
+                    dataBuf.Position = file.uoffFolderStart;
+                    dataBuf.Read(fileBytes, 0, fileBytes.Length);
+                    
+                    _writeToDump(file.szName, fileBytes);
+                }
             }
         }
 
