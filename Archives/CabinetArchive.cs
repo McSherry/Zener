@@ -225,7 +225,10 @@ namespace SynapLink.Zener.Archives
             // length of the abReserve field in each
             // CFDATA block.
             DATA_ABRLEN_OFFSET      = 39,
-            DATA_ABRLEN_LEN         = U1
+            DATA_ABRLEN_LEN         = U1,
+            // The bytes comprising an MSZIP signature.
+            MSZIP_SIGBYTE_0         = 0x43,
+            MSZIP_SIGBYTE_1         = 0x4B
             ;
 
         /// <summary>
@@ -279,7 +282,7 @@ namespace SynapLink.Zener.Archives
         // A set of Filemark structs indicating the positions
         // of each file within the temporary file storing
         // their uncompressed representations.
-        private List<Filemark> _marks;
+        private List<Filemark> _filemarks;
         // A FileStream with the temporary file open and
         // ready for reading/writing.
         private FileStream _dataDump;
@@ -354,7 +357,7 @@ namespace SynapLink.Zener.Archives
                     );
 
             _names = new List<string>();
-            _marks = new List<Filemark>();
+            _filemarks = new List<Filemark>();
             _dataLock = new object();
 
             try
@@ -517,7 +520,7 @@ namespace SynapLink.Zener.Archives
                 {
                     throw new NotSupportedException(
                         String.Format(
-                            "{0}{1} (folder {2}).",
+                            "{0} {1} (folder {2}).",
                             "The cabinet contains data compressed with an",
                             "unsupported algorithm",
                             i
