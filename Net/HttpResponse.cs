@@ -316,7 +316,7 @@ namespace SynapLink.Zener.Net
         private void _CheckResponding()
         {
             if (_beginRespond) throw new InvalidOperationException(
-                "Cannot modify the status code after the response body has been written to."
+                "Cannot modify the headers after the response body has been written to."
                 );
         }
 
@@ -411,12 +411,7 @@ namespace SynapLink.Zener.Net
             get { return _bufferOutput; }
             set
             {
-                if (_beginRespond)
-                {
-                    throw new InvalidOperationException(
-                        "Cannot buffer output when the headers have been sent."
-                        );
-                }
+                _CheckResponding();
 
                 _bufferOutput = value;
             }
