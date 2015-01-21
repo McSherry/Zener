@@ -86,7 +86,7 @@ namespace SynapLink.Zener.Core
         /// <param name="handler">The handler to be associated with this route.</param>
         public Route(string format, RouteHandler handler)
         {
-            _formatOriginal = format.Trim(' ', '/');
+            _formatOriginal = Routing.TrimFormatString(format);
             this.Format = _formatOriginal.ToLower();
             this.Handler = handler;
             this.Name = this.Format;
@@ -105,7 +105,7 @@ namespace SynapLink.Zener.Core
         public bool TryMatch(string path, out dynamic param)
         {
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
-            path = path.Trim(' ', '/');
+            path = Routing.TrimFormatString(path);
 
             // Indices within format and path
             int fIndex = 0, pIndex = 0;

@@ -74,6 +74,17 @@ namespace SynapLink.Zener.Core
             return @params;
         }
         /// <summary>
+        /// Trims a format string to allow comparison between equal (but not identical)
+        /// format strings.
+        /// </summary>
+        /// <param name="format">The format string to trim.</param>
+        /// <returns>The trimmed format string.</returns>
+        public static string TrimFormatString(string format)
+        {
+            return format.Trim(' ', '/');
+        }
+
+        /// <summary>
         /// Adds a directory handler to the router. A directory handler
         /// is used to serve files from a directory, using a parameter in
         /// the format string as the file-name.
