@@ -122,7 +122,7 @@ namespace SynapLink.Zener.Core
         {
             var route = new Route(format, handler) { Name = name };
 
-            _routes.RemoveAll(r => r.Name.Equals(route.Name));
+            _routes.RemoveAll(r => r.Format.Equals(route.Format) || r.Name.Equals(route.Name));
 
             _routes.Add(route);
         }
