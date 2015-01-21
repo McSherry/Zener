@@ -246,10 +246,15 @@ namespace SynapLink.Zener.Net
         private HttpCookieCollection _cookies;
         private Action _closeCallback;
         private StreamWriter _nsw;
+        private MemoryStream _oBuffer;
         // Set to true when the first write is made. When this is
         // true, it indicates that the response headers have been
         // sent to the client.
-        private bool _beginRespond, _closed, _bufferOutput;
+        private bool _beginRespond, 
+            // True when the Close() method has been called.
+            _closed, 
+            // Whether output buffering is enabled.
+            _bufferOutput;
 
         /// <summary>
         /// Writes the headers to the StreamWriter if they have not
@@ -412,6 +417,11 @@ namespace SynapLink.Zener.Net
             set
             {
                 _CheckResponding();
+
+                if (value && _oBuffer != null)
+                {
+                    _oBuffer = new MemoryStream();
+                }
 
                 _bufferOutput = value;
             }
