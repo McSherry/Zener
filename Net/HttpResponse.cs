@@ -249,7 +249,7 @@ namespace SynapLink.Zener.Net
         // Set to true when the first write is made. When this is
         // true, it indicates that the response headers have been
         // sent to the client.
-        private bool _beginRespond, _closed;
+        private bool _beginRespond, _closed, _bufferOutput;
 
         /// <summary>
         /// Writes the headers to the StreamWriter if they have not
@@ -401,6 +401,25 @@ namespace SynapLink.Zener.Net
         public HttpCookieCollection Cookies
         {
             get { return _cookies; }
+        }
+        /// <summary>
+        /// Whether to enable output buffering. Output buffering delays
+        /// the sending of the response body.
+        /// </summary>
+        public bool BufferOutput
+        {
+            get { return _bufferOutput; }
+            set
+            {
+                if (_beginRespond)
+                {
+                    throw new InvalidOperationException(
+                        "Cannot buffer output when the headers have been sent."
+                        );
+                }
+
+                _bufferOutput = value;
+            }
         }
 
         /// <summary>
