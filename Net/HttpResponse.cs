@@ -592,10 +592,7 @@ namespace SynapLink.Zener.Net
         /// <param name="value">The value to write.</param>
         public void Write(object value)
         {
-            _CheckClosed();
-            _ConditionalWriteHeaders();
-
-            _nsw.Write(value);
+            this.Write(value: value.ToString());
         }
         /// <summary>
         /// Writes the provided string to the response.
@@ -603,7 +600,7 @@ namespace SynapLink.Zener.Net
         /// <param name="value">The string to write.</param>
         public void Write(string value)
         {
-            this.Write((object)value);
+            this.Write(this.Encoding.GetBytes(value));
         }
         /// <summary>
         /// Writes the provided bytes to the response.
@@ -639,10 +636,7 @@ namespace SynapLink.Zener.Net
         /// <param name="args">The values to write.</param>
         public void Write(string format, params object[] args)
         {
-            _CheckClosed();
-            _ConditionalWriteHeaders();
-
-            _nsw.Write(format, args);
+            this.Write(String.Format(format, args));
         }
         /// <summary>
         /// Writes the provided value to the response, followed
@@ -651,10 +645,7 @@ namespace SynapLink.Zener.Net
         /// <param name="value">The value to write.</param>
         public void WriteLine(object value)
         {
-            _CheckClosed();
-            _ConditionalWriteHeaders();
-
-            _nsw.WriteLine(value);
+            this.Write(value: String.Format("{0}{1}", value.ToString(), HTTP_NEWLINE));
         }
         /// <summary>
         /// Writes the provided string to the response,
@@ -663,7 +654,7 @@ namespace SynapLink.Zener.Net
         /// <param name="value">The string to write.</param>
         public void WriteLine(string value)
         {
-            this.WriteLine(value as object);
+            this.WriteLine(value: String.Format("{0}{1}", value, HTTP_NEWLINE));
         }
         /// <summary>
         /// Writes the provided values to the response in the
@@ -673,10 +664,11 @@ namespace SynapLink.Zener.Net
         /// <param name="args">The values to write.</param>
         public void WriteLine(string format, params object[] args)
         {
-            _CheckClosed();
-            _ConditionalWriteHeaders();
+            StringBuilder formatBuilder = new StringBuilder();
+            formatBuilder.AppendFormat(format, args);
+            formatBuilder.Append(HTTP_NEWLINE);
 
-            _nsw.WriteLine(format, args);
+            this.Write(value: formatBuilder.ToString());
         }
 
         /// <summary>
