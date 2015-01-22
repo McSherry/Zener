@@ -261,6 +261,30 @@ namespace SynapLink.Zener.Net
             // Whether output buffering is enabled.
             _bufferOutput;
 
+        private void _ConditionalSendHeader()
+        {
+            // If we've already begun responding, we've already
+            // sent the headers, so we can just return.
+            if (_beginRespond) return;
+            // If we're buffering output, the headers will be
+            // sent later.
+            if (this.BufferOutput) return;
+
+            // If we're here, it means output buffering is
+            // disabled. This means that we can't know the
+            // content length in advance, so we need to remove
+            // any Content-Length headers.
+            this.Headers.Remove(HDR_CONTENTLENGTH);
+            // With buffering disabled, we'll be using chunked
+            // transfer encoding to transfer data. Set the
+            // Transfer-Encoding header, overwriting any previous
+            // such headers.
+            this.Headers.Add(
+                fieldName:  HDR_XFERENCODING,
+                fieldValue: HDRF_CHUNKEDXFER,
+                overwrite:  true
+                );
+        }
         /// <summary>
         /// Writes the headers to the StreamWriter if they have not
         /// already been written.
