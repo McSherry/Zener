@@ -260,6 +260,7 @@ namespace SynapLink.Zener.Net
         /// Writes the headers to the StreamWriter if they have not
         /// already been written.
         /// </summary>
+        [Obsolete("", true)]
         private void _ConditionalWriteHeaders()
         {
             if (!_beginRespond)
