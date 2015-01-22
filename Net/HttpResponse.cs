@@ -267,6 +267,7 @@ namespace SynapLink.Zener.Net
             _closed, 
             // Whether output buffering is enabled.
             _bufferOutput;
+        private Encoding _encoding;
 
         private void _BufferedWrite(byte[] bytes)
         {
@@ -487,6 +488,7 @@ namespace SynapLink.Zener.Net
             }
 
             this.StatusCode = HttpStatus.OK;
+            this.Encoding = Encoding.UTF8;
             _closeCallback = closeCallback;
             _rstr = responseStream;
             _headers = new HttpHeaderCollection();
@@ -562,6 +564,25 @@ namespace SynapLink.Zener.Net
                 }
 
                 _bufferOutput = value;
+            }
+        }
+        /// <summary>
+        /// The encoding used when writing strings to the response. Defaults
+        /// to UTF-8.
+        /// </summary>
+        public Encoding Encoding
+        {
+            get { return _encoding; }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(
+                        "The response's encoding cannot be null."
+                        );
+                }
+
+                _encoding = value;
             }
         }
 
