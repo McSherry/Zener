@@ -256,8 +256,8 @@ namespace SynapLink.Zener.Net
         private HttpHeaderCollection _headers;
         private HttpCookieCollection _cookies;
         private Action _closeCallback;
-        private StreamWriter _nsw;
-        private MemoryStream _oBuffer;
+        // Response stream, output buffer stream
+        private Stream _rstr, _obstr;
         // Set to true when the first write is made. When this is
         // true, it indicates that the response headers have been
         // sent to the client.
@@ -440,11 +440,7 @@ namespace SynapLink.Zener.Net
 
             this.StatusCode = HttpStatus.OK;
             _closeCallback = closeCallback;
-            _nsw = new StreamWriter(responseStream)
-            {
-                AutoFlush = true,
-                NewLine = "\r\n"
-            };
+            _rstr = responseStream;
             _headers = new HttpHeaderCollection();
             _cookies = new HttpCookieCollection();
             _beginRespond = false;
@@ -512,9 +508,9 @@ namespace SynapLink.Zener.Net
             {
                 _CheckResponding();
 
-                if (value && _oBuffer != null)
+                if (value && _obstr == null)
                 {
-                    _oBuffer = new MemoryStream();
+                    _obstr = new MemoryStream();
                 }
 
                 _bufferOutput = value;
