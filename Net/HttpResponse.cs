@@ -238,8 +238,13 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpResponse
     {
-        private const string HDR_SETCOOKIE  = "Set-Cookie";
-        private const string HTTP_VERSION   = "1.1";
+        private const string 
+            HDR_SETCOOKIE       = "Set-Cookie",
+            HDR_CONTENTLENGTH   = "Content-Length",
+            HDR_XFERENCODING    = "Transfer-Encoding",
+            HDRF_CHUNKEDXFER    = "Chunked",
+            HTTP_VERSION        = "1.1"
+            ;
 
         private HttpStatus _httpStatus;
         private HttpHeaderCollection _headers;
