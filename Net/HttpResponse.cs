@@ -249,7 +249,8 @@ namespace SynapLink.Zener.Net
             HDRF_SERVER         = "Zener/{0}",
             HDRF_CONTENTTYPE    = "text/html",
 
-            HTTP_VERSION        = "1.1"
+            HTTP_VERSION        = "1.1",
+            HTTP_NEWLINE        = "\r\n"
             ;
 
         private HttpStatus _httpStatus;
