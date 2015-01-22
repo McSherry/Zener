@@ -269,6 +269,29 @@ namespace SynapLink.Zener.Net
             _bufferOutput;
 
         private void _ConditionalSendHeader()
+        private void _ChunkedNetworkWrite(byte[] bytes)
+        {
+            // The chunked transfer encoding mechanism specifies
+            // the length of its chunks using a hexadecimal string.
+            // Thankfully, Int32.ToString provides an easy-to-use
+            // way of doing this.
+            //
+            // This hexadecimal integer is ASCII-encoded.
+            var len = Encoding.ASCII.GetBytes(bytes.Length.ToString("x"));
+            // The length is separated from the chunk data by a
+            // newline, and the chunk itself is terminated by a
+            // newline.
+            var nl = Encoding.ASCII.GetBytes(HTTP_NEWLINE);
+
+            // The length comes first.
+            _rstr.Write(len, 0, len.Length);
+            // Followed by a separating newline.
+            _rstr.Write(nl, 0, nl.Length);
+            // Followed by the chunk body.
+            _rstr.Write(bytes, 0, bytes.Length);
+            // And then a final terminating newline.
+            _rstr.Write(nl, 0, nl.Length);
+        }
         private void _ConditionalSendHeaders()
         {
             // If we've already begun responding, we've already
