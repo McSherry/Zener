@@ -335,8 +335,18 @@ namespace SynapLink.Zener.Net
         ///     Thrown when the provided stream does not support the
         ///     required operations.
         /// </exception>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided stream is null.
+        /// </exception>
         internal HttpResponse(Stream responseStream, Action closeCallback)
         {
+            if (responseStream == null)
+            {
+                throw new ArgumentNullException(
+                    "The response stream cannot be null."
+                    );
+            }
+
             if (
                 !responseStream.CanRead ||
                 !responseStream.CanWrite)
