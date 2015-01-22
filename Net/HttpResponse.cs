@@ -367,6 +367,12 @@ namespace SynapLink.Zener.Net
             // and the start of the response body.
             headerBuilder.AppendFormat("{0}{1}", this.Headers.ToString(), HTTP_NEWLINE);
 
+            // Headers are ASCII-encoded, so we need to find the appropriate
+            // byte representation of our strings.
+            var headerBytes = Encoding.ASCII.GetBytes(headerBuilder.ToString());
+            // Once we've got the bytes, we need to write them to the network.
+            _rstr.Write(headerBytes, 0, headerBytes.Length);
+
             // It is possible that the user enabled output buffering, wrote
             // to the response, then disabled it. If this is the case, we
             // need to ensure that we write whatever was in the buffer
