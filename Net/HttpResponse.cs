@@ -590,9 +590,25 @@ namespace SynapLink.Zener.Net
         /// <param name="value"></param>
         public void Write(IEnumerable<byte> value)
         {
-            _nsw.BaseStream.Write(
-                value.ToArray(), 0, value.Count()
-                );
+            // Ensure that the response has not been closed.
+            _CheckClosed();
+            // Send headers if necessary.
+            _ConditionalSendHeaders();
+
+            // The function signature uses IEnumerable<byte>
+            // to ease use, but in the end we do need a byte
+            // array to pass to the streams.
+            var valueArray = value.ToArray();
+            // If output buffering is enabled, we need to write
+            // to a different stream.
+            if (this.BufferOutput)
+            {
+                _BufferedWrite(valueArray);
+            }
+            else
+            {
+                _ChunkedNetworkWrite(valueArray);
+            }
         }
         /// <summary>
         /// Writes the provided values to the response in the
