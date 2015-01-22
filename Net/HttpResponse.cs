@@ -398,54 +398,6 @@ namespace SynapLink.Zener.Net
             _beginRespond = true;
         }
         /// <summary>
-        /// Writes the headers to the StreamWriter if they have not
-        /// already been written.
-        /// </summary>
-        [Obsolete("", true)]
-        private void _ConditionalWriteHeaders()
-        {
-            if (!_beginRespond)
-            {
-                _nsw.Write(this.ResponseLine);
-
-                // Ensures that the content is transferred with a media type.
-                // Defaults to HTML, since what else is an HTTP server most likely
-                // to be serving?
-                if (!this.Headers.Contains("Content-Type"))
-                {
-                    this.Headers.Add("Content-Type", "text/html");
-                }
-
-                // Since cookies are sent in headers, we want to make sure that
-                // the collection cannot be modified after the headers are sent.
-                this.Cookies.IsReadOnly = true;
-                foreach (var cookie in this.Cookies)
-                {
-                    this.Headers.Add(
-                        fieldName:  HDR_SETCOOKIE,
-                        fieldValue: cookie.ToString(),
-                        overwrite:  false
-                        );
-                }
-
-                if (!this.Headers.Contains("Server"))
-                {
-                    this.Headers.Add("Server", "Zener/" + ZenerCore.Version.ToString(3), true);
-                }
-
-                // As with cookies, headers cannot be modified once we
-                // start sending the response body.
-                this.Headers.IsReadOnly = true;
-                _nsw.Write(this.Headers.ToString());
-                // The end of the header block is indicated by using two CRLFs,
-                // so we need to write an extra one to our stream before the
-                // body can be sent.
-                _nsw.WriteLine();
-
-                _beginRespond = true;
-            }
-        }
-        /// <summary>
         /// Checks if the connection between client and server has
         /// been closed, and throws an exception if it has.
         /// </summary>
