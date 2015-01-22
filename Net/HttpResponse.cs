@@ -353,12 +353,15 @@ namespace SynapLink.Zener.Net
             // them. Headers are always ASCII text, so this is perfectly fine.
             StringBuilder headerBuilder = new StringBuilder();
             // The response line comes first. This contains the HTTP version,
-            // status code, and an optional textual status message. We'll be
-            // using AppendFormat to ensure that newlines are compliant. It
-            // is possible that other platforms may append different new-lines
-            // (for example, a *nix system may use \n alone, while HTTP requires
-            // the use of \r\n).
-            headerBuilder.AppendFormat("{0}{1}", this.ResponseLine, HTTP_NEWLINE);
+            // status code, and an optional textual status message. The
+            // ResponseLine property adds a newline for us, so we don't need
+            // to worry about it.
+            //
+            // We'll be using AppendFormat elsewhere ensure that newlines are
+            // compliant. It is possible that other platforms may append different
+            // new-lines (for example, a *nix system may use \n alone, while HTTP
+            // requires the use of \r\n).
+            headerBuilder.Append(this.ResponseLine);
             // The HttpHeaderCollection class provides an overload of
             // Object.ToString, so we are able to just call that. The
             // class handles the newlines at the end of headers, but
