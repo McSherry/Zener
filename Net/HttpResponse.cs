@@ -262,6 +262,7 @@ namespace SynapLink.Zener.Net
             _bufferOutput;
 
         private void _ConditionalSendHeader()
+        private void _ConditionalSendHeaders()
         {
             // If we've already begun responding, we've already
             // sent the headers, so we can just return.
