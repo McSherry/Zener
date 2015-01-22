@@ -354,14 +354,35 @@ namespace SynapLink.Zener.Net
             // is possible that other platforms may append different new-lines
             // (for example, a *nix system may use \n alone, while HTTP requires
             // the use of \r\n).
-            headerBuilder.AppendFormat("{0}\r\n", this.ResponseLine);
+            headerBuilder.AppendFormat("{0}{1}", this.ResponseLine, HTTP_NEWLINE);
             // The HttpHeaderCollection class provides an overload of
             // Object.ToString, so we are able to just call that. The
             // class handles the newlines at the end of headers, but
             // we still need to provide the second newline that indicates
             // to the HTTP client (such as a browser) the end of the headers
             // and the start of the response body.
-            headerBuilder.AppendFormat("{0}\r\n", this.Headers.ToString());
+            headerBuilder.AppendFormat("{0}{1}", this.Headers.ToString(), HTTP_NEWLINE);
+
+            // It is possible that the user enabled output buffering, wrote
+            // to the response, then disabled it. If this is the case, we
+            // need to ensure that we write whatever was in the buffer
+            // before anything else is written.
+            if (_obstr != null && _obstr.Length > 0)
+            {
+                // Read the contents of the buffer in to a byte array.
+                byte[] outBuf = new byte[_obstr.Length];
+                _obstr.Read(outBuf, 0, outBuf.Length);
+                // Write the contents of the byte array to the network.
+                // The method called will write in the chunked transfer
+                // encoding format.
+                _ChunkedNetworkWrite(outBuf);
+            }
+
+            // We've written our headers, so we want to ensure that they are
+            // not written again, and that the user cannot make modifications
+            // to any other header-related properties. This field indicates
+            // that we have begun responding, and so cannot modify headers.
+            _beginRespond = true;
         }
         /// <summary>
         /// Writes the headers to the StreamWriter if they have not
