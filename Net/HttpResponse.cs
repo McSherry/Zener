@@ -684,6 +684,11 @@ namespace SynapLink.Zener.Net
         {
             if (!_closed)
             {
+                if (!this.BufferOutput)
+                {
+                    _ChunkedNetworkWrite(new byte[0]);
+                }
+
                 _closeCallback();
                 _closed = true;
             }
