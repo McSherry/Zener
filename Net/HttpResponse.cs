@@ -269,6 +269,10 @@ namespace SynapLink.Zener.Net
             _bufferOutput;
 
         private void _ConditionalSendHeader()
+        private void _BufferedWrite(byte[] bytes)
+        {
+            _obstr.Write(bytes, 0, bytes.Length);
+        }
         private void _ChunkedNetworkWrite(byte[] bytes)
         {
             // The chunked transfer encoding mechanism specifies
