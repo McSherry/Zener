@@ -242,7 +242,13 @@ namespace SynapLink.Zener.Net
             HDR_SETCOOKIE       = "Set-Cookie",
             HDR_CONTENTLENGTH   = "Content-Length",
             HDR_XFERENCODING    = "Transfer-Encoding",
+            HDR_SERVER          = "Server",
+            HDR_CONTENTTYPE     = "Content-Type",
+
             HDRF_CHUNKEDXFER    = "Chunked",
+            HDRF_SERVER         = "Zener/{0}",
+            HDRF_CONTENTTYPE    = "text/html",
+
             HTTP_VERSION        = "1.1"
             ;
 
