@@ -291,6 +291,53 @@ namespace SynapLink.Zener.Net
                 fieldValue: HDRF_CHUNKEDXFER,
                 overwrite:  true
                 );
+            // Add the server identification header. This includes
+            // the name of the server software, and the current
+            // version.
+            this.Headers.Add(
+                fieldName:  HDR_SERVER,
+                fieldValue: String.Format(HDRF_SERVER, ZenerCore.Version),
+                overwrite:  true
+                );
+            // Responses should always be sent with a Content-Type
+            // header. We need to check to see if the response
+            // already has such a header.
+            if (!this.Headers.Contains(HDRF_CONTENTTYPE))
+            {
+                // If the response does not have a Content-Type header,
+                // we'll add one with a sane default value. In this case,
+                // text/html since it's reasonably likely that whatever
+                // is being served will be HTML.
+                this.Headers.Add(
+                    fieldName:  HDR_CONTENTTYPE,
+                    fieldValue: HDRF_CONTENTTYPE
+                    );
+            }
+            // We want to ensure that the user knows that they can no longer
+            // modify headers. To do this, we make the headers collection
+            // read-only. The collection will now throw an exception should
+            // the user try to add elements to or remove elements from the
+            // collection.
+            this.Headers.IsReadOnly = true;
+
+            // To save on calls to an encoder and calls to the response stream,
+            // we'll use a string builder to build our headers before sending
+            // them. Headers are always ASCII text, so this is perfectly fine.
+            StringBuilder headerBuilder = new StringBuilder();
+            // The response line comes first. This contains the HTTP version,
+            // status code, and an optional textual status message. We'll be
+            // using AppendFormat to ensure that newlines are compliant. It
+            // is possible that other platforms may append different new-lines
+            // (for example, a *nix system may use \n alone, while HTTP requires
+            // the use of \r\n).
+            headerBuilder.AppendFormat("{0}\r\n", this.ResponseLine);
+            // The HttpHeaderCollection class provides an overload of
+            // Object.ToString, so we are able to just call that. The
+            // class handles the newlines at the end of headers, but
+            // we still need to provide the second newline that indicates
+            // to the HTTP client (such as a browser) the end of the headers
+            // and the start of the response body.
+            headerBuilder.AppendFormat("{0}\r\n", this.Headers.ToString());
         }
         /// <summary>
         /// Writes the headers to the StreamWriter if they have not
