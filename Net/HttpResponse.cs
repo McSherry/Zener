@@ -268,7 +268,6 @@ namespace SynapLink.Zener.Net
             // Whether output buffering is enabled.
             _bufferOutput;
 
-        private void _ConditionalSendHeader()
         private void _BufferedWrite(byte[] bytes)
         {
             _obstr.Write(bytes, 0, bytes.Length);
