@@ -299,6 +299,32 @@ namespace SynapLink.Zener.Net
             // And then a final terminating newline.
             _rstr.Write(nl, 0, nl.Length);
         }
+        private void _NetworkWrite(byte[] bytes)
+        {
+            // This method writes to the network stream, and
+            // should be used by any network-writing code within
+            // this class. It writes in chunks of 4kB to help
+            // prevent the operating system's transmit buffers
+            // being filled.
+
+            int runningTotal = 0;
+            int count = bytes.Length > TX_BUFFER_SIZE ? TX_BUFFER_SIZE : bytes.Length;
+            while (runningTotal != bytes.Length)
+            {
+                _rstr.Write(bytes, runningTotal, count);
+                
+                // Advance the current total by the number of bytes we've
+                // written to the network.
+                runningTotal += count;
+                // If the number of bytes left to be written is greater than
+                // the maximum number of bytes we would write at once, set the
+                // variable containing the number of bytes to be written to 
+                // the maximum that would be written at once. Otherwise, set it
+                // to the number of bytes remaining to be written.
+                count = bytes.Length - runningTotal;
+                count = count > TX_BUFFER_SIZE ? TX_BUFFER_SIZE : count;
+            }
+        }
         private void _ConditionalSendHeaders()
         {
             // If we've already begun responding, we've already
