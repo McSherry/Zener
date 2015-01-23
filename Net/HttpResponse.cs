@@ -330,31 +330,75 @@ namespace SynapLink.Zener.Net
             // If we've already begun responding, we've already
             // sent the headers, so we can just return.
             if (_beginRespond) return;
-            // If we're buffering output, the headers will be
-            // sent later.
-            if (this.BufferOutput) return;
 
-            // If we're here, it means output buffering is
-            // disabled. This means that we can't know the
-            // content length in advance, so we need to remove
-            // any Content-Length headers.
-            this.Headers.Remove(HDR_CONTENTLENGTH);
-            // With buffering disabled, we'll be using chunked
-            // transfer encoding to transfer data. Set the
-            // Transfer-Encoding header, overwriting any previous
-            // such headers.
-            this.Headers.Add(
-                fieldName:  HDR_XFERENCODING,
-                fieldValue: HDRF_CHUNKEDXFER,
-                overwrite:  true
-                );
+            // We'll use this when writing to the network.
+            // Using an Action<T> helps prevent code duplication,
+            // as we can reuse the code that calls sendMethod for
+            // both chunked transfer encoding and responding with
+            // a definite length.
+            Action<byte[]> sendMethod;
+
+            if (this.BufferOutput)
+            {
+                // If we're buffering output and the response has
+                // not been closed, it is still possible for the
+                // user to write to the buffer. For this reason,
+                // we don't want to send the headers.
+                if (!_closed) return;
+                else
+                {
+                    // If we've reached this point, we were using
+                    // output buffering and the response has been
+                    // closed. This means that we're now free to
+                    // send the response to the client.
+
+                    // As output buffering means we know the length
+                    // of the data, we don't want to use chunked
+                    // transfer encoding to send it. Instead, we
+                    // set the Content-Length header.
+                    this.Headers.Add(
+                        fieldName:  HDR_CONTENTLENGTH,
+                        fieldValue: _obstr.Length.ToString(),
+                        overwrite:  true
+                        );
+                    // We want to make sure that there isn't a
+                    // transfer encoding header.
+                    this.Headers.Remove(HDR_XFERENCODING);
+                    // We'll be writing directly to the network,
+                    // so _NetworkWrite is the method we should
+                    // use.
+                    sendMethod = _NetworkWrite;
+                }
+            }
+            else
+            {
+                // If we're here, it means output buffering is
+                // disabled. This means that we can't know the
+                // content length in advance, so we need to remove
+                // any Content-Length headers.
+                this.Headers.Remove(HDR_CONTENTLENGTH);
+                // With buffering disabled, we'll be using chunked
+                // transfer encoding to transfer data. Set the
+                // Transfer-Encoding header, overwriting any previous
+                // such headers.
+                this.Headers.Add(
+                    fieldName: HDR_XFERENCODING,
+                    fieldValue: HDRF_CHUNKEDXFER,
+                    overwrite: true
+                    );
+                // We'll be using chunked transfer encoding,
+                // so we need to set sendMethod to our method
+                // for writing to the network in chunks.
+                sendMethod = _ChunkedNetworkWrite;
+            }
+
             // Add the server identification header. This includes
             // the name of the server software, and the current
             // version.
             this.Headers.Add(
-                fieldName:  HDR_SERVER,
+                fieldName: HDR_SERVER,
                 fieldValue: String.Format(HDRF_SERVER, ZenerCore.Version),
-                overwrite:  true
+                overwrite: true
                 );
             // Responses should always be sent with a Content-Type
             // header. We need to check to see if the response
@@ -414,9 +458,9 @@ namespace SynapLink.Zener.Net
                 byte[] outBuf = new byte[_obstr.Length];
                 _obstr.Read(outBuf, 0, outBuf.Length);
                 // Write the contents of the byte array to the network.
-                // The method called will write in the chunked transfer
-                // encoding format.
-                _ChunkedNetworkWrite(outBuf);
+                // The delegate will have been set appropriately by the
+                // above code.
+                sendMethod(outBuf);
             }
 
             // We've written our headers, so we want to ensure that they are
