@@ -711,13 +711,28 @@ namespace SynapLink.Zener.Net
         {
             if (!_closed)
             {
+                // The _closed variable must be set to true
+                // for the headers/body to be sent properly
+                // when output buffering is enabled.
+                _closed = true;
+                // Send the headers and, if output buffering
+                // is enabled, flush the buffer to the network.
+                _ConditionalSendHeaders();
+
+                // If output buffering is disabled, we're sending
+                // with chunked transfer encoding. This means that
+                // we need to send a terminating chunk to signify
+                // that we've finished sending chunked data.
+                // 
+                // Terminating chunks are "zero-length." Quoted
+                // because we still send bytes, but the bytes
+                // indicate that the chunk has no data.
                 if (!this.BufferOutput)
                 {
                     _ChunkedNetworkWrite(new byte[0]);
                 }
 
                 _closeCallback();
-                _closed = true;
             }
         }
     }
