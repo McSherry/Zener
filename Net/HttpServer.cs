@@ -183,21 +183,15 @@ namespace SynapLink.Zener.Net
             }
             catch (IOException ioex)
             {
-                // If the connection's been reset, none of our handlers will
-                // be much use, since they all write to the connection. The
-                // best thing to do is to just return and stop handling it.
-                //
-                // I'm sure this is preferable to throwing an exception every
-                // time the client resets the connection.
+                // If there's a problem with the socket, there's probably
+                // nothing we can do from here. It's unlikely that we'll
+                // be able to inform the client of an issue. We'll just
+                // skip it and continue on.
                 if (ioex.InnerException is SocketException)
                 {
-                    if (((SocketException)ioex.InnerException).ErrorCode == (int)SocketError.ConnectionReset)
-                    {
-                        return;
-                    }
+                    return;
                 }
-                
-                throw;
+                else throw;
             }
             
             res.Close();
