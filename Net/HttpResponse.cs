@@ -738,7 +738,9 @@ namespace SynapLink.Zener.Net
                 }
             }
         }
-
+        /// <summary>
+        /// Calls HttpResponse.Close.
+        /// </summary>
         void IDisposable.Dispose()
         {
             this.Close();
