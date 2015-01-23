@@ -260,7 +260,6 @@ namespace SynapLink.Zener.Net
         private HttpStatus _httpStatus;
         private HttpHeaderCollection _headers;
         private HttpCookieCollection _cookies;
-        private Action _closeCallback;
         // Response stream, output buffer stream
         private Stream _rstr, _obstr;
         // Set to true when the first write is made. When this is
@@ -497,7 +496,7 @@ namespace SynapLink.Zener.Net
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided stream is null.
         /// </exception>
-        internal HttpResponse(Stream responseStream, Action closeCallback)
+        internal HttpResponse(Stream responseStream)
         {
             if (responseStream == null)
             {
@@ -516,7 +515,6 @@ namespace SynapLink.Zener.Net
 
             this.StatusCode = HttpStatus.OK;
             this.Encoding = Encoding.UTF8;
-            _closeCallback = closeCallback;
             _rstr = responseStream;
             _headers = new HttpHeaderCollection();
             _cookies = new HttpCookieCollection();
@@ -725,8 +723,6 @@ namespace SynapLink.Zener.Net
                 {
                     _ChunkedNetworkWrite(new byte[0]);
                 }
-
-                _closeCallback();
 
                 _rstr.Close();
                 _rstr.Dispose();

@@ -159,12 +159,7 @@ namespace SynapLink.Zener.Net
             NetworkStream ns = tcl.GetStream();
 
             HttpRequest req;
-            HttpResponse res = new HttpResponse(ns, () => 
-            {
-                ns.Close();
-                ns.Dispose();
-                tcl.Close();
-            });
+            HttpResponse res = new HttpResponse(ns);
 
             try
             {
@@ -206,6 +201,7 @@ namespace SynapLink.Zener.Net
             }
             
             res.Close();
+            tcl.Close();
         }
 
         /// <summary>
