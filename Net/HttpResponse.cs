@@ -398,7 +398,7 @@ namespace SynapLink.Zener.Net
             // version.
             this.Headers.Add(
                 fieldName: HDR_SERVER,
-                fieldValue: String.Format(HDRF_SERVER, ZenerCore.Version),
+                fieldValue: String.Format(HDRF_SERVER, ZenerCore.Version.ToString(3)),
                 overwrite: true
                 );
             // Responses should always be sent with a Content-Type
