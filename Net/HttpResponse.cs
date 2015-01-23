@@ -237,6 +237,7 @@ namespace SynapLink.Zener.Net
     /// respond to an HTTP request.
     /// </summary>
     public class HttpResponse
+        : IDisposable
     {
         private const string 
             HDR_SETCOOKIE       = "Set-Cookie",
@@ -446,7 +447,7 @@ namespace SynapLink.Zener.Net
             // byte representation of our strings.
             var headerBytes = Encoding.ASCII.GetBytes(headerBuilder.ToString());
             // Once we've got the bytes, we need to write them to the network.
-            _rstr.Write(headerBytes, 0, headerBytes.Length);
+            _NetworkWrite(headerBytes);
 
             // It is possible that the user enabled output buffering, wrote
             // to the response, then disabled it. If this is the case, we
@@ -454,6 +455,10 @@ namespace SynapLink.Zener.Net
             // before anything else is written.
             if (_obstr != null && _obstr.Length > 0)
             {
+                // The output buffer will be positioned at the end of
+                // it's data. We need to set it back to the start to
+                // read the data from it.
+                _obstr.Position = 0;
                 // Read the contents of the buffer in to a byte array.
                 byte[] outBuf = new byte[_obstr.Length];
                 _obstr.Read(outBuf, 0, outBuf.Length);
@@ -733,7 +738,17 @@ namespace SynapLink.Zener.Net
                 }
 
                 _closeCallback();
+
+                _rstr.Close();
+                _rstr.Dispose();
+                _obstr.Close();
+                _obstr.Dispose();
             }
+        }
+
+        void IDisposable.Dispose()
+        {
+            this.Close();
         }
     }
 }
