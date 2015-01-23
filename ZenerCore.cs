@@ -29,7 +29,7 @@ namespace SynapLink.Zener
     public class ZenerCore
     {
         private const string INTERNAL_PREFIX = ":";
-        private static Version _ver;
+        private static readonly Version _ver;
 
         private HttpServer _http;
 
