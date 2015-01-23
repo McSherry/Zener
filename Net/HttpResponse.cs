@@ -741,8 +741,12 @@ namespace SynapLink.Zener.Net
 
                 _rstr.Close();
                 _rstr.Dispose();
-                _obstr.Close();
-                _obstr.Dispose();
+
+                if (_obstr != null)
+                {
+                    _obstr.Close();
+                    _obstr.Dispose();
+                }
             }
         }
 
