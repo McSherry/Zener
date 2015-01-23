@@ -383,9 +383,9 @@ namespace SynapLink.Zener.Net
                 // Transfer-Encoding header, overwriting any previous
                 // such headers.
                 this.Headers.Add(
-                    fieldName: HDR_XFERENCODING,
+                    fieldName:  HDR_XFERENCODING,
                     fieldValue: HDRF_CHUNKEDXFER,
-                    overwrite: true
+                    overwrite:  true
                     );
                 // We'll be using chunked transfer encoding,
                 // so we need to set sendMethod to our method
@@ -397,9 +397,9 @@ namespace SynapLink.Zener.Net
             // the name of the server software, and the current
             // version.
             this.Headers.Add(
-                fieldName: HDR_SERVER,
+                fieldName:  HDR_SERVER,
                 fieldValue: String.Format(HDRF_SERVER, ZenerCore.Version.ToString(3)),
-                overwrite: true
+                overwrite:  true
                 );
             // Responses should always be sent with a Content-Type
             // header. We need to check to see if the response
