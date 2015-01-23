@@ -330,7 +330,7 @@ namespace SynapLink.Zener.Net
             // Responses should always be sent with a Content-Type
             // header. We need to check to see if the response
             // already has such a header.
-            if (!this.Headers.Contains(HDRF_CONTENTTYPE))
+            if (!this.Headers.Contains(HDR_CONTENTTYPE))
             {
                 // If the response does not have a Content-Type header,
                 // we'll add one with a sane default value. In this case,
@@ -344,8 +344,7 @@ namespace SynapLink.Zener.Net
             // We want to ensure that the user knows that they can no longer
             // modify headers. To do this, we make the headers collection
             // read-only. The collection will now throw an exception should
-            // the user try to add elements to or remove elements from the
-            // collection.
+            // the user try to add elements to or remove elements from it.
             this.Headers.IsReadOnly = true;
 
             // To save on calls to an encoder and calls to the response stream,
