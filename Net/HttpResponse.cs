@@ -474,21 +474,11 @@ namespace SynapLink.Zener.Net
             // that we have begun responding, and so cannot modify headers.
             _beginRespond = true;
         }
-        /// <summary>
-        /// Checks if the connection between client and server has
-        /// been closed, and throws an exception if it has.
-        /// </summary>
-        /// <exception cref="System.InvalidOperationException"></exception>
         private void _CheckClosed()
         {
             if (_closed) throw new InvalidOperationException
             ("Cannot modify the response after the connection has been closed.");
         }
-        /// <summary>
-        /// Checks if the server has begun responding to the client,
-        /// and throws if it has.
-        /// </summary>
-        /// <exception cref="System.InvalidOperationException"></exception>
         private void _CheckResponding()
         {
             if (_beginRespond) throw new InvalidOperationException(
