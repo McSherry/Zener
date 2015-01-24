@@ -89,12 +89,58 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="format">The format to be associated with this route.</param>
         /// <param name="handler">The handler to be associated with this route.</param>
-        public Route(string format, RouteHandler handler)
+        /// <param name="methods">The methods this route is constrained to.</param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when at least one of the provided arguments is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the set of acceptable HTTP methods does not contain at
+        ///     least one method.
+        /// </exception>
+        public Route(
+            string format,
+            RouteHandler handler,
+            IEnumerable<string> methods)
         {
+            #region Param validation
+            if (format == null)
+            {
+                throw new ArgumentNullException(
+                    "format",
+                    "The format string cannot be null."
+                    );
+            }
+
+            if (handler == null)
+            {
+                throw new ArgumentNullException(
+                    "methods",
+                    "The route handler cannot be null."
+                    );
+            }
+
+            if (methods == null)
+            {
+                throw new ArgumentNullException(
+                    "methods",
+                    "The set of acceptable HTTP methods cannot be null."
+                    );
+            }
+
+            if (methods.Count() == 0)
+            {
+                throw new ArgumentException(
+                    "At least one acceptable HTTP method must be provided.",
+                    "methods"
+                    );
+            }
+            #endregion
+
             _formatOriginal = Routing.TrimFormatString(format);
             this.Format = _formatOriginal.ToLower();
             this.Handler = handler;
             this.Name = this.Format;
+            this.Methods = methods;
 
             _paramNames = new Lazy<IEnumerable<string>>(
                 () => Routing.GetParameters(this.Format)
@@ -283,7 +329,7 @@ namespace SynapLink.Zener.Core
         /// <summary>
         /// The HTTP methods this route is constrained to.
         /// </summary>
-        public IEnumerable<string> Method
+        public IEnumerable<string> Methods
         {
             get;
             private set;
