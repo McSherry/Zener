@@ -79,6 +79,11 @@ namespace SynapLink.Zener.Core
         private readonly Lazy<IEnumerable<string>> _paramNames;
         private readonly string _formatOriginal;
 
+        static Route()
+        {
+            Route.MethodComparer = StringComparer.OrdinalIgnoreCase;
+        }
+
         /// <summary>
         /// Creates a new route.
         /// </summary>
@@ -274,6 +279,23 @@ namespace SynapLink.Zener.Core
         public IEnumerable<string> Parameters
         {
             get { return _paramNames.Value; }
+        }
+        /// <summary>
+        /// The HTTP methods this route is constrained to.
+        /// </summary>
+        public IEnumerable<string> Method
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// The comparer to be used when comparing HTTP methods.
+        /// </summary>
+        public static StringComparer MethodComparer
+        {
+            get;
+            private set;
         }
     }
 }
