@@ -112,7 +112,7 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="format">The format to be associated with this route.</param>
         /// <param name="handler">The handler to be associated with this route.</param>
-        /// <param name="methods">The methods this route is constrained to.</param>
+        /// <param name="methods">The methods this route should be constrained to.</param>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when at least one of the provided arguments is null.
         /// </exception>
@@ -351,7 +351,7 @@ namespace SynapLink.Zener.Core
             get { return _paramNames.Value; }
         }
         /// <summary>
-        /// The HTTP methods this route is constrained to.
+        /// The HTTP methods this route should be constrained to.
         /// </summary>
         public IEnumerable<string> Methods
         {
