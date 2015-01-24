@@ -76,14 +76,37 @@ namespace SynapLink.Zener.Core
          * matches, because the unbounded variable is infixed.
          */
 
+        private static readonly IEnumerable<string> _defaultMethods;
+
         private readonly Lazy<IEnumerable<string>> _paramNames;
         private readonly string _formatOriginal;
 
         static Route()
         {
             Route.MethodComparer = StringComparer.OrdinalIgnoreCase;
+            _defaultMethods = new[] 
+            {
+                "GET", "POST", "HEAD", "PUT", "DELETE",
+                "OPTIONS", "CONNECT", "TRACE"
+            };
         }
 
+        /// <summary>
+        /// Creates a new route.
+        /// </summary>
+        /// <param name="format">The format to be associated with this route.</param>
+        /// <param name="handler">The handler to be associated with this route.</param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when at least one of the provided arguments is null.
+        /// </exception>
+        public Route(
+            string format,
+            RouteHandler handler
+            )
+            : this(format, handler, _defaultMethods)
+        {
+            
+        }
         /// <summary>
         /// Creates a new route.
         /// </summary>
@@ -100,7 +123,8 @@ namespace SynapLink.Zener.Core
         public Route(
             string format,
             RouteHandler handler,
-            IEnumerable<string> methods)
+            IEnumerable<string> methods
+            )
         {
             #region Param validation
             if (format == null)
