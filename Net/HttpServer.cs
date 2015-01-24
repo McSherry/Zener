@@ -99,12 +99,10 @@ namespace SynapLink.Zener.Net
     }
 
     /// <summary>
-    /// The signature that handlers of HTTP requests must fit.
+    /// The delegate used for handling messages from the HTTP server.
     /// </summary>
-    /// <param name="request">The received HTTP request.</param>
-    /// <param name="response">The class representing the handler's response.</param>
-    public delegate void HttpRequestHandler(HttpRequest request, HttpResponse response);
-    public delegate void HttpErrorHandler(HttpException exception, HttpResponse response);
+    /// <param name="message">The message the server sent.</param>
+    public delegate void HttpServerMessageHandler(HttpServerMessage message);
 
     /// <summary>
     /// A class implementing a basic HTTP server.
@@ -260,22 +258,8 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// The method called when the server receives a request.
+        /// Fired each time the HttpServer emits a message.
         /// </summary>
-        public HttpRequestHandler RequestHandler
-        {
-            get;
-            set;
-        }
-        /// <summary>
-        /// The method called when there is an error related to the
-        /// server's HTTP functions (i.e. a request error). It is
-        /// passed the HTTP status code of the error.
-        /// </summary>
-        public HttpErrorHandler ErrorHandler
-        {
-            get;
-            set;
-        }
+        public event HttpServerMessageHandler MessageEmitted;
     }
 }
