@@ -35,6 +35,25 @@ namespace SynapLink.Zener.Core
         /// <returns>True if a handler was found.</returns>
         public bool TryFind(string path, out HttpRequestHandler handler)
         {
+            var handlers = this.Find(path);
+
+            if (handlers.Count() == 0)
+            {
+                handler = null;
+                return false;
+            }
+
+            handler = handlers.First();
+            return true;
+        }
+        /// <summary>
+        /// Retrieves all handlers that match the specified path,
+        /// ordered by the best match.
+        /// </summary>
+        /// <param name="path">The path to find matches for.</param>
+        /// <returns>An enumerable containing all matches.</returns>
+        public IEnumerable<HttpRequestHandler> Find(string path)
+        {
             /*
              * It should be possible to have routes with
              * variable and non-variable sections in the
@@ -57,21 +76,16 @@ namespace SynapLink.Zener.Core
 
             if (validHandlers.Count == 0)
             {
-                handler = null;
-                return false;
+                return new HttpRequestHandler[0];
             }
 
-            var rhandler = validHandlers
-                .Zip(validParams, (r, pr) => new { Route = r, Params = pr })
+            return validHandlers
+                .Zip(validParams, (r, p) => new { Route = r, Params = p })
                 .OrderByDescending(hwp => hwp.Params is Empty)
-                .FirstOrDefault()
+                .Select(
+                    hwp => new HttpRequestHandler((q, s) => hwp.Route.Handler(q, s, hwp.Params))
+                    )
                 ;
-
-            handler = new HttpRequestHandler(
-                (req, res) => rhandler.Route.Handler(req, res, rhandler.Params)
-                );
-
-            return rhandler != default(object);
         }
         /// <summary>
         /// Attempts to retrieve the handler for a route with the
