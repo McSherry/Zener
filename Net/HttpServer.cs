@@ -237,21 +237,6 @@ namespace SynapLink.Zener.Net
 
                 return;
             }
-            catch (HttpException hex)
-            {
-                // The request or the message handler threw an
-                // HttpException. This is generally a sign that
-                // we want to speak to a handler that will inform
-                // the user of the error.
-                //
-                // In order to do this, we need to emit another
-                // message, this time indicating that an error
-                // handler should be invoked.
-                this.EmitMessage(
-                    MessageType.InvokeErrorHandler,
-                    new object[] { hex }
-                    );
-            }
             catch (IOException ioex)
             {
                 // If there's a problem with the socket, there's probably
