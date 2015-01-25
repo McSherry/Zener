@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.IO;
+using System.Dynamic;
 
 using SynapLink.Zener.Net;
 using SynapLink.Zener.Core;
@@ -96,6 +97,11 @@ namespace SynapLink.Zener
                     {
                         HttpServer.DefaultErrorHandler(exc, res);
                     }
+
+                    var rPr = new ExpandoObject() as IDictionary<string, object>;
+                    rPr.Add("Exception", exc);
+
+                    route.Item1.Handler(null, res, rPr);
                 } break;
             }
         }
