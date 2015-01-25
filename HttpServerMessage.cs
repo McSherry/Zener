@@ -12,6 +12,30 @@ using System.Text;
 
 namespace SynapLink.Zener
 {
+    /* HttpServerMessages include a type to identify their meaning
+     * and an enumerable of arguments. The arguments contain any
+     * values which are useful in handling the type of message.
+     * 
+     * RequestReceived Message:
+     * 
+     *      The RequestReceived type is emitted when the HttpServer
+     *      receives a request that can be successfully parsed. Its
+     *      arguments are as follows.
+     *      
+     *          [0]     =>  HttpRequest
+     *          [1]     =>  HttpResponse
+     *          
+     *      
+     * InvokeErrorHandler Message:
+     *      
+     *      This message type is emitted when the an error occurs.
+     *      It may be emitted when request parsing fails, or may be
+     *      emitted when a handler throws an exception inheriting
+     *      from HttpException. Its arguments are given below.
+     *      
+     *          [0]     => HttpException
+     */
+
     /// <summary>
     /// The type of message from the HTTP server.
     /// </summary>
