@@ -206,6 +206,18 @@ namespace SynapLink.Zener.Net
             }
             catch (HttpException hex)
             {
+                /* Message handlers can throw HttpExceptions or types
+                 * that inherit from HttpException to cause the HttpServer
+                 * to generate an InvokeErrorHandler message.
+                 * 
+                 * Handler writers beware, if your handler for InvokeErrorHandler
+                 * throws an HttpException, you may end up with an infinite
+                 * loop and stack overflow.
+                 */
+                this.EmitMessage(
+                    MessageType.InvokeErrorHandler,
+                    new object[] { hex }
+                    );
             }
         }
 
