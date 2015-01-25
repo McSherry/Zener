@@ -41,27 +41,62 @@ namespace SynapLink.Zener
             get { return _ver; }
         }
 
-        private void HandleHttpRequestSuccessful(HttpRequest req, HttpResponse res)
+        private void HttpServerMessageHandler(HttpServerMessage msg)
         {
-            HttpRequestHandler hrh;
-            bool found = this.Routes.TryFind(req.Path, out hrh);
-
-            if (!found) throw new HttpException(HttpStatus.NotFound);
-
-            hrh(req, res);
-        }
-        private void HandleHttpRequestError(HttpException exception, HttpResponse res)
-        {
-            HttpRequestHandler hrh;
-            bool found = this.Routes.TryFind(
-                String.Format("{0}{1}", INTERNAL_PREFIX, (int)exception.StatusCode),
-                out hrh
-                );
-
-            if (!found) HttpServer.DefaultErrorHandler(exception, res);
-            else
+            switch (msg.Type)
             {
-                hrh(null, res);
+                case MessageType.RequestReceived:
+                {
+                    HttpRequest req = (HttpRequest)msg.Arguments[0];
+                    HttpResponse res = (HttpResponse)msg.Arguments[1];
+
+                    /* We want to be able to provide two different error
+                     * messages to aid debugging. If no route matches exist,
+                     * we want to provide a 404 (Not Found). However, if
+                     * matches exist but the request method is not acceptable,
+                     * we want to provide 405 (Method Not Acceptable).
+                     */
+                    var routes = this.Routes.Find(req.Path);
+
+                    // Absolutely no matches, 404.
+                    if (routes.Count() == 0)
+                    {
+                        throw new HttpException(HttpStatus.NotFound, req);
+                    }
+
+                    routes = routes
+                        .Where(t => t.Item1.MethodIsAcceptable(req.Method))
+                        .ToList();
+
+                    // No acceptable matches, 405.
+                    if (routes.Count() == 0)
+                    {
+                        throw new HttpException(HttpStatus.MethodNotAllowed, req);
+                    }
+
+                    // We've got a match!
+                    var route = routes.First();
+                    route.Item1.Handler(req, res, route.Item2);
+                } break;
+                case MessageType.InvokeErrorHandler:
+                {
+                    var exc = (HttpException)msg.Arguments[0];
+                    var res = (HttpResponse)msg.Arguments[1];
+
+                    var route = this.Routes
+                        .Find(
+                            String.Format(
+                                "{0}{1}",
+                                INTERNAL_PREFIX, (int)exc.StatusCode
+                        ))
+                        .DefaultIfEmpty(null)
+                        .First();
+
+                    if (route == null)
+                    {
+                        HttpServer.DefaultErrorHandler(exc, res);
+                    }
+                } break;
             }
         }
 
@@ -77,11 +112,8 @@ namespace SynapLink.Zener
         public ZenerCore(ZenerContext context)
         {
             this.Routes = new Router();
-            _http = new HttpServer(context.IpAddress, context.TcpPort)
-            {
-                RequestHandler = HandleHttpRequestSuccessful,
-                ErrorHandler = HandleHttpRequestError
-            };
+            _http = new HttpServer(context.IpAddress, context.TcpPort);
+            _http.MessageEmitted += this.HttpServerMessageHandler;
 
             context.AddApiRoutes(this.Routes);
 
