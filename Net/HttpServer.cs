@@ -148,6 +148,12 @@ namespace SynapLink.Zener.Net
     /// </summary>
     /// <param name="message">The message the server sent.</param>
     public delegate void HttpServerMessageHandler(HttpServerMessage message);
+    /// <summary>
+    /// The delegate used for responding to HTTP requests.
+    /// </summary>
+    /// <param name="request">The details of the HTTP request.</param>
+    /// <param name="response">The response to be sent to the client.</param>
+    public delegate void HttpRequestHandler(HttpRequest request, HttpResponse response);
 
     /// <summary>
     /// A class implementing a basic HTTP server.
