@@ -179,6 +179,62 @@ namespace SynapLink.Zener.Net
             this.Method = rlArray[0].ToUpper();
         }
         /// <summary>
+        /// Interprets the contents of the request body and sets
+        /// any properties appropriately.
+        /// </summary>
+        /// <param name="body">A stream containing the request's body.</param>
+        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
+        ///     Thrown when the data contained within the request's
+        ///     body is malformed.
+        /// </exception>
+        private void InterpretRequestBody(Stream body)
+        {
+            if (body.CanSeek && body.Length > 0)
+            {
+                _raw = new byte[body.Length];
+                body.Position = 0;
+                body.Read(_raw, 0, _raw.Length);
+                body.Position = 0;
+            }
+            else
+            {
+                _raw = new byte[0];
+            }
+
+            if (this.Headers.Contains(HDR_CTYPE) && _raw.Length > 0)
+            {
+                var ctype = new NamedParametersHttpHeader(this.Headers[HDR_CTYPE].Last());
+
+                if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
+                {
+                    using (StreamReader sr = new StreamReader(body, Encoding.ASCII))
+                    {
+                        _post = ParseFormUrlEncoded(sr.ReadToEnd());
+                    }
+                }
+                else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
+                {
+                    var bdry = ctype.Pairs
+                        .Where(p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase))
+                        .Select(p => p.Value)
+                        .DefaultIfEmpty(null)
+                        .First();
+
+                    if (bdry == null)
+                    {
+                        throw new HttpRequestException(
+                            this,
+                            "No boundary provided for multipart data."
+                            );
+                    }
+
+                    _post = ParseMultipartFormData(this, body, bdry);
+                }
+                else _post = new Empty();
+            }
+            else _post = new Empty();
+        }
+        /// <summary>
         /// Parses the provided string, assuming that it is in the
         /// application/x-www-formurlencoded format.
         /// </summary>
@@ -429,6 +485,18 @@ namespace SynapLink.Zener.Net
             }
         }
 
+        /* If the state of the HttpRequest allows, a
+         * HttpRequestException will be thrown. This
+         * exception will minimally provide the requested
+         * path, the request method, and any query-string
+         * variables.
+         * 
+         * If the request's request line cannot be parsed,
+         * an InvalidDataException will be thrown instead.
+         * This exception indicates that it is not possible
+         * to glean meaningful information from the request.
+         */
+
         /// <summary>
         /// Creates a new HttpRequest from a stream.
         /// </summary>
@@ -460,6 +528,8 @@ namespace SynapLink.Zener.Net
                     "stream"
                     );
 
+            HttpRequest request = new HttpRequest();
+
             string line;
             // Lines before the request line can be blank.
             // We want to skip these since there's nothing
@@ -470,7 +540,7 @@ namespace SynapLink.Zener.Net
             // We've now hit the first line with content. In
             // a compliant HTTP request, this is the request
             // line.
-            string requestLine = line;
+            request.SetPropertiesFromRequestLine(line);
             // Move past the request line in to what is likely
             // to be the first HTTP header in the request.
             line = stream.ReadAsciiLine();
@@ -588,11 +658,15 @@ namespace SynapLink.Zener.Net
                     }
 
                     ms.Write(bodyBytes, 0, bodyBytes.Length);
+                    ms.Position = 0;
                 }
 
-                return new HttpRequest(requestLine, headers, ms);
+                request.Headers = headers;
+                request.InterpretRequestBody(ms);
+                request.SetCookiesFromHeaders();
             }
 
+            return request;
         }
 
         /// <summary>
