@@ -220,7 +220,8 @@ namespace SynapLink.Zener.Net
                 // as its arguments.
                 this.EmitMessage(
                     MessageType.RequestReceived,
-                    new object[] { req, res }
+                    new object[] { req, res }.ToList(),
+                    res
                     );
             }
             catch (InvalidDataException)
@@ -272,7 +273,7 @@ namespace SynapLink.Zener.Net
             res.Close();
             tcl.Close();
         }
-        private void EmitMessage(MessageType msgType, IEnumerable<object> args)
+        private void EmitMessage(MessageType msgType, IList<object> args, HttpResponse res)
         {
             try
             {
@@ -293,7 +294,8 @@ namespace SynapLink.Zener.Net
                  */
                 this.EmitMessage(
                     MessageType.InvokeErrorHandler,
-                    new object[] { hex }
+                    new object[] { hex, res }.ToList(),
+                    res
                     );
             }
         }

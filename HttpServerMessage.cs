@@ -34,6 +34,7 @@ namespace SynapLink.Zener
      *      from HttpException. Its arguments are given below.
      *      
      *          [0]     => HttpException
+     *          [1]     => HttpResponse
      */
 
     /// <summary>
@@ -59,7 +60,7 @@ namespace SynapLink.Zener
         /// <summary>
         /// Create a new HttpServerMessage.
         /// </summary>
-        public HttpServerMessage(MessageType type, IEnumerable<object> args)
+        public HttpServerMessage(MessageType type, IList<object> args)
         {
             this.Type = type;
             this.Arguments = args;
@@ -72,6 +73,6 @@ namespace SynapLink.Zener
         /// <summary>
         /// The arguments/data passed with the message.
         /// </summary>
-        public readonly IEnumerable<object> Arguments;
+        public readonly IList<object> Arguments;
     }
 }
