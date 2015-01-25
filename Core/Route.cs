@@ -103,7 +103,7 @@ namespace SynapLink.Zener.Core
             string format,
             RouteHandler handler
             )
-            : this(format, handler, _defaultMethods)
+            : this(format, handler, new string[0])
         {
             
         }
@@ -177,8 +177,32 @@ namespace SynapLink.Zener.Core
         /// <param name="path">The path to test.</param>
         /// <param name="param">If the path matches, where any parameters are stored.</param>
         /// <returns>True if the route matches the path.</returns>
-        public bool TryMatch(string path, out dynamic param)
+        public bool TryMatch(string path, string method, out dynamic param)
         {
+            /* If this route's set of methods is empty, it will be
+             * considered a wildcard, and any method will be accepted.
+             * 
+             * If the set is not empty, then we will check to see if the
+             * HTTP method passed as an argument is within the set. 
+             * 
+             * If it is within the set, or if the set is empty, we
+             * continue with format string/path comparisons. Otherwise,
+             * we consider it not a match and return false.
+             * 
+             * If the passed method is null, we won't perform any
+             * method comparison.
+             */
+            if (
+                method == null ||
+                (
+                    this.Methods.Count() != 0 &&
+                    !this.Methods.Contains(method, Route.MethodComparer)
+                ))
+            {
+                param = new Empty();
+                return false;
+            }
+
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
             path = Routing.TrimFormatString(path);
 
@@ -307,10 +331,10 @@ namespace SynapLink.Zener.Core
         /// <param name="path">The path to test.</param>
         /// <param name="callback">The callback to pass parameters to.</param>
         /// <returns>True if the route matches the path.</returns>
-        public bool TryMatch(string path, Action<dynamic> callback)
+        public bool TryMatch(string path, string method, Action<dynamic> callback)
         {
             dynamic result = null;
-            bool success = this.TryMatch(path, out result);
+            bool success = this.TryMatch(path, method, out result);
 
             if (success) callback(result);
 

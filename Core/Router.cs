@@ -28,31 +28,12 @@ namespace SynapLink.Zener.Core
         }
 
         /// <summary>
-        /// Attempts retrieve the handler for the specified path.
-        /// </summary>
-        /// <param name="path">The path to find a handler for.</param>
-        /// <param name="handler">This will contain the handler if successful, null if otherwise.</param>
-        /// <returns>True if a handler was found.</returns>
-        public bool TryFind(string path, out HttpRequestHandler handler)
-        {
-            var handlers = this.Find(path);
-
-            if (handlers.Count() == 0)
-            {
-                handler = null;
-                return false;
-            }
-
-            handler = handlers.First();
-            return true;
-        }
-        /// <summary>
         /// Retrieves all handlers that match the specified path,
         /// ordered by the best match.
         /// </summary>
         /// <param name="path">The path to find matches for.</param>
         /// <returns>An enumerable containing all matches.</returns>
-        public IEnumerable<HttpRequestHandler> Find(string path)
+        public IEnumerable<HttpRequestHandler> Find(string path, string method = null)
         {
             /*
              * It should be possible to have routes with
@@ -71,7 +52,7 @@ namespace SynapLink.Zener.Core
             List<dynamic> validParams = new List<dynamic>();
 
             var validHandlers = _routes
-                .Where(r => r.TryMatch(path, validParams.Add))
+                .Where(r => r.TryMatch(path, method, validParams.Add))
                 .ToList();
 
             if (validHandlers.Count == 0)
