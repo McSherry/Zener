@@ -93,15 +93,20 @@ namespace SynapLink.Zener
                         .DefaultIfEmpty(null)
                         .First();
 
+                    RouteHandler handler;
                     if (route == null)
                     {
-                        HttpServer.DefaultErrorHandler(exc, res);
+                        handler = HttpServer.DefaultErrorHandler;
+                    }
+                    else
+                    {
+                        handler = route.Item1.Handler;
                     }
 
                     var rPr = new ExpandoObject() as IDictionary<string, object>;
                     rPr.Add("Exception", exc);
 
-                    route.Item1.Handler(null, res, rPr);
+                    handler(null, res, rPr);
                 } break;
             }
         }

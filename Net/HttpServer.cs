@@ -167,16 +167,22 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// The error handler called when no other handler exists.
         /// </summary>
-        internal static void DefaultErrorHandler(HttpException exception, HttpResponse response)
+        internal static void DefaultErrorHandler(
+            HttpRequest req, HttpResponse res, dynamic param
+            )
         {
-            response.Headers.Add("Content-Type", "text/plain");
-            response.Write(
+            var exception = (HttpException)param.Exception;
+
+            res.BufferOutput = true;
+            res.Headers.Add("Content-Type", "text/plain");
+
+            res.Write(
                 "{0} {1}\n\n",
-                (int)exception.StatusCode,
+                exception.StatusCode.GetCode(),
                 exception.StatusCode.GetMessage()
                 );
 
-            response.WriteLine("{0}\n", exception.ToString());
+            res.WriteLine(exception);
         }
 
        static HttpServer()
