@@ -596,61 +596,11 @@ namespace SynapLink.Zener.Net
         }
 
         /// <summary>
-        /// Creates an HttpRequest from a request line, set of headers,
-        /// and a stream containing the body.
+        /// Create a new HttpRequest to be manually initialised.
         /// </summary>
-        /// <param name="requestLine">The HTTP request line (e.g. GET / HTTP/1.1).</param>
-        /// <param name="headers">The headers sent with the request.</param>
-        /// <param name="body">A stream containing the request body's bytes.</param>
-        private HttpRequest(string requestLine, HttpHeaderCollection headers, Stream body)
+        private HttpRequest()
         {
-            this.SetPropertiesFromRequestLine(requestLine);
-            _headers = headers;
 
-            if (body.CanSeek && body.Length > 0)
-            {
-                _raw = new byte[body.Length];
-                body.Position = 0;
-                body.Read(_raw, 0, _raw.Length);
-                body.Position = 0;
-            }
-            else
-            {
-                _raw = new byte[0];
-            }
-
-            if (this.Headers.Contains(HDR_CTYPE) && _raw.Length > 0)
-            {
-                var ctype = new NamedParametersHttpHeader(this.Headers[HDR_CTYPE].Last());
-
-                if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
-                {
-                    using (StreamReader sr = new StreamReader(body, Encoding.ASCII))
-                    {
-                        _post = ParseFormUrlEncoded(sr.ReadToEnd());
-                    }
-                }
-                else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
-                {
-                    var bdry = ctype.Pairs
-                        .Where(p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase))
-                        .Select(p => p.Value)
-                        .DefaultIfEmpty(null)
-                        .First();
-
-                    if (bdry == null)
-                    {
-                        throw new HttpRequestException
-                        ("No boundary provided for multipart data.");
-                    }
-
-                    _post = ParseMultipartFormData(body, bdry);
-                }
-                else _post = new Empty();
-            }
-            else _post = new Empty();
-
-            this.SetCookiesFromHeaders();
         }
 
         /// <summary>
