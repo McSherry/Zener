@@ -138,6 +138,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.NotFound,
+                        rq,
                         "The specified directory could not be found.",
                         dnfex
                         );
@@ -146,6 +147,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.NotFound,
+                        rq,
                         "The specified file could not be found.",
                         fnfex
                         );
@@ -154,6 +156,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.Forbidden,
+                        rq,
                         "You do not have permission to access this file.",
                         uaex
                         );
@@ -162,6 +165,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.RequestUriTooLarge,
+                        rq,
                         "The specified file path was too long.",
                         ptlex
                         );
@@ -170,6 +174,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.InternalServerError,
+                        rq,
                         "An unspecified I/O error occured.",
                         ioex
                         );
@@ -214,6 +219,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.NotFound,
+                        rq,
                         "The specified directory could not be found.",
                         dnfex
                         );
@@ -222,6 +228,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.NotFound,
+                        rq,
                         "The specified file could not be found.",
                         fnfex
                         );
@@ -230,6 +237,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.Forbidden,
+                        rq,
                         "You do not have permission to access this file.",
                         uaex
                         );
@@ -238,6 +246,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.RequestUriTooLarge,
+                        rq,
                         "The specified file path was too long.",
                         ptlex
                         );
@@ -246,6 +255,7 @@ namespace SynapLink.Zener.Core
                 {
                     throw new HttpException(
                         HttpStatus.InternalServerError,
+                        rq,
                         "An unspecified I/O error occured.",
                         ioex
                         );

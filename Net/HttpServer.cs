@@ -23,24 +23,35 @@ namespace SynapLink.Zener.Net
     /// </summary>
     public class HttpException : Exception
     {
+        private void SetFromHttpRequest(HttpRequest request)
+        {
+            this.Method = request.Method;
+            this.Path = request.Path;
+            this.GET = request.GET;
+        }
+
         /// <summary>
         /// Creates a new HttpException.
         /// </summary>
         /// <param name="status">The HTTP status code representing the error.</param>
-        public HttpException(HttpStatus status)
+        public HttpException(HttpStatus status, HttpRequest request)
             : base()
         {
             this.StatusCode = status;
+
+            this.SetFromHttpRequest(request);
         }
         /// <summary>
         /// Creates a new HttpException.
         /// </summary>
         /// <param name="status">The HTTP status code representing the error.</param>
         /// <param name="message">The message to send with the exception.</param>
-        public HttpException(HttpStatus status, string message)
+        public HttpException(HttpStatus status, HttpRequest request, string message)
             : base(message)
         {
             this.StatusCode = status;
+
+            this.SetFromHttpRequest(request);
         }
         /// <summary>
         /// Creates a new HttpException.
@@ -48,10 +59,15 @@ namespace SynapLink.Zener.Net
         /// <param name="status">The HTTP status code representing the error.</param>
         /// <param name="message">The message to send with the exception.</param>
         /// <param name="innerException">The exception that caused this exception to be raised.</param>
-        public HttpException(HttpStatus status, string message, Exception innerException)
+        public HttpException(
+            HttpStatus status, HttpRequest request,
+            string message, Exception innerException
+            )
             : base(message, innerException)
         {
             this.StatusCode = status;
+
+            this.SetFromHttpRequest(request);
         }
 
         /// <summary>
@@ -61,6 +77,32 @@ namespace SynapLink.Zener.Net
         {
             get;
             protected set;
+        }
+
+        /// <summary>
+        /// The method that was used with the request.
+        /// </summary>
+        public string Method
+        {
+            get;
+            private set;
+        }
+        /// <summary>
+        /// The path requested in the request.
+        /// </summary>
+        public string Path
+        {
+            get;
+            private set;
+        }
+        /// <summary>
+        /// The GET / query-string parameters passed with
+        /// the request.
+        /// </summary>
+        public dynamic GET
+        {
+            get;
+            private set;
         }
     }
     /// <summary>
@@ -72,8 +114,8 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// Creates a new HttpLengthrequiredException.
         /// </summary>
-        public HttpLengthRequiredException()
-            : base(HttpStatus.LengthRequired)
+        public HttpLengthRequiredException(HttpRequest request)
+            : base(HttpStatus.LengthRequired, request)
         {
 
         }
@@ -81,8 +123,8 @@ namespace SynapLink.Zener.Net
         /// Creates a new HttpLengthrequiredException.
         /// </summary>
         /// <param name="message">The message to send with the exception.</param>
-        public HttpLengthRequiredException(string message)
-            : base(HttpStatus.LengthRequired, message)
+        public HttpLengthRequiredException(HttpRequest request, string message)
+            : base(HttpStatus.LengthRequired, request, message)
         {
 
         }
@@ -91,8 +133,11 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="message">The message to send with the exception.</param>
         /// <param name="innerException">The exception that is the cause of this exception.</param>
-        public HttpLengthRequiredException(string message, Exception innerException)
-            : base(HttpStatus.LengthRequired, message, innerException)
+        public HttpLengthRequiredException(
+            HttpRequest request, 
+            string message, Exception innerException
+            )
+            : base(HttpStatus.LengthRequired, request, message, innerException)
         {
 
         }

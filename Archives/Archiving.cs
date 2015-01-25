@@ -87,7 +87,7 @@ namespace SynapLink.Zener.Archives
                             .FirstOrDefault();
 
                     if (name == default(string))
-                        throw new HttpException(HttpStatus.NotFound);
+                        throw new HttpException(HttpStatus.NotFound, request);
 
                     response.Headers.Add(
                         "Content-Type",

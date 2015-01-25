@@ -28,8 +28,8 @@ namespace SynapLink.Zener.Net
         /// <summary>
         /// Creates a new HttpRequestException.
         /// </summary>
-        public HttpRequestException()
-            : base(HttpStatus.BadRequest)
+        public HttpRequestException(HttpRequest request)
+            : base(HttpStatus.BadRequest, request)
         {
 
         }
@@ -37,8 +37,8 @@ namespace SynapLink.Zener.Net
         /// Creates a new HttpRequestException.
         /// </summary>
         /// <param name="message">The message to send with the exception.</param>
-        public HttpRequestException(string message)
-            : base(HttpStatus.BadRequest, message)
+        public HttpRequestException(HttpRequest request, string message)
+            : base(HttpStatus.BadRequest, request, message)
         {
 
         }
@@ -47,8 +47,8 @@ namespace SynapLink.Zener.Net
         /// </summary>
         /// <param name="message">The message to send with the exception.</param>
         /// <param name="innerException">The exception that is the cause of this exception.</param>
-        public HttpRequestException(string message, Exception innerException)
-            : base(HttpStatus.BadRequest, message, innerException)
+        public HttpRequestException(HttpRequest request, string message, Exception innerException)
+            : base(HttpStatus.BadRequest, request, message, innerException)
         {
 
         }
@@ -125,7 +125,7 @@ namespace SynapLink.Zener.Net
         /// based on its values.
         /// </summary>
         /// <param name="requestLine">The HTTP request's request line.</param>
-        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
+        /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the HTTP request line is invalid or
         ///     is malformed.
         /// </exception>
@@ -135,8 +135,12 @@ namespace SynapLink.Zener.Net
             // spaces. It's in the spec, not lazy parsing.
             string[] rlArray = requestLine.Split(' ');
 
-            if (rlArray.Length != 3) throw new HttpRequestException
-            ("HTTP request line is malformed.");
+            if (rlArray.Length != 3)
+            {
+                throw new InvalidDataException(
+                    "The HTTP request line is malformed."
+                    );
+            }
 
             var pathBuilder = new StringBuilder();
             int strIndex = 0;
@@ -242,7 +246,11 @@ namespace SynapLink.Zener.Net
         ///     Thrown when the provided stream did not support the
         ///     required operations.
         /// </exception>
-        private static dynamic ParseMultipartFormData(Stream formatBody, string boundary)
+        private static dynamic ParseMultipartFormData(
+            HttpRequest request,
+            Stream formatBody,
+            string boundary
+            )
         {
             if (!formatBody.CanRead || !formatBody.CanSeek)
                 throw new ArgumentException
@@ -285,8 +293,12 @@ namespace SynapLink.Zener.Net
                 }
 
                 if (!partHeaders.Contains(HDR_CDISPOSITION))
-                    throw new HttpRequestException
-                    ("Multipart data is malformed; no Content-Disposition.");
+                {
+                    throw new HttpRequestException(
+                        request,
+                        "Multipart data is malformed; no Content-Disposition."
+                        );
+                }
                 var cdis = new NamedParametersHttpHeader(partHeaders[HDR_CDISPOSITION].Last());
 
                 string name = cdis.Pairs
@@ -295,8 +307,10 @@ namespace SynapLink.Zener.Net
                     .DefaultIfEmpty(null)
                     .First();
                 if (name == null)
-                    throw new HttpRequestException
-                    ("Multipart form data is malformed; no name.");
+                    throw new HttpRequestException(
+                        request,
+                        "Multipart form data is malformed; no name."
+                        );
 
                 long remLeng = formatBody.Length - formatBody.Position;
 
@@ -304,8 +318,10 @@ namespace SynapLink.Zener.Net
                 // boundary (plus 2, for the trailing --), then the body is malformed.
                 if (boundaryBytes.Length + 2 > remLeng)
                 {
-                    throw new HttpRequestException
-                    ("Multi-part form data is malformed.");
+                    throw new HttpRequestException(
+                        request,
+                        "Multi-part form data is malformed."
+                        );
                 }
 
                 // Read the contents of this part.
@@ -386,7 +402,6 @@ namespace SynapLink.Zener.Net
             // return an Empty to indicate that there is no data.
             return dynObj.Count == 0 ? (dynamic)new Empty() : (dynamic)dynObj;
         }
-
         /// <summary>
         /// Sets the current instance's Cookie property.
         /// </summary>
@@ -485,6 +500,7 @@ namespace SynapLink.Zener.Net
             catch (ArgumentException aex)
             {
                 throw new HttpRequestException(
+                    request,
                     "Could not parse HTTP headers.", aex
                     );
             }
@@ -513,6 +529,7 @@ namespace SynapLink.Zener.Net
                     if (!Int32.TryParse(cLen.Value, out cLenOctets))
                     {
                         throw new HttpRequestException(
+                            request,
                             "Invalid Content-Length header (non-integral value)."
                             );
                     }
@@ -521,6 +538,7 @@ namespace SynapLink.Zener.Net
                     if (cLenOctets < 0)
                     {
                         throw new HttpRequestException(
+                            request,
                             "Invalid Content-Length header (negative value)."
                             );
                     }
@@ -531,6 +549,7 @@ namespace SynapLink.Zener.Net
                     {
                         throw new HttpException(
                             HttpStatus.RequestEntityTooLarge,
+                            request,
                             "The request body was too large."
                             );
                     }
