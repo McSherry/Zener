@@ -32,9 +32,10 @@ namespace SynapLink.Zener.Core
         /// ordered by the best match.
         /// </summary>
         /// <param name="path">The path to find matches for.</param>
-        /// <returns>An enumerable containing all matches.</returns>
-        public IEnumerable<HttpRequestHandler> Find(string path, string method = null)
+        /// <returns>A list containing all matches.</returns>
+        public IList<Tuple<Route, dynamic>> Find(string path, string method = null)
         {
+            
             /*
              * It should be possible to have routes with
              * variable and non-variable sections in the
@@ -57,15 +58,13 @@ namespace SynapLink.Zener.Core
 
             if (validHandlers.Count == 0)
             {
-                return new HttpRequestHandler[0];
+                return new Tuple<Route, dynamic>[0].ToList();
             }
 
             return validHandlers
-                .Zip(validParams, (r, p) => new { Route = r, Params = p })
-                .OrderByDescending(hwp => hwp.Params is Empty)
-                .Select(
-                    hwp => new HttpRequestHandler((q, s) => hwp.Route.Handler(q, s, hwp.Params))
-                    )
+                .Zip(validParams, (r, p) => new Tuple<Route, dynamic>(r, p))
+                .OrderByDescending(testc => testc.Item2 is Empty)
+                .ToList()
                 ;
         }
         /// <summary>
