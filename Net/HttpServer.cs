@@ -137,7 +137,6 @@ namespace SynapLink.Zener.Net
         private Thread _listenThread;
         private int _port;
         private bool _acceptConnections = true;
-        private int _faultCount = 0;
 
         private void TcpAcceptor()
         {
@@ -203,20 +202,10 @@ namespace SynapLink.Zener.Net
                 if (this.MessageEmitted != null)
                 {
                     this.MessageEmitted(new HttpServerMessage(msgType, args));
-                    _faultCount = 0;
                 }
             }
             catch (HttpException hex)
             {
-                _faultCount++;
-
-                if (_faultCount == 2)
-                {
-                    throw new InvalidOperationException(
-                        "A double fault occurred.",
-                        hex
-                        );
-                }
             }
         }
 
