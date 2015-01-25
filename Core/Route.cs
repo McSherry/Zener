@@ -171,25 +171,7 @@ namespace SynapLink.Zener.Core
         /// <returns>True if the route matches the path.</returns>
         public bool TryMatch(string path, string method, out dynamic param)
         {
-            /* If this route's set of methods is empty, it will be
-             * considered a wildcard, and any method will be accepted.
-             * 
-             * If the set is not empty, then we will check to see if the
-             * HTTP method passed as an argument is within the set. 
-             * 
-             * If it is within the set, or if the set is empty, we
-             * continue with format string/path comparisons. Otherwise,
-             * we consider it not a match and return false.
-             * 
-             * If the passed method is null, we won't perform any
-             * method comparison.
-             */
-            if (
-                method == null ||
-                (
-                    this.Methods.Count() != 0 &&
-                    !this.Methods.Contains(method, Route.MethodComparer)
-                ))
+            if (!this.MethodIsAcceptable(method))
             {
                 param = new Empty();
                 return false;

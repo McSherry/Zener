@@ -83,6 +83,27 @@ namespace SynapLink.Zener.Core
         {
             return format.Trim(' ', '/');
         }
+        /// <summary>
+        /// Determines whether the specified HTTP method is acceptable
+        /// for the provided route.
+        /// </summary>
+        /// <param name="route">The route to check the method against.</param>
+        /// <param name="method">The method to check.</param>
+        /// <returns>
+        ///     True if the <paramref name="method"/> is acceptable for
+        ///     the <paramref name="route"/>.
+        /// </returns>
+        public static bool MethodIsAcceptable(this Route route, string method)
+        {
+            // Null/empty can be used to indicate that any method is
+            // an acceptable method.
+            if (route.Methods == null || route.Methods.Count() == 0)
+            {
+                return true;
+            }
+
+            return route.Methods.Contains(method, Route.MethodComparer);
+        }
 
         /// <summary>
         /// Adds a directory handler to the router. A directory handler
