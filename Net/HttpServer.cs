@@ -206,23 +206,44 @@ namespace SynapLink.Zener.Net
 
             try
             {
+                // Attempt to create a request object.
                 req = HttpRequest.Create(ns);
 
-                if (this.RequestHandler != null)
-                {
-                    this.RequestHandler(req, res);
-                }
+                // If creation succeeds, emit a message
+                // with the request and response objects
+                // as its arguments.
+                this.EmitMessage(
+                    MessageType.RequestReceived,
+                    new object[] { req, res }
+                    );
+            }
+            catch (InvalidDataException)
+            {
+                // The request creator throwing InvalidDataException
+                // indicates that the request is malformed beyond having
+                // any useful data. The only sensible course of action
+                // from here is to close the connection.
+                res.Close();
+                ns.Close();
+                ns.Dispose();
+                tcl.Close();
+
+                return;
             }
             catch (HttpException hex)
             {
-                if (this.ErrorHandler == null)
-                {
-                    DefaultErrorHandler(hex, res);
-                }
-                else
-                {
-                    this.ErrorHandler(hex, res);
-                }
+                // The request or the message handler threw an
+                // HttpException. This is generally a sign that
+                // we want to speak to a handler that will inform
+                // the user of the error.
+                //
+                // In order to do this, we need to emit another
+                // message, this time indicating that an error
+                // handler should be invoked.
+                this.EmitMessage(
+                    MessageType.InvokeErrorHandler,
+                    new object[] { hex }
+                    );
             }
             catch (IOException ioex)
             {
@@ -232,6 +253,11 @@ namespace SynapLink.Zener.Net
                 // skip it and continue on.
                 if (ioex.InnerException is SocketException)
                 {
+                    res.Close();
+                    ns.Close();
+                    ns.Dispose();
+                    tcl.Close();
+
                     return;
                 }
                 else throw;
