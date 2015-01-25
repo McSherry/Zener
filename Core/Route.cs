@@ -150,14 +150,6 @@ namespace SynapLink.Zener.Core
                     "The set of acceptable HTTP methods cannot be null."
                     );
             }
-
-            if (methods.Count() == 0)
-            {
-                throw new ArgumentException(
-                    "At least one acceptable HTTP method must be provided.",
-                    "methods"
-                    );
-            }
             #endregion
 
             _formatOriginal = Routing.TrimFormatString(format);
