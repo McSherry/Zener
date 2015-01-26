@@ -291,13 +291,7 @@ namespace SynapLink.Zener.Core
         {
             router.AddHandler(format, methods, (rq, rs, prm) =>
             {
-                string mediaType = MediaTypeMap.FallbackType;
-                if (Path.HasExtension(filePath))
-                {
-                    mediaType = MediaTypes.Find(
-                        Path.GetExtension(filePath)
-                        );
-                }
+                string mediaType = MediaTypes.Find(filePath, FindParameterType.NameOrPath);
                 rs.Headers.Add("Content-Type", mediaType);
 
                 try
