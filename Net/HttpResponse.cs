@@ -724,9 +724,6 @@ namespace SynapLink.Zener.Net
                     _ChunkedNetworkWrite(new byte[0]);
                 }
 
-                _rstr.Close();
-                _rstr.Dispose();
-
                 if (_obstr != null)
                 {
                     _obstr.Close();

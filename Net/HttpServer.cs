@@ -262,6 +262,8 @@ namespace SynapLink.Zener.Net
             }
             
             res.Close();
+            ns.Close();
+            ns.Dispose();
             tcl.Close();
         }
         private void EmitMessage(MessageType msgType, IList<object> args, HttpResponse res)
