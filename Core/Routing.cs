@@ -105,7 +105,6 @@ namespace SynapLink.Zener.Core
             return route.Methods.Contains(method, Route.MethodComparer);
         }
 
-
         /// <summary>
         /// Adds a directory handler to the router. A directory handler
         /// is used to serve files from a directory, using a parameter in
@@ -113,7 +112,48 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
-        /// <param name="methods">The method for this route to be constrained to.</param>
+        /// <param name="dirPath">The directory to serve files from.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used to identify files within
+        ///     <paramref name="dirPath"/>.
+        /// </exception>
+        public static void AddDirectory(
+            this Router router, string format, string dirPath
+            )
+        {
+            router.AddDirectory(format, new string[0], dirPath);
+        }
+        /// <summary>
+        /// Adds a directory handler to the router. A directory handler
+        /// is used to serve files from a directory, using a parameter in
+        /// the format string as the file-name.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="dirPath">The directory to serve files from.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used to identify files within
+        ///     <paramref name="dirPath"/>.
+        /// </exception>
+        public static void AddDirectory(
+            this Router router,
+            string format, string method,
+            string dirPath
+            )
+        {
+            router.AddDirectory(format, new string[1] { method }, dirPath);
+        }
+        /// <summary>
+        /// Adds a directory handler to the router. A directory handler
+        /// is used to serve files from a directory, using a parameter in
+        /// the format string as the file-name.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
         /// <param name="dirPath">The directory to serve files from.</param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
@@ -205,14 +245,44 @@ namespace SynapLink.Zener.Core
                 }
             });
         }
+
         /// <summary>
         /// Adds a file handler to the router. A file handler is used to
         /// serve a single file.
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
-        /// <param name="methods">The method for this route to be constrained to.</param>
-        /// <param name="filePath">The file to serve.</param>
+        /// <param name="filePath">The path of the file to serve.</param>
+        public static void AddFile(
+            this Router router, string format, string filePath
+            )
+        {
+            router.AddFile(format, new string[0], filePath);
+        }
+        /// <summary>
+        /// Adds a file handler to the router. A file handler is used to
+        /// serve a single file.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="filePath">The path of the file to serve.</param>
+        public static void AddFile(
+            this Router router,
+            string format, string method,
+            string filePath
+            )
+        {
+            router.AddFile(format, new string[1] { method }, filePath);
+        }
+        /// <summary>
+        /// Adds a file handler to the router. A file handler is used to
+        /// serve a single file.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
+        /// <param name="filePath">The path of the file to serve.</param>
         public static void AddFile(
             this Router router,
             string format, IEnumerable<string> methods,
@@ -288,12 +358,43 @@ namespace SynapLink.Zener.Core
                 }
             });
         }
+
         /// <summary>
         /// Adds a handler which will serve the provided bytes when called.
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
-        /// <param name="methods">The method for this route to be constrained to.</param>
+        /// <param name="content">The content to serve.</param>
+        /// <param name="mediaType">The media type of the content (e.g. text/plain).</param>
+        public static void AddResource(
+            this Router router, string format,
+            byte[] content, string mediaType
+            )
+        {
+            router.AddResource(format, new string[0], content, mediaType);
+        }
+        /// <summary>
+        /// Adds a handler which will serve the provided bytes when called.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="content">The content to serve.</param>
+        /// <param name="mediaType">The media type of the content (e.g. text/plain).</param>
+        public static void AddResource(
+            this Router router,
+            string format, string method,
+            byte[] content, string mediaType
+            )
+        {
+            router.AddResource(format, new string[1] { method }, content, mediaType);
+        }
+        /// <summary>
+        /// Adds a handler which will serve the provided bytes when called.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
         /// <param name="content">The content to serve.</param>
         /// <param name="mediaType">The media type of the content (e.g. text/plain).</param>
         public static void AddResource(
@@ -315,7 +416,36 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
-        /// <param name="methods">The method for this route to be constrained to.</param>
+        /// <param name="html">The HTML to be served.</param>
+        public static void AddResource(
+            this Router router, string format, string html
+            )
+        {
+            router.AddResource(format, new string[0], html);
+        }
+        /// <summary>
+        /// Adds a handler which will serve the provided string as UTF-8
+        /// HTML when called.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="html">The HTML to be served.</param>
+        public static void AddResource(
+            this Router router,
+            string format, string method,
+            string html
+            )
+        {
+            router.AddResource(format, new string[1] { method }, html);
+        }
+        /// <summary>
+        /// Adds a handler which will serve the provided string as UTF-8
+        /// HTML when called.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
         /// <param name="html">The HTML to be served.</param>
         public static void AddResource(
             this Router router,
