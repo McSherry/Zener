@@ -50,6 +50,66 @@ namespace SynapLink.Zener.Archives
             bool caseSensitive = false
             )
         {
+            router.AddArchive(format, new string[0], archive, caseSensitive);
+        }
+        /// <summary>
+        /// Adds a handler which serves from an archive
+        /// to the router.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="archive">The archive to serve from.</param>
+        /// <param name="caseSensitive">Whether the names of archived files are case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the archive passed to the method does not contain
+        ///     any files.
+        /// </exception>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when either the router or the archive passed to the
+        ///     method is null.
+        /// </exception>
+        /// <exception cref="System.FormatException">
+        ///     Thrown when the format string passed to the method does not
+        ///     contain a variable to be used for file names.
+        /// </exception>
+        public static void AddArchive(
+            this Router router,
+            string format, string method,
+            Archive archive, bool caseSensitive = false
+            )
+        {
+            router.AddArchive(
+                format, new string[1] { method }, archive, caseSensitive
+                );
+        }
+        /// <summary>
+        /// Adds a handler which serves from an archive
+        /// to the router.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
+        /// <param name="archive">The archive to serve from.</param>
+        /// <param name="caseSensitive">Whether the names of archived files are case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the archive passed to the method does not contain
+        ///     any files.
+        /// </exception>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when either the router or the archive passed to the
+        ///     method is null.
+        /// </exception>
+        /// <exception cref="System.FormatException">
+        ///     Thrown when the format string passed to the method does not
+        ///     contain a variable to be used for file names.
+        /// </exception>
+        public static void AddArchive(
+            this Router router,
+            string format, IEnumerable<string> methods,
+            Archive archive, bool caseSensitive = false
+            )
+        {
             if (!Routing.GetParameters(format).Contains(RTR_ADDARCHIVE_PARAM))
                 throw new FormatException(
                     String.Format(
@@ -78,7 +138,7 @@ namespace SynapLink.Zener.Archives
                 ;
 
             router.AddHandler(
-                format,
+                format, methods,
                 (request, response, parameters) =>
                 {
                     string file = parameters.file;
@@ -121,6 +181,62 @@ namespace SynapLink.Zener.Archives
             bool caseSensitive = false
             )
         {
+            router.AddTarArchive(format, new string[0], stream, caseSensitive);
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves
+        /// files from a UNIX V6 Tape Archive or a
+        /// POSIX IEEE P1003.1 Uniform Standard Tape
+        /// Archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the TarArchive/UstarArchive constructor throws
+        ///     an exception.
+        /// </exception>
+        public static void AddTarArchive(
+            this Router router,
+            string format, string method,
+            Stream stream, bool caseSensitive = false
+            )
+        {
+            router.AddTarArchive(
+                format, new string[1] { method }, stream, caseSensitive
+                );
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves
+        /// files from a UNIX V6 Tape Archive or a
+        /// POSIX IEEE P1003.1 Uniform Standard Tape
+        /// Archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">Whether file names should be case-sensitive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the TarArchive/UstarArchive constructor throws
+        ///     an exception.
+        /// </exception>
+        public static void AddTarArchive(
+            this Router router,
+            string format, IEnumerable<string> methods,
+            Stream stream, bool caseSensitive = false
+            )
+        {
             UstarArchive ustar;
 
             try
@@ -135,8 +251,9 @@ namespace SynapLink.Zener.Archives
                     );
             }
 
-            router.AddArchive(format, ustar, caseSensitive);
+            router.AddArchive(format, methods, ustar, caseSensitive);
         }
+
         /// <summary>
         /// Adds a handler to the router which serves files
         /// from a GNU Zip (Gzip) archive.
@@ -158,6 +275,56 @@ namespace SynapLink.Zener.Archives
             bool caseSensitive = false
             )
         {
+            router.AddGzipArchive(format, new string[0], stream, caseSensitive);
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves files
+        /// from a GNU Zip (Gzip) archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the constructor for GzipArchive throws
+        ///     an exception.
+        /// </exception>
+        public static void AddGzipArchive(
+            this Router router,
+            string format, string method,
+            Stream stream, bool caseSensitive = false
+            )
+        {
+            router.AddGzipArchive(
+                format, new string[1] { method }, stream, caseSensitive
+                );
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves files
+        /// from a GNU Zip (Gzip) archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the constructor for GzipArchive throws
+        ///     an exception.
+        /// </exception>
+        public static void AddGzipArchive(
+            this Router router,
+            string format, IEnumerable<string> methods,
+            Stream stream, bool caseSensitive = false
+            )
+        {
             GzipArchive gzip;
 
             try
@@ -172,8 +339,9 @@ namespace SynapLink.Zener.Archives
                     );
             }
 
-            router.AddArchive(format, gzip, caseSensitive);
+            router.AddArchive(format, methods, gzip, caseSensitive);
         }
+
         /// <summary>
         /// Adds a handler to the router which serves files from
         /// a Microsoft Cabinet (MS-CAB) archive.
@@ -199,6 +367,64 @@ namespace SynapLink.Zener.Archives
             bool caseSensitive = false
             )
         {
+            router.AddCabinetArchive(format, new string[0], stream, caseSensitive);
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves files from
+        /// a Microsoft Cabinet (MS-CAB) archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the stream does not contain a valid cabinet
+        ///     archive.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when the cabinet archive uses features which are
+        ///     not supported.
+        /// </exception>
+        public static void AddCabinetArchive(
+            this Router router,
+            string format, string method,
+            Stream stream, bool caseSensitive = false
+            )
+        {
+            router.AddCabinetArchive(
+                format, new string[1] { method }, stream, caseSensitive
+                );
+        }
+        /// <summary>
+        /// Adds a handler to the router which serves files from
+        /// a Microsoft Cabinet (MS-CAB) archive.
+        /// </summary>
+        /// <param name="router">The router to add the handler to.</param>
+        /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
+        /// <param name="stream">The stream containing the archive.</param>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when <paramref name="format"/> does not contain a
+        ///     variable to be used as the file name.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the stream does not contain a valid cabinet
+        ///     archive.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when the cabinet archive uses features which are
+        ///     not supported.
+        /// </exception>
+        public static void AddCabinetArchive(
+            this Router router,
+            string format, IEnumerable<string> methods,
+            Stream stream, bool caseSensitive = false
+            )
+        {
             CabinetArchive cab;
 
             try
@@ -217,7 +443,7 @@ namespace SynapLink.Zener.Archives
                     );
             }
 
-            router.AddArchive(format, cab, caseSensitive);
+            router.AddArchive(format, methods, cab, caseSensitive);
         }
     }
 }
