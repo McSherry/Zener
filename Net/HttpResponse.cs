@@ -245,6 +245,7 @@ namespace SynapLink.Zener.Net
             HDR_XFERENCODING    = "Transfer-Encoding",
             HDR_SERVER          = "Server",
             HDR_CONTENTTYPE     = "Content-Type",
+            HDR_DATE            = "Date",
 
             HDRF_CHUNKEDXFER    = "Chunked",
             HDRF_SERVER         = "Zener/{0}",
@@ -391,6 +392,15 @@ namespace SynapLink.Zener.Net
                 sendMethod = _ChunkedNetworkWrite;
             }
 
+            // HTTP requires that the server send a Date header
+            // in most circumstances. DateTime's ToString() method
+            // helpfully provides a formatter for HTTP dates, so
+            // we just need to pass the string "R" to it.
+            this.Headers.Add(
+                fieldName:  HDR_DATE,
+                fieldValue: DateTime.UtcNow.ToString("R"),
+                overwrite:  true
+                );
             // Add the server identification header. This includes
             // the name of the server software, and the current
             // version.
