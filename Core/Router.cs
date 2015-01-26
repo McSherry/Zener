@@ -104,17 +104,47 @@ namespace SynapLink.Zener.Core
         /// <param name="handler">The handler to be associated with the route.</param>
         public void AddHandler(string format, RouteHandler handler)
         {
-            this.AddHandler(format, handler, format);
+            this.AddHandler(format, new string[0], handler);
         }
         /// <summary>
         /// Adds a route to a handler to the router's route-set.
         /// </summary>
         /// <param name="format">The format to be associated with the route.</param>
+        /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="handler">The handler to be associated with the route.</param>
+        public void AddHandler(string format, string method, RouteHandler handler)
+        {
+            this.AddHandler(format, new string[1] { method }, handler);
+        }
+        /// <summary>
+        /// Adds a route to a handler to the router's route-set.
+        /// </summary>
+        /// <param name="format">The format to be associated with the route.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
+        /// <param name="handler">The handler to be associated with the route.</param>
+        public void AddHandler(
+            string format,
+            IEnumerable<string> methods,
+            RouteHandler handler
+            )
+        {
+            this.AddHandler(format, methods, handler, format);
+        }
+        /// <summary>
+        /// Adds a route to a handler to the router's route-set.
+        /// </summary>
+        /// <param name="format">The format to be associated with the route.</param>
+        /// <param name="methods">The methods for this route to be constrained to.</param>
         /// <param name="handler">The handler to be associated with the route.</param>
         /// <param name="name">The name to give the route.</param>
-        public void AddHandler(string format, RouteHandler handler, string name)
+        public void AddHandler(
+            string format,
+            IEnumerable<string> methods,
+            RouteHandler handler,
+            string name
+            )
         {
-            var route = new Route(format, handler) { Name = name };
+            var route = new Route(format, handler, methods) { Name = name };
 
             _routes.RemoveAll(r => r.Format.Equals(route.Format) || r.Name.Equals(route.Name));
 
