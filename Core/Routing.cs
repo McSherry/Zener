@@ -105,6 +105,7 @@ namespace SynapLink.Zener.Core
             return route.Methods.Contains(method, Route.MethodComparer);
         }
 
+
         /// <summary>
         /// Adds a directory handler to the router. A directory handler
         /// is used to serve files from a directory, using a parameter in
@@ -112,6 +113,7 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The method for this route to be constrained to.</param>
         /// <param name="dirPath">The directory to serve files from.</param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
@@ -120,7 +122,8 @@ namespace SynapLink.Zener.Core
         /// </exception>
         public static void AddDirectory(
             this Router router,
-            string format, string dirPath
+            string format, IEnumerable<string> methods,
+            string dirPath
             )
         {
             var paramNames = Routing.GetParameters(format);
@@ -132,7 +135,7 @@ namespace SynapLink.Zener.Core
                         RTR_ADDDIR_PARAM
                     ));
 
-            router.AddHandler(format, (rq, rs, pr) => {
+            router.AddHandler(format, methods, (rq, rs, pr) => {
                 string filePath = String.Format(@"{0}\{1}", dirPath, pr.file);
 
                 try
@@ -208,13 +211,15 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The method for this route to be constrained to.</param>
         /// <param name="filePath">The file to serve.</param>
         public static void AddFile(
             this Router router,
-            string format, string filePath
+            string format, IEnumerable<string> methods,
+            string filePath
             )
         {
-            router.AddHandler(format, (rq, rs, prm) =>
+            router.AddHandler(format, methods, (rq, rs, prm) =>
             {
                 string mediaType = MediaTypeMap.FallbackType;
                 if (Path.HasExtension(filePath))
@@ -288,14 +293,16 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The method for this route to be constrained to.</param>
         /// <param name="content">The content to serve.</param>
         /// <param name="mediaType">The media type of the content (e.g. text/plain).</param>
         public static void AddResource(
             this Router router,
-            string format, byte[] content, string mediaType
+            string format, IEnumerable<string> methods, 
+            byte[] content, string mediaType
             )
         {
-            router.AddHandler(format, (rq, rs, prm) =>
+            router.AddHandler(format, methods, (rq, rs, prm) =>
             {
                 rs.Headers.Add("Content-Type", mediaType);
 
@@ -308,14 +315,16 @@ namespace SynapLink.Zener.Core
         /// </summary>
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
+        /// <param name="methods">The method for this route to be constrained to.</param>
         /// <param name="html">The HTML to be served.</param>
         public static void AddResource(
             this Router router,
-            string format, string html
+            string format, IEnumerable<string> methods,
+            string html
             )
         {
             router.AddResource(
-                format,
+                format, methods,
                 Encoding.UTF8.GetBytes(html),
                 "text/html"
             );
