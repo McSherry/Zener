@@ -298,11 +298,15 @@ namespace SynapLink.Zener.Core
                 {
                     using (FileStream fs = File.OpenRead(filePath))
                     {
-                        byte[] content = new byte[fs.Length];
+                        // The running total of bytes read from the stream
+                        int runningTotal = 0;
+                        byte[] buf = new byte[HttpResponse.TX_BUFFER_SIZE];
+                        while (runningTotal != fs.Length)
+                        {
+                            runningTotal += fs.Read(buf, 0, buf.Length);
 
-                        fs.Read(content, 0, content.Length);
-
-                        rs.Write(content);
+                            rs.Write(buf);
+                        }
                     }
                 }
                 catch (DirectoryNotFoundException dnfex)

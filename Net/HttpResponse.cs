@@ -254,7 +254,7 @@ namespace SynapLink.Zener.Net
             HTTP_VERSION        = "1.1",
             HTTP_NEWLINE        = "\r\n"
             ;
-        private const int
+        internal const int
             TX_BUFFER_SIZE      = 4096
             ;
 
