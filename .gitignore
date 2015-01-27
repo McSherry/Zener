@@ -4,3 +4,5 @@ obj/
 bin/
 *.cd
 *.html
+*.vsp
+*.psess

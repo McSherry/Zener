@@ -291,13 +291,17 @@ namespace SynapLink.Zener.Net
             // newline.
             var nl = Encoding.ASCII.GetBytes(HTTP_NEWLINE);
 
-            _NetworkWrite(
-                len                 // The length comes first.
-                    .Concat(nl)     // Followed by a separating newline.
-                    .Concat(bytes)  // Followed by the chunk body.
-                    .Concat(nl)     // And then a final terminating newline.
-                    .ToArray()      // And then we just turn it into an array.
-                );
+            _NetworkWrite(len);
+            _NetworkWrite(nl);
+            _NetworkWrite(bytes);
+            _NetworkWrite(nl);
+            //_NetworkWrite(
+            //    len                 // The length comes first.
+            //        .Concat(nl)     // Followed by a separating newline.
+            //        .Concat(bytes)  // Followed by the chunk body.
+            //        .Concat(nl)     // And then a final terminating newline.
+            //        .ToArray()      // And then we just turn it into an array.
+            //    );
         }
         private void _NetworkWrite(byte[] bytes)
         {
