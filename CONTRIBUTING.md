@@ -42,6 +42,8 @@ In order to maintain code readability, any code contributions should follow this
         7. Public instances.
         8. Explicitly-declared interface methods.
     - **Classes/Structs:** The class name with its modifiers should be on its own line, with the opening brace on the next line. If the class inherits, the colon and the name of the base class and any interfaces should be placed on the line after the class name. The opening brace for the class should then be on the next line after that ([fig.10](#figure-10)).
+    - **Type Constraints:** Type constraints follow roughly the same style as shown for inheriting in [fig.10](#figure-10), with the `where` keyword on the same line as the colon and types.
+- **Documentation:** All non-private members/classes/structs should have [XML documentation comments](https://msdn.microsoft.com/en-us/library/vstudio/b2s063f7%28v=vs.100%29.aspx). The required XML comment tags are `<summary>`, `<param>`, `<exception>`, and `<returns>` (where applicable). Code should also be amply commented using normal comments (`//`-prefixed lines or `/**/` blocks).
 
 ## Figures
 
