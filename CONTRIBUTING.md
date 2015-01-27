@@ -5,19 +5,54 @@ Contributions to Zener are welcomed. This file provides the information you'll n
 1. [Style Guide](#style-guide)
     1. [Line Width](#line-width)
     2. [Indentation](#indentation)
-2. [Contributor's Licence Agreement](#licence-agreement)
+2. [Figures](#figures)
+3. [Contributor's Licence Agreement](#licence-agreement)
 
 ## Style Guide
 
 In order to maintain code readability, any code contributions should follow this style guide. If this guide is not followed, contributions may be rejected.
 
-### Line Widths
+- **Line widths:**. Lines should be around 80 columns in length, and should be no longer than 100 columns.
+- **Indentation:** Indentation should be in the form of groups of four spaces. Tabs or lesser quantities of spaces should not be used.
+- **Capitalisation:**
+    - **Abbreviations:** Abbreviations be `PascalCased` (`Http`, `Tcp`, `IpAddress`).
+    - **Non-Private:** Non-private members should use `PascalCase`.
+    - **Private:** Private members should use `camelCase` with a prefixing underscore (`_someMember`).
+    - **Method Arguments:** Method arguments should use `camelCase`.
+    - **Private/Protected Constants:** Constants marked `private` or `protected` should be uppercase with underscores separating words (`CONST_VAL`).
+- **Brace Style:** Braces should, generally, be on their own lines.
+    - **Braced If/Else:** The braces and the keywords `if` and `else` should be on their own lines ([fig.1](#figure-1)).
+    - **Braceless If/Else:** `if`/`else` statements without braces are permitted where the braces would add little to readability. The body must be on the same line as the `if`/`else` statement ([fig.2](#figure-2)).
 
-You should aim to keep your lines at around 80 columns in length. You may go over 80 columns, but all lines must be no longer than 100 columns.
+## Figures
 
-### Indentation
+Referenced figures.
 
-Code should be indented using four spaces. Tabs should not be used.
+### Figure #1
+
+Braced if/else statements.
+```c#
+if (condition)
+{
+    doTheThing();
+}
+else
+{
+    doTheOtherThing();
+}
+```
+
+### Figure #2
+
+Braceless if/else.
+
+```c#
+int abs(int n)
+{
+    if (n < 0) return -n;
+    else return n;
+}
+```
 
 ## Licence Agreement
 
