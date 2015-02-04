@@ -154,6 +154,11 @@ namespace McSherry.Zener.Net
                     partBuilder.Append(c);
                 }
             }
+            // The very last part won't be added to the list
+            // as there is no delimiting whitespace. This means
+            // we need to include this extra call to Add to
+            // ensure correct parsing.
+            parts.Add(partBuilder.ToString());
             // We want to make sure that any empty parts
             // are removed. Doing this means we can still
             // loosely check validity based on the number
