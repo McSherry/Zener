@@ -1,5 +1,5 @@
 ﻿/*
- *      Copyright (c) 2014-2015, SynapLink, LLC
+ *      Copyright (c) 2014-2015, Liam McSherry
  *      All Rights reserved.
  *      
  *      Released under BSD 3-Clause licence. See terms in

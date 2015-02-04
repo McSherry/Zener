@@ -9,9 +9,9 @@ using System.Resources;
 [assembly: AssemblyTitle("Zener")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("SynapLink, LLC")]
+[assembly: AssemblyCompany("Liam McSherry")]
 [assembly: AssemblyProduct("Zener")]
-[assembly: AssemblyCopyright("Copyright 2014-2015 © SynapLink, LLC")]
+[assembly: AssemblyCopyright("Copyright 2014-2015 © Liam McSherry")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
