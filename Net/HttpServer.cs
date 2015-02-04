@@ -260,11 +260,19 @@ namespace SynapLink.Zener.Net
                 }
                 else throw;
             }
-            
+
             res.Close();
-            ns.Close();
-            ns.Dispose();
-            tcl.Close();
+
+            if (ns.DataAvailable)
+            {
+                this.HttpRequestHandler(tclo);
+            }
+            else
+            {
+                ns.Close();
+                ns.Dispose();
+                tcl.Close();
+            }
         }
         private void EmitMessage(MessageType msgType, IList<object> args, HttpResponse res)
         {
