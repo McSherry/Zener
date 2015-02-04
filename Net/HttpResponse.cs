@@ -255,7 +255,7 @@ namespace SynapLink.Zener.Net
             HTTP_NEWLINE        = "\r\n"
             ;
         internal const int
-            TX_BUFFER_SIZE      = 4096
+            TX_BUFFER_SIZE      = 16384
             ;
 
         private HttpStatus _httpStatus;
