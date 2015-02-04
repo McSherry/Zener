@@ -153,13 +153,24 @@ namespace SynapLink.Zener.Net
             while (true)
             {
                 string line = text.ReadLine();
-
-                if (String.IsNullOrWhiteSpace(line)) break;
+                // If the line's empty, we're at the end of the
+                // headers, so there aren't any further lines to
+                // add to our list of lines. The TextReader will
+                // also return null if we've run out of lines to
+                // read.
+                if (String.IsNullOrEmpty(line)) break;
 
                 lines.Add(line);
             }
 
             int initialCount = lines.Count;
+            // Although now deprecated in RFC 7230, it is possible
+            // that some clients will send multi-line headers. We
+            // can determine which lines are part of multi-line headers
+            // by checking for a space at the start of the line.
+            //
+            // We use an anonymous object with the index of the line to
+            // merge and the contents of the line itself.
             var linesToMerge = Enumerable
                 .Range(0, lines.Count)
                 .Zip(lines, (i, l) => new { i, l })
@@ -168,14 +179,33 @@ namespace SynapLink.Zener.Net
 
             foreach (var ml in linesToMerge)
             {
+                // We're going to be modifying our list, which means
+                // indices are going to change. To work with the
+                // changing indices, we need to find the difference
+                // from our initial count of lines.
                 int lengDiff = (initialCount - lines.Count);
 
-                lines[ml.i - lengDiff - 1] = String.Format(
-                    "{0}{1}",
-                    lines[ml.i - lengDiff - 1],
-                    ml.l.TrimStart(TRIM_CHARS)
+                // We then take the index of the line to merge, subtract
+                // the difference to make sure we've adjusted for any removed
+                // lines, then subtract one so we get the index of the line to
+                // merge into.
+                int mergeIntoIndex = ml.i - lengDiff - 1;
+                lines[mergeIntoIndex] = String.Format(
+                    // Per RFC 7230 section 3.2.4, each newline in a multi-line
+                    // header should be replaced with a single space. This is
+                    // pretty simple to do.
+                    "{0} {1}",
+                    // The first part of the line needs to go first.
+                    lines[mergeIntoIndex],
+                    // The bit we're merging needs to go after. Before we can
+                    // merge it, we need to trim from the start and end any
+                    // whitespace.
+                    ml.l.Trim(TRIM_CHARS)
                     );
 
+                // We've merged the lines, so now we need to remove the line
+                // fragment that we've just merged so we don't need to merge it
+                // again.
                 lines.RemoveAt(ml.i - lengDiff);
             }
 
