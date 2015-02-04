@@ -261,14 +261,29 @@ namespace SynapLink.Zener.Net
                 else throw;
             }
 
+            // We're finished with this request, so we can close it. This
+            // will flush any buffers to the network, and with close/dispose
+            // any disposable resources.
             res.Close();
-
+            // We need to support HTTP pipelining for HTTP/1.1 compliance, and
+            // this is how we're going to do it. Pipelining involves the user
+            // agent sending multiple requests, one after the other, without
+            // waiting for a response. This means that, if a user agent is using
+            // pipelining, we'll still have data in our receive buffers after
+            // processing the first request.
             if (ns.DataAvailable)
             {
+                // The pipelined requests aren't specially formatted, it's just
+                // one HTTP request after another. This means we don't need to
+                // write any special code, and we can just call the method we're
+                // currently in again.
                 this.HttpRequestHandler(tclo);
             }
             else
             {
+                // If there's no data remaining in our receive buffers, there
+                // are no more requests to process. This means that we can close
+                // the streams and connections.
                 ns.Close();
                 ns.Dispose();
                 tcl.Close();
