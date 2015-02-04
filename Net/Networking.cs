@@ -11,6 +11,7 @@ namespace McSherry.Zener.Net
     public static class Networking
     {
         #region HttpStatus Messages
+        private const string HTTP_STATUSMSG_DEFAULT = "Non-Standard Status Code";
         private static readonly Dictionary<HttpStatus, string> HttpStatusMessages
             = new Dictionary<HttpStatus, string>()
             {
@@ -68,7 +69,15 @@ namespace McSherry.Zener.Net
         /// <returns>The status code's associated message.</returns>
         public static string GetMessage(this HttpStatus status)
         {
-            return HttpStatusMessages[status];
+            string msg;
+            if (HttpStatusMessages.TryGetValue(status, out msg))
+            {
+                return msg;
+            }
+            else
+            {
+                return HTTP_STATUSMSG_DEFAULT;
+            }
         }
         /// <summary>
         /// Gets the numeric code associated with the HTTP status.
