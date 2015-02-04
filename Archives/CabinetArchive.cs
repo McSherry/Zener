@@ -12,7 +12,7 @@ using System.Text;
 using System.IO;
 using System.IO.Compression;
 
-namespace SynapLink.Zener.Archives
+namespace McSherry.Zener.Archives
 {
     /// <summary>
     /// Represents a Microsoft Cabinet/MS-CAB archive.

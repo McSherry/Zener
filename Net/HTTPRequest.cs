@@ -17,7 +17,7 @@ using System.Net;
 
 using WebUtility = System.Web.HttpUtility;
 
-namespace SynapLink.Zener.Net
+namespace McSherry.Zener.Net
 {
     /// <summary>
     /// The exception thrown when there is an error with an HTTP
@@ -211,7 +211,7 @@ namespace SynapLink.Zener.Net
         /// any properties appropriately.
         /// </summary>
         /// <param name="body">A stream containing the request's body.</param>
-        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
         ///     Thrown when the data contained within the request's
         ///     body is malformed.
         /// </exception>
@@ -322,7 +322,7 @@ namespace SynapLink.Zener.Net
         /// Parses the HTTP request body, assuming that it is in the
         /// multipart/form-data format.
         /// </summary>
-        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
         ///     Thrown when the client's HTTP request was invalid and
         ///     could not be parsed.
         /// </exception>
@@ -537,10 +537,10 @@ namespace SynapLink.Zener.Net
         ///     Thrown when the provided stream does not support the
         ///     required operations.
         /// </exception>
-        /// <exception cref="SynapLink.Zener.Net.HttpRequestException">
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
         ///     Thrown when the request is malformed and cannot be parsed.
         /// </exception>
-        /// <exception cref="SynapLink.Zener.Net.HttpLengthRequiredException">
+        /// <exception cref="McSherry.Zener.Net.HttpLengthRequiredException">
         ///     Thrown when the request does not include a Content-Length header.
         /// </exception>
         public static HttpRequest Create(Stream stream)

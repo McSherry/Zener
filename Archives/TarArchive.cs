@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace SynapLink.Zener.Archives
+namespace McSherry.Zener.Archives
 {
     /// <summary>
     /// Represents a UNIX V6 Tape Archive file.

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SynapLink.Zener.Net
+namespace McSherry.Zener.Net
 {
     /// <summary>
     /// Provides a set of methods related to networking.

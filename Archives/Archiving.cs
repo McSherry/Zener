@@ -12,10 +12,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-using SynapLink.Zener.Net;
-using SynapLink.Zener.Core;
+using McSherry.Zener.Net;
+using McSherry.Zener.Core;
 
-namespace SynapLink.Zener.Archives
+namespace McSherry.Zener.Archives
 {
     /// <summary>
     /// Provides a set of methods related to archiving.

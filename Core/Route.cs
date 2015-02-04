@@ -12,9 +12,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Dynamic;
 
-using SynapLink.Zener.Net;
+using McSherry.Zener.Net;
 
-namespace SynapLink.Zener.Core
+namespace McSherry.Zener.Core
 {
     /// <summary>
     /// The delegate used with handler functions for routes.

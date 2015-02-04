@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace SynapLink.Zener.Net
+namespace McSherry.Zener.Net
 {
     /// <summary>
     /// Implements a basic HTTP header.

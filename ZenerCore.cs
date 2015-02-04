@@ -14,10 +14,10 @@ using System.Reflection;
 using System.IO;
 using System.Dynamic;
 
-using SynapLink.Zener.Net;
-using SynapLink.Zener.Core;
+using McSherry.Zener.Net;
+using McSherry.Zener.Core;
 
-namespace SynapLink.Zener
+namespace McSherry.Zener
 {
     /// <summary>
     /// Used to indicate when a dynamic property has no value.

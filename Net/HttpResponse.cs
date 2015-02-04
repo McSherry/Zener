@@ -13,7 +13,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
-namespace SynapLink.Zener.Net
+namespace McSherry.Zener.Net
 {
     /// <summary>
     /// HTTP status codes. Can be cast to and from Int32 to

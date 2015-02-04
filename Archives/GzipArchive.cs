@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.IO.Compression;
 
-namespace SynapLink.Zener.Archives
+namespace McSherry.Zener.Archives
 {
     /// <summary>
     /// Represents an RFC 1952 GZip archive file.

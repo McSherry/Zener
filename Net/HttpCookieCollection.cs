@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SynapLink.Zener.Net
+namespace McSherry.Zener.Net
 {
     /// <summary>
     /// Represents a collection of HttpCookies.

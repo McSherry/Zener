@@ -11,9 +11,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SynapLink.Zener.Net;
+using McSherry.Zener.Net;
 
-namespace SynapLink.Zener.Core
+namespace McSherry.Zener.Core
 {
     /// <summary>
     /// A class used to route requests to their handlers.

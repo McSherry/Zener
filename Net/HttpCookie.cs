@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 
-namespace SynapLink.Zener.Net
+namespace McSherry.Zener.Net
 {
     /// <summary>
     /// Specifies how cookies should be compared

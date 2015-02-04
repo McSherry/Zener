@@ -15,7 +15,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 
-namespace SynapLink.Zener.Net
+namespace McSherry.Zener.Net
 {
     /// <summary>
     /// The exception thrown when there is an error related to

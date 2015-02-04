@@ -12,9 +12,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-using SynapLink.Zener.Net;
+using McSherry.Zener.Net;
 
-namespace SynapLink.Zener.Core
+namespace McSherry.Zener.Core
 {
     /// <summary>
     /// Provides methods for working with Route and Router classes.

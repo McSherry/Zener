@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 using Path = System.IO.Path;
 
-namespace SynapLink.Zener.Core
+namespace McSherry.Zener.Core
 {
     /// <summary>
     /// The type of parameter being passed to the

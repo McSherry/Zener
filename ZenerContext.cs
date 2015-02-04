@@ -12,16 +12,16 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-using SynapLink.Zener.Core;
-using SynapLink.Zener.Net;
+using McSherry.Zener.Core;
+using McSherry.Zener.Net;
 
 using IPAddress = System.Net.IPAddress;
 using Method = System.Func<dynamic, string>;
 using WebUtility = System.Web.HttpUtility;
 using RouteList = System.Collections.Generic
-    .Dictionary<string, System.Func<SynapLink.Zener.ZenerContext, SynapLink.Zener.Core.RouteHandler>>;
+    .Dictionary<string, System.Func<McSherry.Zener.ZenerContext, McSherry.Zener.Core.RouteHandler>>;
 
-namespace SynapLink.Zener
+namespace McSherry.Zener
 {
     /// <summary>
     /// Used to pass state information to a ZenerCore.

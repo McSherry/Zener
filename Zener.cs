@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace SynapLink.Zener
+namespace McSherry.Zener
 {
     /// <summary>
     /// Provides a set of methods that can ease Zener's use,
