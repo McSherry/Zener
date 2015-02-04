@@ -55,7 +55,6 @@ namespace SynapLink.Zener.Net
                 throw new ArgumentException
                 ("A value must be provided.", "value");
             }
-
             if (fieldName.Any(c => c == ':' || c == '\n' || c == '\r'))
             {
                 throw new ArgumentException
@@ -99,6 +98,7 @@ namespace SynapLink.Zener.Net
         ///         2. The provided value is null, zero-length, or whitespace.
         ///         3. The field name contains a carriage return or line feed character.
         ///         4. The value contains a carriage return or line feed character.
+        ///         5. There is a space between the field name and colon.
         /// </exception>
         public static HttpHeader Parse(string headerLine)
         {
@@ -113,7 +113,22 @@ namespace SynapLink.Zener.Net
             int i = 0;
             for (; i < headerLine.Length;)
             {
-                if (headerLine[i] == ':') break;
+                if (headerLine[i] == ':')
+                {
+                    // RFC 7230, section 3.2.4
+                    //
+                    // RFC 7230 specifies that there must not be
+                    // whitespace between the header field name and
+                    // the colon at the end of the field name.
+                    if (headerLine[i - 1] == ' ')
+                    {
+                        throw new ArgumentException(
+                            "There must not be whitespace between the colon and field name."
+                            );
+                    }
+
+                    break;
+                }
                 fieldBuilder.Append(headerLine[i++]);
             }
 
