@@ -131,36 +131,64 @@ namespace SynapLink.Zener.Net
         /// </exception>
         private void SetPropertiesFromRequestLine(string requestLine)
         {
-            // The sections of the request line can always be split using
-            // spaces. It's in the spec, not lazy parsing.
-            string[] rlArray = requestLine.Split(' ');
+            List<string> parts = new List<string>();
+            StringBuilder partBuilder = new StringBuilder();
+            // Per RFC 7230 s3.5p3, a request line's parts may
+            // be separated by tabs (vertical or horizontal), spaces,
+            // high bytes (0xFF), or carriage returns.
+            foreach (char c in requestLine)
+            {
+                if (
+                    c == ' ' ||
+                    c == '\t' ||
+                    c == '\v' ||
+                    c == '\r' ||
+                    c == 0xFF
+                    )
+                {
+                    parts.Add(partBuilder.ToString());
+                    partBuilder.Clear();
+                }
+                else
+                {
+                    partBuilder.Append(c);
+                }
+            }
+            // We want to make sure that any empty parts
+            // are removed. Doing this means we can still
+            // loosely check validity based on the number
+            // of parts.
+            parts.RemoveAll(String.IsNullOrEmpty);
+            // We'll be reusing the StringBuilder further
+            // down, since we may as well save on instantiating
+            // another one.
+            partBuilder.Clear();
 
-            if (rlArray.Length != 3)
+            if (parts.Count != 3)
             {
                 throw new InvalidDataException(
                     "The HTTP request line is malformed."
                     );
             }
 
-            var pathBuilder = new StringBuilder();
             int strIndex = 0;
             bool hasQueryString = false;
-            foreach (char c in rlArray[1])
+            foreach (char c in parts[1])
             {
                 if (c == '?')
                 {
                     hasQueryString = true;
                     break;
                 }
-                pathBuilder.Append(c);
+                partBuilder.Append(c);
                 ++strIndex;
             }
             // Cut off any trailing forward-slashes.
-            if (pathBuilder.Length > 1 && pathBuilder[pathBuilder.Length - 1] == '/')
+            if (partBuilder.Length > 1 && partBuilder[partBuilder.Length - 1] == '/')
             {
-                pathBuilder.Remove(pathBuilder.Length - 1, 1);
+                partBuilder.Remove(partBuilder.Length - 1, 1);
             }
-            this.Path = pathBuilder.ToString();
+            this.Path = partBuilder.ToString();
 
             // We increment the index so that we're ahead of any
             // question mark indicating the start of the query string.
@@ -168,15 +196,15 @@ namespace SynapLink.Zener.Net
             // to false.
             if (hasQueryString && ++strIndex < requestLine.Length)
             {
-                this.GET = ParseFormUrlEncoded(rlArray[1].Substring(strIndex));
+                this.GET = ParseFormUrlEncoded(parts[1].Substring(strIndex));
             }
             else
             {
                 this.GET = new Empty();
             }
 
-            this.HttpVersion = rlArray[2];
-            this.Method = rlArray[0].ToUpper();
+            this.HttpVersion = parts[2];
+            this.Method = parts[0].ToUpper();
         }
         /// <summary>
         /// Interprets the contents of the request body and sets
