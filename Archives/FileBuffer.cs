@@ -16,7 +16,7 @@ namespace McSherry.Zener.Archives
         : ICollection<IEnumerable<byte>>, IDisposable
     {
         // The default capacity of the List<Filemark>.
-        private const int DEFAULT_CAPACITY = 8;
+        protected const int DEFAULT_CAPACITY = 8;
         // The size of the buffer used when reading/writing
         // from the FileStream representing the file being
         // used as a backing buffer.
