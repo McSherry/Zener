@@ -33,7 +33,27 @@ namespace McSherry.Zener.Archives
         // media, this should be perfectly fine in all but the most
         // performance-sensitive of applications.
         private Stream _file;
+        // Used to lock when writing to/reading from the
+        // filestream.
+        private object _lockbox;
+        // ICollection requires IsReadOnly to be implemented, so we
+        // might as well add functionality for making it read-only.
+        private bool _readonly;
 
+        private void _checkReadOnly()
+        {
+            if (_readonly)
+            {
+                throw new InvalidOperationException(
+                    "A read-only collection cannot be modified."
+                    );
+            }
+        }
+
+        /// <summary>
+        /// Creates a new FileBuffer.
+        /// </summary>
+        /// <param name="capacity"></param>
         public FileBuffer(int capacity = DEFAULT_CAPACITY)
         {
             _marks = new List<Filemark>(capacity);
@@ -63,6 +83,46 @@ namespace McSherry.Zener.Archives
                 // default for a FileStream.
                 bufferSize: BUFFER_BUFFER_SIZE
                 );
+            _lockbox = new object();
+            _readonly = false;
+        }
+
+        /// <summary>
+        /// Adds the provided set of bytes to the buffer.
+        /// </summary>
+        /// <param name="bytes">The bytes to add.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the collection is read-only.
+        /// </exception>
+        public void Add(IEnumerable<byte> bytes)
+        {
+            _checkReadOnly();
+
+            // Calls to ToArray/ToList/etc are fairly slow,
+            // so checking if the provided enumerable is a
+            // byte array first could improve performance.
+            byte[] data;
+            if (bytes is byte[])
+            {
+                data = (byte[])bytes;
+            }
+            else
+            {
+                data = bytes.ToArray();
+            }
+
+            lock (_lockbox)
+            {
+                // We need to be at the end of the stream so
+                // we don't overwrite any other bits of data.
+                _file.Seek(0, SeekOrigin.End);
+                // We need to add the Filemark so we can find
+                // our data in future.
+                _marks.Add(new Filemark(data.Length, _file.Position));
+                // Then all that's left is to write our data to
+                // the stream.
+                _file.Write(data, 0, data.Length);
+            }
         }
     }
 }
