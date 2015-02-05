@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,7 +40,9 @@ namespace McSherry.Zener.Archives
         private object _lockbox;
         // ICollection requires IsReadOnly to be implemented, so we
         // might as well add functionality for making it read-only.
-        private bool _readonly;
+        private bool _readonly,
+            // Whether the file buffer has been disposed.
+            _disposed;
 
         private void _checkReadOnly()
         {
@@ -48,6 +51,36 @@ namespace McSherry.Zener.Archives
                 throw new InvalidOperationException(
                     "A read-only collection cannot be modified."
                     );
+            }
+        }
+        private void _checkDisposed()
+        {
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(
+                    "The buffer has been disposed."
+                    );
+            }
+        }
+        private void _checkCanModify()
+        {
+            _checkDisposed();
+            _checkReadOnly();
+        }
+        private IEnumerable<IEnumerable<byte>> _getEnumerator()
+        {
+            int initialCount = this.Count;
+
+            for (int i = 0; i < initialCount; i++)
+            {
+                if (this.Count != initialCount)
+                {
+                    throw new InvalidOperationException(
+                        "The buffer was modified."
+                        );
+                }
+
+                yield return this[i];
             }
         }
 
@@ -86,6 +119,7 @@ namespace McSherry.Zener.Archives
                 );
             _lockbox = new object();
             _readonly = false;
+            _disposed = false;
         }
 
         /// <summary>
@@ -133,9 +167,12 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the buffer is read-only.
         /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
         public void Add(IEnumerable<byte> bytes)
         {
-            _checkReadOnly();
+            _checkCanModify();
 
             // Calls to ToArray/ToList/etc are fairly slow,
             // so checking if the provided enumerable is a
@@ -176,8 +213,13 @@ namespace McSherry.Zener.Archives
         ///     have all sets of bytes stored within the buffer
         ///     copied in to it.
         /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
         public void CopyTo(IEnumerable<byte>[] array, int arrayIndex)
         {
+            _checkDisposed();
+
             // Check to make sure that the array we've been passed
             // is long enough to contain all sets of bytes stored
             // within the buffer.
@@ -199,8 +241,13 @@ namespace McSherry.Zener.Archives
         /// </summary>
         /// <param name="bytes">The set of bytes to search for.</param>
         /// <returns>True if the buffer contains a set equal to the provided set.</returns>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
         public bool Contains(IEnumerable<byte> bytes)
         {
+            _checkDisposed();
+
             bool hasMatch = false;
             // Doing this in serial would likely be fairly slow, as
             // a file has to be read on each iteration. Making the
@@ -240,15 +287,77 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the buffer is read-only.
         /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
         public void Clear()
         {
-            _checkReadOnly();
+            _checkCanModify();
 
             lock (_lockbox)
             {
                 _marks.Clear();
                 _file.SetLength(0);
             }
+        }
+
+        /// <summary>
+        ///  Returns an enumerator that iterates through the sets
+        ///  of bytes stored in the buffer.
+        /// </summary>
+        /// <returns>
+        ///     An enumerator that iterates through the sets of bytes
+        ///     stored within the buffer.
+        /// </returns>
+        public IEnumerator<IEnumerable<byte>> GetEnumerator()
+        {
+            _checkDisposed();
+
+            return _getEnumerator().GetEnumerator();
+        }
+
+        /// <summary>
+        /// Releases the resources used by the buffer.
+        /// </summary>
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _disposed = true;
+
+                _file.Close();
+                _file.Dispose();
+                _marks.Clear();
+            }
+        }
+
+        /// <summary>
+        /// The number of sets of bytes stored within the buffer.
+        /// </summary>
+        public int Count
+        {
+            get { return _marks.Count; }
+        }
+        /// <summary>
+        /// Whether the buffer is read-only.
+        /// </summary>
+        public bool IsReadOnly
+        {
+            get { return _readonly; }
+            set { _readonly = value; }
+        }
+
+        /// <summary>
+        /// Whether the file buffer has been disposed.
+        /// </summary>
+        public bool Disposed
+        {
+            get { return _disposed; }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
     }
 }
