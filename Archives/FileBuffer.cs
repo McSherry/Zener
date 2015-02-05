@@ -290,9 +290,10 @@ namespace McSherry.Zener.Archives
                             state.Stop();
                         }
                     });
+
+                return hasMatch;
             }
 
-            return hasMatch;
         }
         /// <summary>
         /// Removes a set of bytes from the buffer. Always throws
@@ -337,6 +338,9 @@ namespace McSherry.Zener.Archives
         ///     An enumerator that iterates through the sets of bytes
         ///     stored within the buffer.
         /// </returns>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
         public IEnumerator<IEnumerable<byte>> GetEnumerator()
         {
             lock (_lockbox)

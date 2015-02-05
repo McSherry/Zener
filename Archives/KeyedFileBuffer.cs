@@ -16,7 +16,20 @@ namespace McSherry.Zener.Archives
         private const int DEFAULT_INDEX = -1;
 
         private readonly IEqualityComparer<TKey> _comparer;
-        private readonly IList<TKey> _keys;
+        private readonly List<TKey> _keys;
+
+        private IEnumerable<KeyValuePair<TKey, IEnumerable<byte>>> _getEnumerator()
+        {
+            lock (_lockbox)
+            {
+                _checkDisposed();
+
+                foreach (var key in this.Keys)
+                    yield return new KeyValuePair<TKey, IEnumerable<byte>>(
+                        key, this[key]
+                        );
+            }
+        }
 
         /// <summary>
         /// Creates a new KeyedFileBuffer with default equality
@@ -77,27 +90,15 @@ namespace McSherry.Zener.Archives
         {
             get
             {
-                lock (_lockbox)
+                IEnumerable<byte> bytes;
+                if (this.TryGetValue(key, out bytes))
                 {
-                    _checkDisposed();
-
-                    var index = Enumerable
-                        .Range(0, _keys.Count)
-                        .Zip(_keys, (i, n) => new { i, n })
-                        .Where(o => _comparer.Equals(key, o.n))
-                        .Select(o => o.i)
-                        .DefaultIfEmpty(DEFAULT_INDEX)
-                        .First();
-
-                    if (index == DEFAULT_INDEX)
-                    {
-                        throw new KeyNotFoundException(
-                            "No set of bytes with the specified key could be found."
-                            );
-                    }
-
-                    return base[index];
+                    return bytes;
                 }
+
+                throw new KeyNotFoundException(
+                    "No set of bytes with the specified key could be found."
+                    );
             }
             set
             {
@@ -147,7 +148,7 @@ namespace McSherry.Zener.Archives
             {
                 _checkCanModify();
 
-                if (this.Contains(key))
+                if (this.ContainsKey(key))
                 {
                     throw new InvalidOperationException(
                         "The specified key already exists within the buffer."
@@ -159,18 +160,87 @@ namespace McSherry.Zener.Archives
             }
         }
         /// <summary>
-        /// Adds data to the buffer. Always throws a
-        /// NotSupportedException.
+        /// Attempts to retrieve the data associated with a key.
         /// </summary>
-        /// <param name="bytes">The data to add to the buffer.</param>
-        /// <exception cref="System.NotSupportedException">
-        ///     Always thrown by this method.
-        /// </exception>
-        public override void Add(IEnumerable<byte> bytes)
+        /// <param name="key">The key to attempt to retrieve the data for.</param>
+        /// <param name="item">The retrieved data.</param>
+        /// <returns>True if the data was retrieved successfully.</returns>
+        public bool TryGetValue(TKey key, out IEnumerable<byte> item)
         {
-            throw new NotSupportedException(
-                "This file buffer requires keys be added with data."
-                );
+            lock (_lockbox)
+            {
+                _checkDisposed();
+
+                var index = Enumerable
+                    .Range(0, _keys.Count)
+                    .Zip(_keys, (i, n) => new { i, n })
+                    .Where(o => _comparer.Equals(key, o.n))
+                    .Select(o => o.i)
+                    .DefaultIfEmpty(DEFAULT_INDEX)
+                    .First();
+
+                if (index == DEFAULT_INDEX)
+                {
+                    item = null;
+                    return false;
+                }
+                else
+                {
+                    item = base[index];
+                    return true;
+                }
+            }
+        }
+        /// <summary>
+        /// Copies all sets of bytes and the associated keys stored
+        /// within the buffer to an array of keys and sets of bytes.
+        /// </summary>
+        /// <param name="array">The array to copy to.</param>
+        /// <param name="arrayIndex">The index within the array to start copying to.</param>
+        /// <exception cref="System.IndexOutOfRangeException">
+        ///     Thrown when the provided array is too short to copy all
+        ///     key-data pairs to.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
+        public void CopyTo(
+            KeyValuePair<TKey, IEnumerable<byte>>[] array,
+            int arrayIndex
+            )
+        {
+            lock (_lockbox)
+            {
+                _checkDisposed();
+
+                if (this.Count + arrayIndex > array.Length)
+                {
+                    throw new IndexOutOfRangeException(
+                        "The provided array is too short to copy to."
+                        );
+                }
+
+                IEnumerable<byte>[] dataArray = new IEnumerable<byte>[this.Count];
+                base.CopyTo(dataArray, 0);
+
+                dataArray
+                    .Zip(_keys, (e, k) => new KeyValuePair<TKey, IEnumerable<byte>>(k, e))
+                    .ToArray()
+                    .CopyTo(array, arrayIndex);
+            }
+        }
+        /// <summary>
+        /// Determines whether the provided key-data pair exists within
+        /// the buffer.
+        /// </summary>
+        /// <param name="pair">The pair to check for.</param>
+        /// <returns>True if the pair is present within the buffer.</returns>
+        public bool Contains(KeyValuePair<TKey, IEnumerable<byte>> pair)
+        {
+            lock (_lockbox)
+            {
+                return this.ContainsKey(pair.Key) && base.Contains(pair.Value);
+            }
         }
         /// <summary>
         /// Determines whether there exists within the buffer a
@@ -184,13 +254,86 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.ObjectDisposedException">
         ///     Thrown when the buffer has been disposed.
         /// </exception>
-        public bool Contains(TKey key)
+        public bool ContainsKey(TKey key)
         {
             lock (_lockbox)
             {
                 _checkDisposed();
 
                 return _keys.Contains(key, _comparer);
+            }
+        }
+        /// <summary>
+        /// Removes a key-data pair from the buffer. Always throws
+        /// a NotSupportedException.
+        /// </summary>
+        /// <param name="pair">The key of the key-data pair to remove.</param>
+        /// <exception cref="System.NotSupportedException">
+        ///     Always thrown. The buffer does not support
+        ///     removing individual items.
+        /// </exception>
+        public bool Remove(TKey key)
+        {
+            throw new NotSupportedException(
+                "The buffer does not support removing individual items."
+                );
+        }
+        /// <summary>
+        /// Removes a key-data pair from the buffer. Always throws
+        /// a NotSupportedException.
+        /// </summary>
+        /// <param name="pair">The key-data pair to remove.</param>
+        /// <exception cref="System.NotSupportedException">
+        ///     Always thrown. The buffer does not support
+        ///     removing individual items.
+        /// </exception>
+        public bool Remove(KeyValuePair<TKey, IEnumerable<byte>> pair)
+        {
+            throw new NotSupportedException(
+                "The buffer does not support removing individual items."
+                );
+        }
+        /// <summary>
+        /// Returns an enumerator for iterating through the key-data
+        /// pairs stored within the buffer.
+        /// </summary>
+        /// <returns>
+        ///     An enumerator for iterating through the key-data
+        ///     pairs stored within the buffer.
+        /// </returns>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
+        public new IEnumerator<KeyValuePair<TKey, IEnumerable<byte>>> GetEnumerator()
+        {
+            return _getEnumerator().GetEnumerator();
+        }
+
+        /// <summary>
+        /// A collection containing all keys stored within the buffer.
+        /// </summary>
+        public ICollection<TKey> Keys
+        {
+            get 
+            {
+                _checkDisposed();
+
+                return _keys.AsReadOnly(); 
+            }
+        }
+
+
+        ICollection<IEnumerable<byte>> IDictionary<TKey, IEnumerable<byte>>.Values
+        {
+            get
+            {
+                _checkDisposed();
+
+                var values = new List<IEnumerable<byte>>();
+                foreach (var val in this)
+                    values.Add(val.Value);
+
+                return values.AsReadOnly();
             }
         }
     }
