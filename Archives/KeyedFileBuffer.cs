@@ -56,40 +56,132 @@ namespace McSherry.Zener.Archives
         ///     specified key.
         /// </exception>
         /// <exception cref="System.InvalidOperationException">
-        ///     Thrown when there is an attempt to set a key which already
-        ///     exists within the buffer.
+        ///     Thrown when the specified key is already present
+        ///     within the buffer's set of keys.
+        ///     
+        ///     Thrown when the buffer is read-only.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
         /// </exception>
         public IEnumerable<byte> this[TKey key]
         {
             get
             {
-                var index = Enumerable
-                    .Range(0, _keys.Count)
-                    .Zip(_keys, (i, n) => new { i, n })
-                    .Where(o => _comparer.Equals(key, o.n))
-                    .Select(o => o.i)
-                    .DefaultIfEmpty(DEFAULT_INDEX)
-                    .First();
-
-                if (index == DEFAULT_INDEX)
+                lock (_lockbox)
                 {
-                    throw new KeyNotFoundException(
-                        "No set of bytes with the specified key could be found."
-                        );
-                }
+                    _checkDisposed();
 
-                return base[index];
+                    var index = Enumerable
+                        .Range(0, _keys.Count)
+                        .Zip(_keys, (i, n) => new { i, n })
+                        .Where(o => _comparer.Equals(key, o.n))
+                        .Select(o => o.i)
+                        .DefaultIfEmpty(DEFAULT_INDEX)
+                        .First();
+
+                    if (index == DEFAULT_INDEX)
+                    {
+                        throw new KeyNotFoundException(
+                            "No set of bytes with the specified key could be found."
+                            );
+                    }
+
+                    return base[index];
+                }
             }
             set
             {
-                if (_keys.Contains(key, _comparer))
+                this.Add(key, value);
+            }
+        }
+
+        /// <summary>
+        /// Adds a set of bytes to the buffer and associates it
+        /// with a key.
+        /// </summary>
+        /// <param name="pair">
+        ///     The data to add to the buffer and the key
+        ///     to associate with it.
+        /// </param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the specified key is already present
+        ///     within the buffer's set of keys.
+        ///     
+        ///     Thrown when the buffer is read-only.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
+        public void Add(KeyValuePair<TKey, IEnumerable<byte>> pair)
+        {
+            this.Add(pair.Key, pair.Value);
+        }
+        /// <summary>
+        /// Adds a set of bytes to the buffer and associates it
+        /// with a key.
+        /// </summary>
+        /// <param name="key">The key to associate the bytes with.</param>
+        /// <param name="data">The bytes to associate with the key.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the specified key is already present
+        ///     within the buffer's set of keys.
+        ///     
+        ///     Thrown when the buffer is read-only.
+        /// </exception>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
+        public void Add(TKey key, IEnumerable<byte> data)
+        {
+            lock (_lockbox)
+            {
+                _checkCanModify();
+
+                if (this.Contains(key))
                 {
                     throw new InvalidOperationException(
                         "The specified key already exists within the buffer."
                         );
                 }
 
-                // TODO: call this#Add
+                _keys.Add(key);
+                base.Add(data);
+            }
+        }
+        /// <summary>
+        /// Adds data to the buffer. Always throws a
+        /// NotSupportedException.
+        /// </summary>
+        /// <param name="bytes">The data to add to the buffer.</param>
+        /// <exception cref="System.NotSupportedException">
+        ///     Always thrown by this method.
+        /// </exception>
+        public override void Add(IEnumerable<byte> bytes)
+        {
+            throw new NotSupportedException(
+                "This file buffer requires keys be added with data."
+                );
+        }
+        /// <summary>
+        /// Determines whether there exists within the buffer a
+        /// set of bytes with the specified key.
+        /// </summary>
+        /// <param name="key">The key to check for.</param>
+        /// <returns>
+        ///     True if there is a set of bytes with the
+        ///     specified key associated with it.
+        /// </returns>
+        /// <exception cref="System.ObjectDisposedException">
+        ///     Thrown when the buffer has been disposed.
+        /// </exception>
+        public bool Contains(TKey key)
+        {
+            lock (_lockbox)
+            {
+                _checkDisposed();
+
+                return _keys.Contains(key, _comparer);
             }
         }
     }
