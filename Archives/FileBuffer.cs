@@ -37,14 +37,14 @@ namespace McSherry.Zener.Archives
         private Stream _file;
         // Used to lock when writing to/reading from the
         // filestream.
-        private object _lockbox;
+        protected object _lockbox;
         // ICollection requires IsReadOnly to be implemented, so we
         // might as well add functionality for making it read-only.
         private bool _readonly,
             // Whether the file buffer has been disposed.
             _disposed;
 
-        private void _checkReadOnly()
+        protected void _checkReadOnly()
         {
             if (_readonly)
             {
@@ -53,7 +53,7 @@ namespace McSherry.Zener.Archives
                     );
             }
         }
-        private void _checkDisposed()
+        protected void _checkDisposed()
         {
             if (_disposed)
             {
@@ -62,7 +62,7 @@ namespace McSherry.Zener.Archives
                     );
             }
         }
-        private void _checkCanModify()
+        protected void _checkCanModify()
         {
             _checkDisposed();
             _checkReadOnly();
@@ -192,7 +192,7 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.ObjectDisposedException">
         ///     Thrown when the buffer has been disposed.
         /// </exception>
-        public void Add(IEnumerable<byte> bytes)
+        public virtual void Add(IEnumerable<byte> bytes)
         {
             _checkCanModify();
 
@@ -312,7 +312,7 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.ObjectDisposedException">
         ///     Thrown when the buffer has been disposed.
         /// </exception>
-        public void Clear()
+        public virtual void Clear()
         {
             _checkCanModify();
 
@@ -341,7 +341,7 @@ namespace McSherry.Zener.Archives
         /// <summary>
         /// Releases the resources used by the buffer.
         /// </summary>
-        public void Dispose()
+        public virtual void Dispose()
         {
             if (!_disposed)
             {
@@ -372,7 +372,7 @@ namespace McSherry.Zener.Archives
         /// <summary>
         /// Whether the file buffer has been disposed.
         /// </summary>
-        public bool Disposed
+        public virtual bool Disposed
         {
             get { return _disposed; }
         }
