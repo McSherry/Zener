@@ -194,23 +194,23 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public virtual void Add(IEnumerable<byte> bytes)
         {
-            _checkCanModify();
-
-            // Calls to ToArray/ToList/etc are fairly slow,
-            // so checking if the provided enumerable is a
-            // byte array first could improve performance.
-            byte[] data;
-            if (bytes is byte[])
-            {
-                data = (byte[])bytes;
-            }
-            else
-            {
-                data = bytes.ToArray();
-            }
-
             lock (_lockbox)
             {
+                _checkCanModify();
+
+                // Calls to ToArray/ToList/etc are fairly slow,
+                // so checking if the provided enumerable is a
+                // byte array first could improve performance.
+                byte[] data;
+                if (bytes is byte[])
+                {
+                    data = (byte[])bytes;
+                }
+                else
+                {
+                    data = bytes.ToArray();
+                }
+
                 // We need to be at the end of the stream so
                 // we don't overwrite any other bits of data.
                 _file.Seek(0, SeekOrigin.End);
@@ -240,21 +240,24 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public void CopyTo(IEnumerable<byte>[] array, int arrayIndex)
         {
-            _checkDisposed();
-
-            // Check to make sure that the array we've been passed
-            // is long enough to contain all sets of bytes stored
-            // within the buffer.
-            if (_marks.Count + arrayIndex > array.Length)
+            lock (_lockbox)
             {
-                throw new IndexOutOfRangeException(
-                    "The provided array is too short to copy to."
-                    );
-            }
+                _checkDisposed();
 
-            for (int i = 0; i < _marks.Count; i++)
-            {
-                array[arrayIndex + i] = this[i];
+                // Check to make sure that the array we've been passed
+                // is long enough to contain all sets of bytes stored
+                // within the buffer.
+                if (_marks.Count + arrayIndex > array.Length)
+                {
+                    throw new IndexOutOfRangeException(
+                        "The provided array is too short to copy to."
+                        );
+                }
+
+                for (int i = 0; i < _marks.Count; i++)
+                {
+                    array[arrayIndex + i] = this[i];
+                }
             }
         }
         /// <summary>
@@ -268,23 +271,26 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public bool Contains(IEnumerable<byte> bytes)
         {
-            _checkDisposed();
+            lock (_lockbox)
+            {
+                _checkDisposed();
 
-            bool hasMatch = false;
-            // Doing this in serial would likely be fairly slow, as
-            // a file has to be read on each iteration. Making the
-            // comparisons parallel should help mitigate any
-            // performance hits.
-            Parallel.ForEach(
-                source: this,
-                body: (item, state) => 
-                {
-                    if (bytes.SequenceEqual(item))
+                bool hasMatch = false;
+                // Doing this in serial would likely be fairly slow, as
+                // a file has to be read on each iteration. Making the
+                // comparisons parallel should help mitigate any
+                // performance hits.
+                Parallel.ForEach(
+                    source: this,
+                    body: (item, state) =>
                     {
-                        hasMatch = true;
-                        state.Stop();
-                    }
-                });
+                        if (bytes.SequenceEqual(item))
+                        {
+                            hasMatch = true;
+                            state.Stop();
+                        }
+                    });
+            }
 
             return hasMatch;
         }
@@ -314,10 +320,10 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public virtual void Clear()
         {
-            _checkCanModify();
-
             lock (_lockbox)
             {
+                _checkCanModify();
+
                 _marks.Clear();
                 _file.SetLength(0);
             }
@@ -333,9 +339,12 @@ namespace McSherry.Zener.Archives
         /// </returns>
         public IEnumerator<IEnumerable<byte>> GetEnumerator()
         {
-            _checkDisposed();
+            lock (_lockbox)
+            {
+                _checkDisposed();
 
-            return _getEnumerator().GetEnumerator();
+                return _getEnumerator().GetEnumerator();
+            }
         }
 
         /// <summary>
@@ -343,13 +352,16 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public virtual void Dispose()
         {
-            if (!_disposed)
+            lock (_lockbox)
             {
-                _disposed = true;
+                if (!_disposed)
+                {
+                    _disposed = true;
 
-                _file.Close();
-                _file.Dispose();
-                _marks.Clear();
+                    _file.Close();
+                    _file.Dispose();
+                    _marks.Clear();
+                }
             }
         }
 
@@ -374,7 +386,13 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public virtual bool Disposed
         {
-            get { return _disposed; }
+            get 
+            {
+                lock (_lockbox)
+                {
+                    return _disposed;
+                }
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
