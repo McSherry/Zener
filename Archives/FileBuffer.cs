@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace McSherry.Zener.Archives
 {
@@ -191,6 +192,32 @@ namespace McSherry.Zener.Archives
             {
                 array[arrayIndex + i] = this[i];
             }
+        }
+        /// <summary>
+        /// Determines whether the buffer contains a set of bytes equal to
+        /// the provided sequence of bytes.
+        /// </summary>
+        /// <param name="bytes">The set of bytes to search for.</param>
+        /// <returns>True if the buffer contains a set equal to the provided set.</returns>
+        public bool Contains(IEnumerable<byte> bytes)
+        {
+            bool hasMatch = false;
+            // Doing this in serial would likely be fairly slow, as
+            // a file has to be read on each iteration. Making the
+            // comparisons parallel should help mitigate any
+            // performance hits.
+            Parallel.ForEach(
+                source: this,
+                body: (item, state) => 
+                {
+                    if (bytes.SequenceEqual(item))
+                    {
+                        hasMatch = true;
+                        state.Stop();
+                    }
+                });
+
+            return hasMatch;
         }
         /// <summary>
         /// Removes a set of bytes from the buffer. Always throws
