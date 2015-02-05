@@ -87,36 +87,58 @@ namespace McSherry.Zener.Archives
         /// <summary>
         /// Creates a new FileBuffer.
         /// </summary>
-        /// <param name="capacity"></param>
+        /// <param name="capacity">The starting capacity of the buffer.</param>
+        /// <exception cref="System.IO.IOException">
+        ///     Thrown when an error occurs whilst creating a temporary file.
+        /// </exception>
         public FileBuffer(int capacity = DEFAULT_CAPACITY)
         {
             _marks = new List<Filemark>(capacity);
-            _file = new FileStream(
-                // The file won't have a meaningful name, because there
-                // is no need for one. Thankfully, the BCL provides a
-                // handy method for generating temporary filenames.
-                path:       Path.GetTempFileName(),
-                // We're going to need to open the file, but this also
-                // handles having the file deleted between the call to
-                // Path.GetTempFileName.
-                mode:       FileMode.OpenOrCreate,
-                // Fairly evident.
-                access:     FileAccess.ReadWrite,
-                // There's no reason to need to share access to the file.
-                share:      FileShare.None,
-                // Temporary files aren't, by default, deleted, so we want
-                // to ensure that our temporary file is deleted once we're
-                // done with it, especially considering this class will be
-                // used with archives dealing with compressed files.
-                //
-                // We'll also be skipping around in the file, so any minor
-                // optimisations the RandomAccess flag gives can't hurt.
-                options:    FileOptions.DeleteOnClose | FileOptions.RandomAccess,
-                // This is required for the constructor we're using. I believe
-                // (but don't quote me on this) that the value in use is the
-                // default for a FileStream.
-                bufferSize: BUFFER_BUFFER_SIZE
-                );
+
+            try
+            {
+                _file = new FileStream(
+                    // The file won't have a meaningful name, because there
+                    // is no need for one. Thankfully, the BCL provides a
+                    // handy method for generating temporary filenames.
+                    path: Path.GetTempFileName(),
+                    // We're going to need to open the file, but this also
+                    // handles having the file deleted between the call to
+                    // Path.GetTempFileName.
+                    mode: FileMode.OpenOrCreate,
+                    // Fairly evident.
+                    access: FileAccess.ReadWrite,
+                    // There's no reason to need to share access to the file.
+                    share: FileShare.None,
+                    // Temporary files aren't, by default, deleted, so we want
+                    // to ensure that our temporary file is deleted once we're
+                    // done with it, especially considering this class will be
+                    // used with archives dealing with compressed files.
+                    //
+                    // We'll also be skipping around in the file, so any minor
+                    // optimisations the RandomAccess flag gives can't hurt.
+                    options: FileOptions.DeleteOnClose | FileOptions.RandomAccess,
+                    // This is required for the constructor we're using. I believe
+                    // (but don't quote me on this) that the value in use is the
+                    // default for a FileStream.
+                    bufferSize: BUFFER_BUFFER_SIZE
+                    );
+            }
+            catch (IOException ioex)
+            {
+                throw new IOException(
+                    "An I/O error occured when creating a temporary file.",
+                    ioex
+                    );
+            }
+            catch (UnauthorizedAccessException uaex)
+            {
+                throw new IOException(
+                    "A permissions error occured when creating a temporary file.",
+                    uaex
+                    );
+            }
+
             _lockbox = new object();
             _readonly = false;
             _disposed = false;
