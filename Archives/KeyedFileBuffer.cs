@@ -160,6 +160,20 @@ namespace McSherry.Zener.Archives
             }
         }
         /// <summary>
+        /// Adds a set of bytes to the buffer. Always throws
+        /// a NotSupportedException.
+        /// </summary>
+        /// <param name="data">The data to add.</param>
+        /// <exception cref="System.NotSupportedException">
+        ///     Always thrown.
+        /// </exception>
+        public override void Add(IEnumerable<byte> data)
+        {
+            throw new NotSupportedException(
+                "The buffer does not support adding data without a key."
+                );
+        }
+        /// <summary>
         /// Attempts to retrieve the data associated with a key.
         /// </summary>
         /// <param name="key">The key to attempt to retrieve the data for.</param>
