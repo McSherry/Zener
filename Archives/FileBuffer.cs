@@ -88,11 +88,49 @@ namespace McSherry.Zener.Archives
         }
 
         /// <summary>
+        /// Retrieves a set of bytes from the buffer.
+        /// </summary>
+        /// <param name="index">The index of the set of bytes within the buffer.</param>
+        /// <returns>The set of bytes at the specified index.</returns>
+        /// <exception cref="System.IndexOutOfRangeException">
+        ///     Thrown when the specified index is outside the bounds of
+        ///     the buffer.
+        /// </exception>
+        public IEnumerable<byte> this[int index]
+        {
+            get
+            {
+                if (index >= _marks.Count)
+                {
+                    throw new IndexOutOfRangeException(
+                        "The provided index was outside the bounds of the buffer."
+                        );
+                }
+
+                byte[] data;
+                lock (_lockbox)
+                {
+                    var mark = _marks.ElementAt(index);
+                    data = new byte[mark.Length];
+
+                    // Seek to the first byte of the set of bytes
+                    // we want to return.
+                    _file.Position = mark.Offset;
+                    // Then we just need to read the data in to
+                    // the byte array.
+                    _file.Read(data, 0, data.Length);
+                }
+
+                return data;
+            }
+        }
+
+        /// <summary>
         /// Adds the provided set of bytes to the buffer.
         /// </summary>
         /// <param name="bytes">The bytes to add.</param>
         /// <exception cref="System.InvalidOperationException">
-        ///     Thrown when the collection is read-only.
+        ///     Thrown when the buffer is read-only.
         /// </exception>
         public void Add(IEnumerable<byte> bytes)
         {
@@ -122,6 +160,67 @@ namespace McSherry.Zener.Archives
                 // Then all that's left is to write our data to
                 // the stream.
                 _file.Write(data, 0, data.Length);
+            }
+        }
+        /// <summary>
+        /// Copies all sets of bytes stored within the buffer to an
+        /// array of sets of bytes.
+        /// </summary>
+        /// <param name="array">The array to copy to.</param>
+        /// <param name="arrayIndex">
+        ///     The index within the array to start copying to.
+        /// </param>
+        /// <exception cref="System.IndexOutOfRangeException">
+        ///     Thrown when the provided array is too short to
+        ///     have all sets of bytes stored within the buffer
+        ///     copied in to it.
+        /// </exception>
+        public void CopyTo(IEnumerable<byte>[] array, int arrayIndex)
+        {
+            // Check to make sure that the array we've been passed
+            // is long enough to contain all sets of bytes stored
+            // within the buffer.
+            if (_marks.Count + arrayIndex > array.Length)
+            {
+                throw new IndexOutOfRangeException(
+                    "The provided array is too short to copy to."
+                    );
+            }
+
+            for (int i = 0; i < _marks.Count; i++)
+            {
+                array[arrayIndex + i] = this[i];
+            }
+        }
+        /// <summary>
+        /// Removes a set of bytes from the buffer. Always throws
+        /// a NotSupportedException.
+        /// </summary>
+        /// <param name="bytes">The item to remove.</param>
+        /// <exception cref="System.NotSupportedException">
+        ///     Always thrown. The buffer does not support
+        ///     removing individual items.
+        /// </exception>
+        public bool Remove(IEnumerable<byte> bytes)
+        {
+            throw new NotSupportedException(
+                "The buffer does not support removing individual items."
+                );
+        }
+        /// <summary>
+        /// Removes all items from the file buffer.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the buffer is read-only.
+        /// </exception>
+        public void Clear()
+        {
+            _checkReadOnly();
+
+            lock (_lockbox)
+            {
+                _marks.Clear();
+                _file.SetLength(0);
             }
         }
     }
