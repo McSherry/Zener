@@ -19,6 +19,15 @@ namespace McSherry.Zener.Archives
         private readonly IList<TKey> _keys;
 
         /// <summary>
+        /// Creates a new KeyedFileBuffer with default equality
+        /// comparison rules and the default starting capacity.
+        /// </summary>
+        public KeyedFileBuffer()
+            : this(EqualityComparer<TKey>.Default, DEFAULT_CAPACITY)
+        {
+
+        }
+        /// <summary>
         /// Creates a new KeyedFileBuffer.
         /// </summary>
         /// <param name="comparer">The comparer to use when comparing keys.</param>
