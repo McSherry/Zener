@@ -490,6 +490,13 @@ namespace McSherry.Zener.Archives
 
                 foreach (var file in fdrFiles)
                 {
+                    if (file.cbFile > Int32.MaxValue)
+                    {
+                        throw new InternalBufferOverflowException(
+                            "Files larger than 2GiB - 1 byte are not supported."
+                            );
+                    }
+
                     byte[] fileBytes = new byte[file.cbFile];
                     dataBuf.Position = file.uoffFolderStart;
                     dataBuf.Read(fileBytes, 0, fileBytes.Length);
@@ -556,6 +563,10 @@ namespace McSherry.Zener.Archives
         /// </exception>
         /// <exception cref="System.IO.IOException">
         ///     Thrown when a temporary file could not be opened.
+        /// </exception>
+        /// <exception cref="System.IO.InternalBufferOverflowException">
+        ///     Thrown when the file in the archive is greater than
+        ///     2GiB - 1 byte in length.
         /// </exception>
         public CabinetArchive(Stream stream)
         {
