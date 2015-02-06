@@ -144,6 +144,22 @@ namespace McSherry.Zener.Archives
                 _keys[_keys.IndexOf(current)] = @new;
             }
         }
+        /// <summary>
+        /// Compares the provided keys using the comparer
+        /// the KeyedFileBuffer was instantiated with.
+        /// </summary>
+        /// <param name="a">The first key to compare.</param>
+        /// <param name="b">The second key to compare.</param>
+        /// <returns>True if the provided keys are equal.</returns>
+        public bool CompareKeys(TKey a, TKey b)
+        {
+            lock (_lockbox)
+            {
+                _checkDisposed();
+
+                return _comparer.Equals(a, b);
+            }
+        }
 
         /// <summary>
         /// Adds a set of bytes to the buffer and associates it
