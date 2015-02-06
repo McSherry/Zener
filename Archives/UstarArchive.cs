@@ -54,7 +54,7 @@ namespace McSherry.Zener.Archives
         /// </exception>
         /// <exception cref="System.IO.InternalBufferOverflowException">
         ///     Thrown when the file in the archive is greater than
-        ///     2GiB - 1 byte in length.
+        ///     2,147,483,591 bytes in length.
         /// </exception>
         public UstarArchive(Stream stream)
             : base(stream)

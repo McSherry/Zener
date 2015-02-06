@@ -145,7 +145,7 @@ namespace McSherry.Zener.Archives
         /// </exception>
         /// <exception cref="System.IO.InternalBufferOverflowException">
         ///     Thrown when the file in the archive is greater than
-        ///     2GiB - 1 byte in length.
+        ///     2,147,483,591 bytes in length.
         /// </exception>
         public ZlibArchive(Stream stream)
         {
@@ -194,12 +194,12 @@ namespace McSherry.Zener.Archives
             }
 
             long remainingBytes = stream.Length - stream.Position;
-            // The array storing file data will be limited to 2GiB - 1 byte in length.
+            // The array storing file data will be limited to 2,147,483,591 bytes in length.
             // We need to check that the quantity of bytes is not too great.
-            if (remainingBytes > Int32.MaxValue)
+            if (remainingBytes > ByteArrayMaxLength)
             {
                 throw new InternalBufferOverflowException(
-                    "The class does not support files greater than 2GiB - 1 byte in length."
+                    "The class does not support files greater than 2,147,483,591 bytes in length."
                     );
             }
 

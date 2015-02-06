@@ -218,7 +218,7 @@ namespace McSherry.Zener.Archives
         /// </exception>
         /// <exception cref="System.IO.InternalBufferOverflowException">
         ///     Thrown when the file in the archive is greater than
-        ///     2GiB - 1 byte in length.
+        ///     2,147,483,591 bytes in length.
         /// </exception>
         public GzipArchive(Stream stream)
         {
@@ -324,10 +324,10 @@ namespace McSherry.Zener.Archives
 
             // Arrays only support up to 2^31 - 1 bytes, so we can't store
             // files above this size.
-            if (_isize > Int32.MaxValue)
+            if (_isize > ByteArrayMaxLength)
             {
                 throw new InternalBufferOverflowException(
-                    "Files larger than 2GiB - 1 byte are not supported."
+                    "Files larger than 2,147,483,591 bytes are not supported."
                     );
             }
 

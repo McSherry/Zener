@@ -149,10 +149,10 @@ namespace McSherry.Zener.Archives
                     ? dumpLength + (TAR_BLOCK_SIZE - (dumpLength % TAR_BLOCK_SIZE))
                     : 0;
 
-                if (entryBytes > Int32.MaxValue)
+                if (entryBytes > ByteArrayMaxLength)
                 {
                     throw new InternalBufferOverflowException(
-                        "Files larger than 2GiB - 1 byte are not supported."
+                        "Files larger than 2,147,483,591 bytes are not supported."
                         );
                 }
 
@@ -254,7 +254,7 @@ namespace McSherry.Zener.Archives
         /// </exception>
         /// <exception cref="System.IO.InternalBufferOverflowException">
         ///     Thrown when at least one file in the archive is larger than is
-        ///     supported by the class (2GiB - 1 byte).
+        ///     supported by the class (2,147,483,591 bytes).
         /// </exception>
         public TarArchive(Stream stream)
         {

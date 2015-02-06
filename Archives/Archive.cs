@@ -20,6 +20,11 @@ namespace McSherry.Zener.Archives
         : IDisposable
     {
         /// <summary>
+        /// The maximum length of a byte array.
+        /// </summary>
+        protected const uint ByteArrayMaxLength = 0x7FFFFFC7;
+
+        /// <summary>
         /// The number of files in the archive.
         /// </summary>
         public abstract int Count { get; }
