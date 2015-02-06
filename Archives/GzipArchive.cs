@@ -385,7 +385,9 @@ namespace McSherry.Zener.Archives
         }
 
         /// <summary>
-        /// Retrieves a file based on its name.
+        /// Retrieves a file based on its name. Always returns the single
+        /// file stored within the archive, regardless of the name passed
+        /// to it.
         /// </summary>
         /// <param name="name">The name of the file to retrieve.</param>
         /// <param name="contents">The contents of the retrieved file.</param>
