@@ -107,6 +107,45 @@ namespace McSherry.Zener.Archives
         }
 
         /// <summary>
+        /// Changes the key associated with a set of bytes.
+        /// </summary>
+        /// <param name="current">The key to change.</param>
+        /// <param name="new">The value to change the key to.</param>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">
+        ///     Thrown when the key to be changed is not found
+        ///     within the buffer.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the buffer is read-only.
+        ///     
+        ///     Thrown when the new key is already present
+        ///     within the collection.
+        /// </exception>
+        public void ChangeKey(TKey current, TKey @new)
+        {
+            lock (_lockbox)
+            {
+                _checkCanModify();
+
+                if (!this.ContainsKey(current))
+                {
+                    throw new KeyNotFoundException(
+                        "The key to replace does not exist."
+                        );
+                }
+
+                if (this.ContainsKey(@new))
+                {
+                    throw new InvalidOperationException(
+                        "The new key already exists within the buffer."
+                        );
+                }
+
+                _keys[_keys.IndexOf(current)] = @new;
+            }
+        }
+
+        /// <summary>
         /// Adds a set of bytes to the buffer and associates it
         /// with a key.
         /// </summary>
