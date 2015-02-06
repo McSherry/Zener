@@ -365,7 +365,7 @@ namespace McSherry.Zener.Archives
         /// <summary>
         /// A collection containing all keys stored within the buffer.
         /// </summary>
-        public ICollection<TKey> Keys
+        public IList<TKey> Keys
         {
             get 
             {
@@ -375,6 +375,10 @@ namespace McSherry.Zener.Archives
             }
         }
 
+        ICollection<TKey> IDictionary<TKey, IEnumerable<byte>>.Keys
+        {
+            get { return this.Keys; }
+        }
         ICollection<IEnumerable<byte>> IDictionary<TKey, IEnumerable<byte>>.Values
         {
             get
