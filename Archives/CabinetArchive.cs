@@ -277,18 +277,9 @@ namespace McSherry.Zener.Archives
         // within the cabinet's main header.
         private CabinetHeaderFlags _flags;
 
-        // The names of the files stored within the archive.
-        private List<string> _names;
-        // A set of Filemark structs indicating the positions
-        // of each file within the temporary file storing
-        // their uncompressed representations.
-        private List<Filemark> _filemarks;
-        // A FileStream with the temporary file open and
-        // ready for reading/writing.
-        private FileStream _dataDump;
-        // Object to use in locks when reading/writing
-        // from the _dataDump FileStream.
-        private object _dataLock;
+        // The buffer storing all data extracted
+        // from the cabinet archive.
+        private KeyedFileBuffer<string> _files;
 
         private void _parseCabStream(Stream stream)
         {
@@ -503,35 +494,10 @@ namespace McSherry.Zener.Archives
                     dataBuf.Position = file.uoffFolderStart;
                     dataBuf.Read(fileBytes, 0, fileBytes.Length);
 
-                    _writeToDump(file.szName, fileBytes);
+                    _files.Add(file.szName, fileBytes);
                 }
             }
             #endregion
-        }
-        private void _writeToDump(string name, byte[] bytes, bool seekToEnd = true)
-        {
-            lock (_dataLock)
-            {
-                if (seekToEnd) _dataDump.Seek(0, SeekOrigin.End);
-
-                _names.Add(name);
-                _filemarks.Add(new Filemark(bytes.LongLength, _dataDump.Position));
-                _dataDump.Write(bytes, 0, bytes.Length);
-            }
-        }
-        private IEnumerable<byte> _readFromDump(string name)
-        {
-            int index = _names.IndexOf(name);
-            var mark = _filemarks[index];
-            byte[] fileBytes = new byte[mark.Length];
-
-            lock (_dataLock)
-            {
-                _dataDump.Position = mark.Offset;
-                _dataDump.Read(fileBytes, 0, fileBytes.Length);
-            }
-
-            return fileBytes;
         }
         private void _mszipInflate(CFDATA data, Stream dump)
         {
@@ -609,35 +575,7 @@ namespace McSherry.Zener.Archives
                     "The provided stream does not support reading."
                     );
 
-            _names = new List<string>();
-            _filemarks = new List<Filemark>();
-            _dataLock = new object();
-
-            try
-            {
-                _dataDump = new FileStream(
-                    Path.GetTempFileName(),
-                    FileMode.OpenOrCreate,
-                    FileAccess.ReadWrite,
-                    FileShare.None,
-                    4096, // The default buffer size
-                    FileOptions.DeleteOnClose | FileOptions.RandomAccess
-                    );
-            }
-            catch (IOException ioex)
-            {
-                throw new IOException(
-                    "Could not open a temporary file.",
-                    ioex
-                    );
-            }
-            catch (UnauthorizedAccessException uaex)
-            {
-                throw new IOException(
-                    "Could not open a temporary file.",
-                    uaex
-                    );
-            }
+            _files = new KeyedFileBuffer<string>();
 
             _parseCabStream(stream);
         }
@@ -647,14 +585,14 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public override int Count
         {
-            get { return _names.Count; }
+            get { return _files.Count; }
         }
         /// <summary>
         /// The names of the files contained within the cabinet.
         /// </summary>
         public override IEnumerable<string> Files
         {
-            get { return _names; }
+            get { return _files.Keys; }
         }
 
         /// <summary>
@@ -665,25 +603,14 @@ namespace McSherry.Zener.Archives
         /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {
-            bool ctns = _names.Contains(name);
-            if (ctns)
-            {
-                contents = _readFromDump(name);
-            }
-            else
-            {
-                contents = null;
-            }
-
-            return ctns;
+            return _files.TryGetValue(name, out contents);
         }
         /// <summary>
         /// Releases the resources used by this class.
         /// </summary>
         public override void Dispose()
         {
-            _dataDump.Close();
-            _dataDump.Dispose();
+            _files.Dispose();
         }
     }
 }
