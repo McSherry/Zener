@@ -76,6 +76,30 @@ namespace McSherry.Zener.Archives
             UtfName     = 1 << 8,
             Reserved    = 0xFE31
         }
+        /// <summary>
+        /// Represents the flags within the
+        /// cabinet file's header.
+        /// </summary>
+        [Flags]
+        private enum CabinetHeaderFlags : ushort
+        {
+            /// <summary>
+            /// Indicates that this cabinet file is not
+            /// the first in a set of cabinet files.
+            /// </summary>
+            IsNotFirst = 0x0001,
+            /// <summary>
+            /// Indicates that this cabinet file is not
+            /// the last in a set of cabinet files.
+            /// </summary>
+            IsNotLast = 0x0002,
+            /// <summary>
+            /// Indicates that the cabinet file contains
+            /// the reserved fields cbCFHeader, cbCFFolder,
+            /// and cbCFData in the current CFHEADER block.
+            /// </summary>
+            ReservedPresent = 0x0004
+        }
         private struct CFFILE
         {
             public CFFILE(Stream source)
@@ -230,31 +254,6 @@ namespace McSherry.Zener.Archives
             MSZIP_SIGBYTE_0         = 0x43,
             MSZIP_SIGBYTE_1         = 0x4B
             ;
-
-        /// <summary>
-        /// Represents the flags within the
-        /// cabinet file's header.
-        /// </summary>
-        [Flags]
-        private enum CabinetHeaderFlags : ushort
-        {
-            /// <summary>
-            /// Indicates that this cabinet file is not
-            /// the first in a set of cabinet files.
-            /// </summary>
-            IsNotFirst      = 0x0001,
-            /// <summary>
-            /// Indicates that this cabinet file is not
-            /// the last in a set of cabinet files.
-            /// </summary>
-            IsNotLast       = 0x0002,
-            /// <summary>
-            /// Indicates that the cabinet file contains
-            /// the reserved fields cbCFHeader, cbCFFolder,
-            /// and cbCFData in the current CFHEADER block.
-            /// </summary>
-            ReservedPresent = 0x0004
-        }
 
         static CabinetArchive()
         {
