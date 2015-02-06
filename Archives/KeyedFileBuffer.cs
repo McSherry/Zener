@@ -375,7 +375,6 @@ namespace McSherry.Zener.Archives
             }
         }
 
-
         ICollection<IEnumerable<byte>> IDictionary<TKey, IEnumerable<byte>>.Values
         {
             get

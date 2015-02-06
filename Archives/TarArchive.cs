@@ -50,10 +50,9 @@ namespace McSherry.Zener.Archives
             FILE_TYPE_LINK_SOFT = 0x32
             ;
 
-        protected List<string> _names;
+        protected KeyedFileBuffer<string> _files;
         protected List<byte[]> _headers;
         protected List<Filemark> _marks;
-        protected Stream _dataDump;
         protected object _dataLock;
 
         protected void ParseTarFile(Stream source)
@@ -75,7 +74,7 @@ namespace McSherry.Zener.Archives
             byte[] buffer = new byte[TAR_BLOCK_SIZE];
             StringBuilder builder = new StringBuilder();
             bool lastWasEmpty = false;
-            long dumpLength = 0, dumpOffset = 0;
+            long dumpLength = 0;
 
             do
             {
@@ -150,6 +149,13 @@ namespace McSherry.Zener.Archives
                     ? dumpLength + (TAR_BLOCK_SIZE - (dumpLength % TAR_BLOCK_SIZE))
                     : 0;
 
+                if (entryBytes > Int32.MaxValue)
+                {
+                    throw new NotSupportedException(
+                        "Files over 2GiB in size are not supported."
+                        );
+                }
+
                 // Check whether the entry is a normal file.
                 byte type = buffer[TAR_FILETYPE_OFFSET];
                 if (
@@ -164,39 +170,64 @@ namespace McSherry.Zener.Archives
                 }
 
                 // If we've made it this far, we're going to be adding
+                // the file and its contents to our KeyedFileBuffer.
+                //
+                // The first thing we need to do is add the tar header
+                // block to our list of headers.
+                _headers.Add((byte[])buffer.Clone());
+                // Next, we will need to read all of the
+                // tar blocks from the stream. It's quite possible that
+                // the data we'll be storing won't be the full length of
+                // the blocks, but it'll mean the stream is seeked to
+                // the first byte of the next block.
+                byte[] data = new byte[entryBytes];
+                source.Read(data, 0, data.Length);
+                // We then resize the array to the actual length of
+                // the data. This will truncate off any padding bytes.
+                Array.Resize(ref data, (int)dumpLength);
+                // Then all we need to do is add this data, with
+                // our file-name, to our buffer.
+                _files.Add(builder.ToString(), data);
+
+                // If we've made it this far, we're going to be adding
                 // the file to our table of contents.
                 //
                 // First on the list, add the header buffer to our list
                 // of headers.
-                _headers.Add((byte[])buffer.Clone());
-                // Then we add the name.
-                _names.Add(builder.ToString());
-                // Then we create a mark for it, and add that.
-                _marks.Add(new Filemark(dumpLength, dumpOffset));
-                // Increment the offset within the file dump
-                // by the number of bytes (sans padding).
-                dumpOffset += dumpLength;
-                // Then we read the data from the archive to the
-                // data dump.
-                long lim = entryBytes / TAR_BLOCK_SIZE;
-                for (int i = 0; i < lim; i++)
-                {
-                    source.Read(buffer, 0, TAR_BLOCK_SIZE);
+                //_headers.Add((byte[])buffer.Clone());
 
-                    if (i == lim - 1)
-                    {
-                        _dataDump.Write(
-                            buffer, 0,
-                            (int)(dumpLength % TAR_BLOCK_SIZE)
-                            );
-                    }
-                    else
-                    {
-                        _dataDump.Write(buffer, 0, TAR_BLOCK_SIZE);
-                    }
-                }
+                //Array.Resize(ref buffer, dumpLength);
+                //// We then add the file to our file-backed buffer.
+                //_files.Add(builder.ToString(), buffer);
 
-                _dataDump.Flush();
+                //// Then we add the name.
+                //_names.Add(builder.ToString());
+                //// Then we create a mark for it, and add that.
+                //_marks.Add(new Filemark(dumpLength, dumpOffset));
+                //// Increment the offset within the file dump
+                //// by the number of bytes (sans padding).
+                //dumpOffset += dumpLength;
+                //// Then we read the data from the archive to the
+                //// data dump.
+                //long lim = entryBytes / TAR_BLOCK_SIZE;
+                //for (int i = 0; i < lim; i++)
+                //{
+                //    source.Read(buffer, 0, TAR_BLOCK_SIZE);
+
+                //    if (i == lim - 1)
+                //    {
+                //        _dataDump.Write(
+                //            buffer, 0,
+                //            (int)(dumpLength % TAR_BLOCK_SIZE)
+                //            );
+                //    }
+                //    else
+                //    {
+                //        _dataDump.Write(buffer, 0, TAR_BLOCK_SIZE);
+                //    }
+                //}
+
+                //_dataDump.Flush();
             } 
             while (true);
 
@@ -232,35 +263,7 @@ namespace McSherry.Zener.Archives
 
             stream.Position = 0;
             _dataLock = new object();
-            _names = new List<string>();
             _headers = new List<byte[]>();
-            _marks = new List<Filemark>();
-
-            try
-            {
-                _dataDump = new FileStream(
-                    Path.GetTempFileName(),
-                    FileMode.Open,
-                    FileAccess.ReadWrite,
-                    FileShare.None,
-                    TAR_BLOCK_SIZE,
-                    FileOptions.DeleteOnClose | FileOptions.RandomAccess
-                    );
-            }
-            catch (IOException ioex)
-            {
-                throw new IOException(
-                    "Could not open a temporary file.",
-                    ioex
-                    );
-            }
-            catch (UnauthorizedAccessException uaex)
-            {
-                throw new IOException(
-                    "Could not open a temporary file.",
-                    uaex
-                    );
-            }
 
             this.ParseTarFile(stream);
         }
@@ -276,7 +279,7 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public override int Count
         {
-            get { return _names.Count; }
+            get { return _files.Keys.Count; }
         }
         /// <summary>
         /// The names of all files within the archive.
@@ -284,7 +287,7 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public override IEnumerable<string> Files
         {
-            get { return _names; }
+            get { return _files.Keys; }
         }
 
         /// <summary>
@@ -295,39 +298,14 @@ namespace McSherry.Zener.Archives
         /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {
-            int fileIndex;
-            try
-            {
-                fileIndex = _names.IndexOf(name);
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                contents = null;
-                return false;
-            }
-            var mark = _marks[fileIndex];
-
-            var file = new byte[mark.Length];
-            lock (_dataLock)
-            {
-                _dataDump.Position = mark.Offset;
-                _dataDump.Read(
-                    file,
-                    0,
-                    (int)mark.Length
-                    );
-            }
-
-            contents = file;
-            return true;
+            return _files.TryGetValue(name, out contents);
         }
         /// <summary>
         /// Releases the resources used by this class.
         /// </summary>
         public override void Dispose()
         {
-            _dataDump.Close();
-            _dataDump.Dispose();
+            _files.Dispose();
         }
     }
 }
