@@ -118,7 +118,7 @@ namespace McSherry.Zener.Archives
         private byte[] _data;
         // The Adler32 checksum stored in the
         // archive's trailer.
-        private uint _checksum;
+        private byte[] _checksum;
         // The compression method identifier from the archive's
         // headers.
         private ZlibCompressionMethod _compMethod;
@@ -138,6 +138,10 @@ namespace McSherry.Zener.Archives
         /// </exception>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided stream is null.
+        /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when the archive uses a compression method that is
+        ///     not supported by the class.
         /// </exception>
         public ZlibArchive(Stream stream)
         {
@@ -163,6 +167,73 @@ namespace McSherry.Zener.Archives
             _compMethod = (ZlibCompressionMethod)(cmf & (byte)ZlibCompressionMethod.BitMask);
             _compInfo = (ZlibCompressionInfo)(cmf & (byte)ZlibCompressionInfo.BitMask);
             _flags = (ZlibFlags)flg;
+
+            // RFC 1950 only specifies DEFLATE as a compression method. As this
+            // is the document we're working to be compatible with, we'll only
+            // be supporting DEFLATE.
+            //
+            // If the archive specifies a different compression method, throw an
+            // exception to indicate that the method is unsupported.
+            if (_compMethod != ZlibCompressionMethod.DEFLATE)
+            {
+                throw new NotSupportedException(
+                    "The archive uses an unsupported compression method."
+                    );
+            }
+
+            // We won't be making use of the DICTID field, but we still need
+            // to know whether it's present so we can skip past it to the compressed
+            // data.
+            if ((_flags & ZlibFlags.DictionaryIdPresent) == ZlibFlags.DictionaryIdPresent)
+            {
+                stream.Seek(DICTID_LENGTH, SeekOrigin.Current);
+            }
+
+            long remainingBytes = stream.Length - stream.Position;
+            // The array storing file data will be limited to 2GiB - 1 byte in length.
+            // We need to check that the quantity of bytes is not too great.
+            if (remainingBytes > Int32.MaxValue)
+            {
+                throw new InternalBufferOverflowException(
+                    "The class does not support files greater than 2GiB - 1 byte in length."
+                    );
+            }
+
+            // The remaining data, minus the trailer, will be our compressed
+            // data. We can read all the data, copy out the trailer, then
+            // resize this array.
+            byte[] cData = new byte[remainingBytes];
+            byte[] trlBuf = new byte[ADLER32_LENGTH];
+
+            stream.Read(cData, 0, (int)remainingBytes);
+            Buffer.BlockCopy(
+                src:        cData,
+                srcOffset:  cData.Length - trlBuf.Length,
+                dst:        trlBuf,
+                dstOffset:  0,
+                count:      trlBuf.Length
+                );
+            Array.Resize(ref cData, cData.Length - trlBuf.Length);
+
+            _checksum = trlBuf;
+            _name = _checksum
+                .Aggregate(
+                    new StringBuilder(),
+                    (sb, b) => sb.Append(b.ToString("x"))
+                    )
+                .ToString();
+
+            using (var oms = new MemoryStream())
+            {
+                using (var ims = new MemoryStream(cData))
+                using (var ds = new DeflateStream(ims, CompressionMode.Decompress))
+                {
+                    ds.CopyTo(oms);
+                }
+
+                _data = oms.GetBuffer();
+                Array.Resize(ref _data, (int)oms.Length);
+            }
         }
 
         /// <summary>
@@ -202,6 +273,14 @@ namespace McSherry.Zener.Archives
         public override IEnumerable<string> Files
         {
             get { return new[] { _name }; }
+        }
+
+        /// <summary>
+        /// Releases the resources held by the class. Does nothing.
+        /// </summary>
+        public override void Dispose()
+        {
+            return;
         }
     }
 }
