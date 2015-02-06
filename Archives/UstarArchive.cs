@@ -58,6 +58,7 @@ namespace McSherry.Zener.Archives
             byte[] idBuffer = new byte[USTAR_ID.Length];
             for (int i = 0; i < base._headers.Count; i++)
             {
+                string originalName = base._files.Keys[i];
                 // If this header is from a Ustar archive, it will have
                 // the ASCII string "ustar" starting at position 257 within
                 // the header block.
@@ -87,10 +88,19 @@ namespace McSherry.Zener.Archives
 
                     // This prefix then needs to be prepended to the filename
                     // we already have associated with this header.
-                    nameBuilder.Append(base._names[i]);
+                    nameBuilder.Append(originalName);
+                    string newName = nameBuilder.ToString();
+
+                    // If the new key is equal to the old key, we don't need
+                    // to make any modifications.
+                    if (base._files.CompareKeys(newName, originalName))
+                    {
+                        continue;
+                    }
+
                     // We then need to replace our currently-stored filename
                     // with the new one.
-                    base._names[i] = nameBuilder.ToString();
+                    base._files.ChangeKey(originalName, nameBuilder.ToString());
                 }
             }
         }
