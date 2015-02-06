@@ -143,6 +143,10 @@ namespace McSherry.Zener.Archives
         ///     Thrown when the archive uses a compression method that is
         ///     not supported by the class.
         /// </exception>
+        /// <exception cref="System.IO.InternalBufferOverflowException">
+        ///     Thrown when the file in the archive is greater than
+        ///     2GiB - 1 byte in length.
+        /// </exception>
         public ZlibArchive(Stream stream)
         {
             if (stream == null)

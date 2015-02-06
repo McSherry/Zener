@@ -52,6 +52,10 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.ArgumentException">
         ///     Thrown when the stream does not support the required operations.
         /// </exception>
+        /// <exception cref="System.IO.InternalBufferOverflowException">
+        ///     Thrown when the file in the archive is greater than
+        ///     2GiB - 1 byte in length.
+        /// </exception>
         public UstarArchive(Stream stream)
             : base(stream)
         {

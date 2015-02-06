@@ -216,6 +216,10 @@ namespace McSherry.Zener.Archives
         ///     archive's header is not supported by the GzipArchive
         ///     class.
         /// </exception>
+        /// <exception cref="System.IO.InternalBufferOverflowException">
+        ///     Thrown when the file in the archive is greater than
+        ///     2GiB - 1 byte in length.
+        /// </exception>
         public GzipArchive(Stream stream)
         {
             if (!stream.CanRead || !stream.CanSeek)
@@ -318,27 +322,21 @@ namespace McSherry.Zener.Archives
                     0
                     );
 
+            // Arrays only support up to 2^31 - 1 bytes, so we can't store
+            // files above this size.
+            if (_isize > Int32.MaxValue)
+            {
+                throw new InternalBufferOverflowException(
+                    "Files larger than 2GiB - 1 byte are not supported."
+                    );
+            }
+
             using (var ms = new MemoryStream(cDataBuf))
             using (var ds = new DeflateStream(ms, CompressionMode.Decompress))
             {
                 _dcData = new byte[_isize];
 
-                // The stream's Read method only accepts an Int32 for length,
-                // which can have a value of up to 2^31. Gzip, however, supports
-                // files up to 2^32 in length.
-                //
-                // To allow >2GiB files to be used, we need to read in two goes
-                // rather than one when they are present.
-                if (_isize > Int32.MaxValue)
-                {
-                    ds.Read(_dcData, 0, Int32.MaxValue);
-                    ds.Read(_dcData, Int32.MaxValue, (int)(_isize - Int32.MaxValue));
-                }
-                else
-                {
-
-                    ds.Read(_dcData, 0, (int)_isize);
-                }
+                ds.Read(_dcData, 0, _dcData.Length);
             }
 
             // If the archive doesn't contain the original file name,

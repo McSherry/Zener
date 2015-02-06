@@ -151,8 +151,8 @@ namespace McSherry.Zener.Archives
 
                 if (entryBytes > Int32.MaxValue)
                 {
-                    throw new NotSupportedException(
-                        "Files over 2GiB in size are not supported."
+                    throw new InternalBufferOverflowException(
+                        "Files larger than 2GiB - 1 byte are not supported."
                         );
                 }
 
@@ -252,7 +252,7 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.ArgumentException">
         ///     Thrown when the stream does not support the required operations.
         /// </exception>
-        /// <exception cref="System.NotSupportedException">
+        /// <exception cref="System.IO.InternalBufferOverflowException">
         ///     Thrown when at least one file in the archive is larger than is
         ///     supported by the class (2GiB - 1 byte).
         /// </exception>
