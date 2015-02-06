@@ -252,6 +252,10 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.ArgumentException">
         ///     Thrown when the stream does not support the required operations.
         /// </exception>
+        /// <exception cref="System.NotSupportedException">
+        ///     Thrown when at least one file in the archive is larger than is
+        ///     supported by the class (2GiB - 1 byte).
+        /// </exception>
         public TarArchive(Stream stream)
         {
             if (!stream.CanSeek) throw new ArgumentException(
@@ -264,6 +268,7 @@ namespace McSherry.Zener.Archives
             stream.Position = 0;
             _dataLock = new object();
             _headers = new List<byte[]>();
+            _files = new KeyedFileBuffer<string>();
 
             this.ParseTarFile(stream);
         }
