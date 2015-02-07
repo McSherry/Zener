@@ -349,7 +349,6 @@ namespace McSherry.Zener.Net
             // and using 'localhost' seems to add 300ms or so to response times.
             _listener = new TcpListener(address, this.Port);
             _listenThread = new Thread(TcpAcceptor);
-            ThreadPool.SetMinThreads(30, 30);
         }
 
         /// <summary>
