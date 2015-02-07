@@ -67,6 +67,7 @@
     <Compile Include="Archives\Archive.cs" />
     <Compile Include="Archives\GzipArchive.cs" />
     <Compile Include="Archives\KeyedFileBuffer.cs" />
+    <Compile Include="Archives\SingleFileArchive.cs" />
     <Compile Include="Archives\TarArchive.cs" />
     <Compile Include="Archives\UstarArchive.cs" />
     <Compile Include="Archives\ZlibArchive.cs" />
