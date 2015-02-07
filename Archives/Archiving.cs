@@ -132,29 +132,48 @@ namespace McSherry.Zener.Archives
                     "The provided archive contains no files."
                     );
 
-            StringComparison comparison = caseSensitive
-                ? StringComparison.Ordinal
-                : StringComparison.OrdinalIgnoreCase
-                ;
+            // If the archive inherits from SingleFileArchive, it
+            // will only contain ever contain a single file. Additionally,
+            // it isn't guaranteed that this file will have a name stored.
+            if (archive is SingleFileArchive)
+            {
+                var sfa = (SingleFileArchive)archive;
+                string mediaType = Routing.MediaTypes.Find(sfa.Filename, FindParameterType.NameOrPath);
 
-            router.AddHandler(
-                format, methods,
-                (request, response, parameters) =>
-                {
-                    string file = parameters.file;
-                    string name = archive.Files
-                            .Where(s => s.Equals(file, comparison))
-                            .FirstOrDefault();
+                router.AddHandler(
+                    format, methods,
+                    (request, response, parameters) =>
+                    {
+                        response.Headers.Add("Content-Type", mediaType);
+                        response.Write(sfa.Data);
+                    });
+            }
+            else
+            {
+                StringComparison comparison = caseSensitive
+                    ? StringComparison.Ordinal
+                    : StringComparison.OrdinalIgnoreCase
+                    ;
 
-                    if (name == default(string))
-                        throw new HttpException(HttpStatus.NotFound, request);
+                router.AddHandler(
+                    format, methods,
+                    (request, response, parameters) =>
+                    {
+                        string file = parameters.file;
+                        string name = archive.Files
+                                .Where(s => s.Equals(file, comparison))
+                                .FirstOrDefault();
 
-                    response.Headers.Add(
-                        "Content-Type",
-                        Routing.MediaTypes.Find(name, FindParameterType.NameOrPath)
-                        );
-                    response.Write(archive.GetFile(name));
-                });
+                        if (name == default(string))
+                            throw new HttpException(HttpStatus.NotFound, request);
+
+                        response.Headers.Add(
+                            "Content-Type",
+                            Routing.MediaTypes.Find(name, FindParameterType.NameOrPath)
+                            );
+                        response.Write(archive.GetFile(name));
+                    });
+            }
         }
 
         /// <summary>
