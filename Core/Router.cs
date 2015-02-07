@@ -35,7 +35,6 @@ namespace McSherry.Zener.Core
         /// <returns>A list containing all matches.</returns>
         public IList<Tuple<Route, dynamic>> Find(string path, string method = null)
         {
-            
             /*
              * It should be possible to have routes with
              * variable and non-variable sections in the

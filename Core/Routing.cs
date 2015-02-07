@@ -101,7 +101,8 @@ namespace McSherry.Zener.Core
             if (
                 route.Methods == null ||
                 route.Methods.Count() == 0 ||
-                String.IsNullOrWhiteSpace(method)
+                String.IsNullOrWhiteSpace(method) ||
+                route.Methods.Any(String.IsNullOrWhiteSpace)
                 )
             {
                 return true;
