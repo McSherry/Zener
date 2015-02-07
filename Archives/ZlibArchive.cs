@@ -18,7 +18,7 @@ namespace McSherry.Zener.Archives
     /// Represents an RFC 1950 zlib archive.
     /// </summary>
     public sealed class ZlibArchive
-        : Archive, IDisposable
+        : SingleFileArchive, IDisposable
     {
         private const int
             // The minimum length of the Zlib
@@ -241,42 +241,11 @@ namespace McSherry.Zener.Archives
         }
 
         /// <summary>
-        /// Retrieves a file based on its name. Always returns the single
-        /// file stored within the archive, regardless of the name passed
-        /// to it.
+        /// The data contained within the Zlib archive.
         /// </summary>
-        /// <param name="name">The name of the file to retrieve.</param>
-        /// <param name="contents">The contents of the retrieved file.</param>
-        /// <returns>True if a file with the given name exists within the archive.</returns>
-        public override bool GetFile(string name, out IEnumerable<byte> contents)
+        public override IEnumerable<byte> Data
         {
-            contents = _data.Clone() as IEnumerable<byte>;
-
-            return true;
-        }
-
-        /// <summary>
-        /// The number of files stored within the archive.
-        /// This always returns 1.
-        /// </summary>
-        public override int Count
-        {
-            get { return 1; }
-        }
-        /// <summary>
-        /// The names of the files stored within
-        /// the archive. Use of the Filename property
-        /// is recommended.
-        /// </summary>
-        /// <remarks>
-        /// A Zlib archive doesn't store the filename
-        /// of the file contained within it. As a result,
-        /// the filename will always be a hex string of
-        /// the archive's Adler32 checksum bytes.
-        /// </remarks>
-        public override IEnumerable<string> Files
-        {
-            get { return new[] { _name }; }
+            get { return _data.Clone() as IEnumerable<byte>; }
         }
 
         /// <summary>
