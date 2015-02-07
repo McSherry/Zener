@@ -19,7 +19,7 @@ namespace McSherry.Zener.Archives
     /// Represents an RFC 1952 GZip archive file.
     /// </summary>
     public sealed class GzipArchive
-        : Archive, IDisposable
+        : SingleFileArchive, IDisposable
     {
         [Flags]
         private enum GzipFlags : byte
@@ -349,52 +349,22 @@ namespace McSherry.Zener.Archives
         }
 
         /// <summary>
-        /// The number of files contained within the archive.
-        /// </summary>
-        public override int Count
-        {
-            // Gzip archives can only ever contain
-            // a single file.
-            get { return 1; }
-        }
-        /// <summary>
-        /// The names of the files contained within the
-        /// archive file.
-        /// </summary>
-        public override IEnumerable<string> Files
-        {
-            get { return new[] { this.Filename }; }
-        }
-        /// <summary>
         /// The name of the file. Uses the Gzip Original Filename
         /// field if present, otherwise uses the hex representation
         /// of the archive's CRC-32.
         /// </summary>
-        public string Filename
+        public override string Filename
         {
             get { return _name; }
         }
         /// <summary>
         /// The contents of the file contained within the Gzip archive.
         /// </summary>
-        public IEnumerable<byte> File
+        public override IEnumerable<byte> Data
         {
             get { return _dcData.Clone() as IEnumerable<byte>; }
         }
 
-        /// <summary>
-        /// Retrieves a file based on its name. Always returns the single
-        /// file stored within the archive, regardless of the name passed
-        /// to it.
-        /// </summary>
-        /// <param name="name">The name of the file to retrieve.</param>
-        /// <param name="contents">The contents of the retrieved file.</param>
-        /// <returns>True if a file with the given name exists within the archive.</returns>
-        public override bool GetFile(string name, out IEnumerable<byte> contents)
-        {
-            contents = _dcData.Clone() as IEnumerable<byte>;
-            return true;
-        }
         /// <summary>
         /// Releases the resources used by the class. This is not implemented.
         /// </summary>
