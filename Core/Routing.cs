@@ -96,8 +96,13 @@ namespace McSherry.Zener.Core
         public static bool MethodIsAcceptable(this Route route, string method)
         {
             // Null/empty can be used to indicate that any method is
-            // an acceptable method.
-            if (route.Methods == null || route.Methods.Count() == 0)
+            // an acceptable method. Passing null as the method parameter
+            // can also be used as an "any" wildcard.
+            if (
+                route.Methods == null ||
+                route.Methods.Count() == 0 ||
+                String.IsNullOrWhiteSpace(method)
+                )
             {
                 return true;
             }
