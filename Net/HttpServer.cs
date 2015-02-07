@@ -363,9 +363,32 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Starts the HTTP server and listener.
         /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the address/port combination specified is
+        ///     already in use, and so cannot be bound to.
+        /// </exception>
+        /// <exception cref="System.Net.SocketException">
+        ///     Thrown when an error occurs with the HttpServer's
+        ///     internal TcpListener.
+        /// </exception>
         public void Start()
         {
-            _listener.Start();
+            try
+            {
+                _listener.Start();
+            }
+            catch (SocketException sex)
+            {
+                if (sex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                {
+                    throw new InvalidOperationException(
+                        "The specified address/port combination is in use.",
+                        sex
+                        );
+                }
+
+                throw;
+            }
             _listenThread.Start();
         }
         /// <summary>
