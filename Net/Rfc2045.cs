@@ -31,6 +31,12 @@ namespace McSherry.Zener.Net
         /// </summary>
         /// <param name="data">The data to encode.</param>
         /// <returns>The Base64-encoded data as a string.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided data is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided data is zero-length.
+        /// </exception>
         public static string Base64Encode(string data)
         {
             return Rfc2045.Base64Encode(data, Encoding.UTF8);
@@ -41,8 +47,23 @@ namespace McSherry.Zener.Net
         /// <param name="data">The data to encode.</param>
         /// <param name="encoding">The encoding the data is in.</param>
         /// <returns>The Base64-encoded data as a string.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided data is null.
+        ///     
+        ///     Thrown when the provided encoding is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided data is zero-length.
+        /// </exception>
         public static string Base64Encode(string data, Encoding encoding)
         {
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided encoding must not be null."
+                    );
+            }
+
             return Rfc2045.Base64Encode(encoding.GetBytes(data));
         }
         /// <summary>
