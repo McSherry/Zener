@@ -396,7 +396,12 @@ namespace McSherry.Zener.Net
         public void Stop()
         {
             _acceptConnections = false;
-            _listener.Stop();
+
+            try
+            {
+                _listener.Stop();
+            }
+            catch (SocketException) { }
         }
 
         /// <summary>
