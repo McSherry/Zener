@@ -193,7 +193,7 @@ namespace McSherry.Zener.Net
         private TcpListener _listener;
         private Thread _listenThread;
         private int _port;
-        private bool _acceptConnections = true;
+        private volatile bool _acceptConnections = true;
 
         private void TcpAcceptor()
         {
