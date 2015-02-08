@@ -50,9 +50,95 @@ namespace McSherry.Zener.Net
         /// </summary>
         /// <param name="data">The data to an encode.</param>
         /// <returns>The Base64-encoded data as a string.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided data is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided data is zero-length.
+        /// </exception>
         public static string Base64Encode(IEnumerable<byte> data)
         {
-            throw new NotImplementedException();
+            if (data == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided data must not be null."
+                    );
+            }
+
+            byte[] bytes = data is byte[]
+                ? (byte[])data : data.ToArray();
+
+            if (bytes.Length == 0)
+            {
+                throw new ArgumentException(
+                    "The provided data must not be zero-length."
+                    );
+            }
+
+            StringBuilder b64s = new StringBuilder();
+            for (int i = 0; i < bytes.Length; i += 3)
+            {
+                // Get the remaining number of bytes, up to
+                // a maximum of three bytes.
+                int r = (bytes.Length - i);
+                r = r >= 3 ? 3 : r;
+
+                if (r == 3)
+                {
+                    // The three bytes catenated to form a 24-bit group.
+                    uint cat = 
+                        (((uint)bytes[i + 0]) << 0x10) |
+                        (((uint)bytes[i + 1]) << 0x08) |
+                        (((uint)bytes[i + 2]) << 0x00) ;
+
+                    b64s.Append(new[] {
+                        // We now need to split our 24-bit group in to four
+                        // six-bit groups. These six-bit groups are used as
+                        // indices within our 64-character alphabet.
+                        BASE64_ALPHA[(int)((cat & 0xFC0000) >> 0x12)],
+                        BASE64_ALPHA[(int)((cat & 0x03F000) >> 0x0C)],
+                        BASE64_ALPHA[(int)((cat & 0x000FC0) >> 0x06)],
+                        BASE64_ALPHA[(int)((cat & 0x00003F) >> 0x00)]
+                    });
+                }
+                else if (r == 2)
+                {
+                    uint cat = 
+                        (((uint)bytes[i + 0]) << 0x10) |
+                        (((uint)bytes[i + 1]) << 0x08) ;
+
+                    b64s.Append(new[] {
+                        // Similar to what we'd do with the full three bytes.
+                        // However, since we're a byte down, the final six
+                        // bits would (erroneously) appear as the index 0. To
+                        // indicate that we didn't have the fourth index, we
+                        // add in our padding character.
+                        BASE64_ALPHA[(int)((cat & 0xFC0000) >> 0x12)],
+                        BASE64_ALPHA[(int)((cat & 0x03F000) >> 0x0C)],
+                        BASE64_ALPHA[(int)((cat & 0x000FC0) >> 0x06)],
+                        BASE64_PADCHAR
+                    });
+                }
+                else
+                {
+                    uint cat = ((uint)bytes[i + 0]) << 0x10;
+
+                    b64s.Append(new[] {
+                        // Just like what we do when there are only two bytes,
+                        // but with an additional padding character since we're
+                        // two bytes down instead of just one.
+                        BASE64_ALPHA[(int)((cat & 0xFC0000) >> 0x12)],
+                        BASE64_ALPHA[(int)((cat & 0x03F000) >> 0x0C)],
+                        BASE64_PADCHAR,
+                        BASE64_PADCHAR
+                    });
+                }
+            }
+
+            // We'll now have our full Base64 string, with padding
+            // characters, in the StringBuilder. All that's left is
+            // to return the built string.
+            return b64s.ToString();
         }
 
         /// <summary>
