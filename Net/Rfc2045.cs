@@ -17,6 +17,14 @@ namespace McSherry.Zener.Net
     /// </summary>
     public static class Rfc2045
     {
+        // Value->Character map (alphabet)
+        private const string 
+            BASE64_ALPHA    = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+            ;
+        private const char 
+            BASE64_PADCHAR  = '='
+            ;
+
         /// <summary>
         /// Encodes the provided data in the RFC 2045 Base64 format,
         /// assuming that the provided string is UTF-8.
