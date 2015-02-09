@@ -214,12 +214,13 @@ namespace McSherry.Zener.Net
             NetworkStream ns = tcl.GetStream();
 
             HttpRequest req;
-            HttpResponse res = new HttpResponse(ns);
+            HttpResponse res = null;
 
             try
             {
                 // Attempt to create a request object.
                 req = HttpRequest.Create(ns);
+                res = new HttpResponse(ns, req);
 
                 // If creation succeeds, emit a message
                 // with the request and response objects
@@ -236,7 +237,7 @@ namespace McSherry.Zener.Net
                 // indicates that the request is malformed beyond having
                 // any useful data. The only sensible course of action
                 // from here is to close the connection.
-                res.Close();
+                if (res != null) res.Close();
                 ns.Close();
                 ns.Dispose();
                 tcl.Close();
@@ -251,7 +252,7 @@ namespace McSherry.Zener.Net
                 // skip it and continue on.
                 if (ioex.InnerException is SocketException)
                 {
-                    res.Close();
+                    if (res != null) res.Close();
                     ns.Close();
                     ns.Dispose();
                     tcl.Close();
@@ -264,7 +265,7 @@ namespace McSherry.Zener.Net
             // We're finished with this request, so we can close it. This
             // will flush any buffers to the network, and with close/dispose
             // any disposable resources.
-            res.Close();
+            if (res != null) res.Close();
             // We need to support HTTP pipelining for HTTP/1.1 compliance, and
             // this is how we're going to do it. Pipelining involves the user
             // agent sending multiple requests, one after the other, without

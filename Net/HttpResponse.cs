@@ -272,6 +272,8 @@ namespace McSherry.Zener.Net
             // Whether output buffering is enabled.
             _bufferOutput;
         private Encoding _encoding;
+        // The request that this response is responding to.
+        private HttpRequest _request;
 
         private void _BufferedWrite(byte[] bytes)
         {
@@ -510,7 +512,7 @@ namespace McSherry.Zener.Net
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided stream is null.
         /// </exception>
-        internal HttpResponse(Stream responseStream)
+        internal HttpResponse(Stream responseStream, HttpRequest request)
         {
             if (responseStream == null)
             {
@@ -529,6 +531,7 @@ namespace McSherry.Zener.Net
 
             this.StatusCode = HttpStatus.OK;
             this.Encoding = Encoding.UTF8;
+            _request = request;
             _rstr = responseStream;
             _headers = new HttpHeaderCollection();
             _cookies = new HttpCookieCollection();
