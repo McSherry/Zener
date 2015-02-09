@@ -786,6 +786,10 @@ namespace McSherry.Zener.Net
         ///     sent, or when it is called after the connection has been
         ///     closed.
         /// </exception>
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
+        ///     Thrown when the client sents invalid Base64 in its
+        ///     Authorization header.
+        /// </exception>
         public bool BasicAuthenticate(
             string username, string password,
             string realm = null
@@ -807,6 +811,8 @@ namespace McSherry.Zener.Net
                     realm = _request.Path;
                 }
 
+                // Remove any characters that cannot be present within
+                // the realm field before it is added to the header.
                 realm = new string(realm
                     .Where(c => !HTTP_SVBASIC_RLMINV.Contains(c))
                     .ToArray()
