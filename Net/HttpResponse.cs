@@ -627,6 +627,13 @@ namespace McSherry.Zener.Net
                 _encoding = value;
             }
         }
+        /// <summary>
+        /// Whether the response has been closed.
+        /// </summary>
+        public bool Closed
+        {
+            get { return _closed; }
+        }
 
         /// <summary>
         /// Writes the provided value to the response.
