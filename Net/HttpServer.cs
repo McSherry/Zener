@@ -174,6 +174,7 @@ namespace McSherry.Zener.Net
             var exception = (HttpException)param.Exception;
 
             res.BufferOutput = true;
+            res.StatusCode = exception.StatusCode;
             res.Headers.Add("Content-Type", "text/plain");
 
             res.Write(
