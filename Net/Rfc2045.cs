@@ -170,8 +170,31 @@ namespace McSherry.Zener.Net
         /// <param name="data">The data to decode.</param>
         /// <param name="encoding">The encoding to return the data in.</param>
         /// <returns>The decoded data in the specified encoding.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided data is null.
+        ///     
+        ///     Thrown when the provided encoding is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided string does not contain
+        ///     any valid Base64 characters.
+        ///     
+        ///     Thrown when the number of valid Base64 characters
+        ///     in the provided string is not a multiple of four.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the data contains padding characters
+        ///     in an invalid location.
+        /// </exception>
         public static string Base64Decode(string data, Encoding encoding)
         {
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided encoding must not be null."
+                    );
+            }
+
             return encoding.GetString((byte[])Rfc2045.Base64Decode(data));
         }
         /// <summary>
