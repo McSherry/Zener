@@ -639,6 +639,11 @@ namespace McSherry.Zener.Net
         /// Writes the provided value to the response.
         /// </summary>
         /// <param name="value">The value to write.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the method is called after the headers or
+        ///     sent, or when it is called after the connection has been
+        ///     closed.
+        /// </exception>
         public void Write(object value)
         {
             this.Write(value: value.ToString());
@@ -647,6 +652,11 @@ namespace McSherry.Zener.Net
         /// Writes the provided string to the response.
         /// </summary>
         /// <param name="value">The string to write.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the method is called after the headers or
+        ///     sent, or when it is called after the connection has been
+        ///     closed.
+        /// </exception>
         public void Write(string value)
         {
             this.Write(this.Encoding.GetBytes(value));
@@ -654,7 +664,12 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Writes the provided bytes to the response.
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">The value to write to the response.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the method is called after the headers or
+        ///     sent, or when it is called after the connection has been
+        ///     closed.
+        /// </exception>
         public void Write(IEnumerable<byte> value)
         {
             // Ensure that the response has not been closed.
@@ -683,6 +698,11 @@ namespace McSherry.Zener.Net
         /// </summary>
         /// <param name="format">The format to write the values in.</param>
         /// <param name="args">The values to write.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the method is called after the headers or
+        ///     sent, or when it is called after the connection has been
+        ///     closed.
+        /// </exception>
         public void Write(string format, params object[] args)
         {
             this.Write(String.Format(format, args));
@@ -692,6 +712,11 @@ namespace McSherry.Zener.Net
         /// by a new-line.
         /// </summary>
         /// <param name="value">The value to write.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the method is called after the headers or
+        ///     sent, or when it is called after the connection has been
+        ///     closed.
+        /// </exception>
         public void WriteLine(object value)
         {
             this.Write(value: String.Format("{0}{1}", value.ToString(), HTTP_NEWLINE));
@@ -701,6 +726,11 @@ namespace McSherry.Zener.Net
         /// followed by a new-line.
         /// </summary>
         /// <param name="value">The string to write.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the method is called after the headers or
+        ///     sent, or when it is called after the connection has been
+        ///     closed.
+        /// </exception>
         public void WriteLine(string value)
         {
             this.WriteLine(value: String.Format("{0}{1}", value, HTTP_NEWLINE));
@@ -711,6 +741,11 @@ namespace McSherry.Zener.Net
         /// </summary>
         /// <param name="format">The format to write the values in.</param>
         /// <param name="args">The values to write.</param>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the method is called after the headers or
+        ///     sent, or when it is called after the connection has been
+        ///     closed.
+        /// </exception>
         public void WriteLine(string format, params object[] args)
         {
             StringBuilder formatBuilder = new StringBuilder();
