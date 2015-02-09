@@ -279,8 +279,6 @@ namespace McSherry.Zener.Net
             // Whether output buffering is enabled.
             _bufferOutput;
         private Encoding _encoding;
-        // The request that this response is responding to.
-        private HttpRequest _request;
 
         private void _BufferedWrite(byte[] bytes)
         {
@@ -508,6 +506,15 @@ namespace McSherry.Zener.Net
         }
 
         /// <summary>
+        /// The HttpRequest this response will be responding to.
+        /// </summary>
+        internal HttpRequest Request
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Creates a new HttpResponse.
         /// </summary>
         /// <param name="responseStream">The stream to write the response to.</param>
@@ -519,7 +526,7 @@ namespace McSherry.Zener.Net
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided stream is null.
         /// </exception>
-        internal HttpResponse(Stream responseStream, HttpRequest request)
+        internal HttpResponse(Stream responseStream)
         {
             if (responseStream == null)
             {
@@ -538,7 +545,6 @@ namespace McSherry.Zener.Net
 
             this.StatusCode = HttpStatus.OK;
             this.Encoding = Encoding.UTF8;
-            _request = request;
             _rstr = responseStream;
             _headers = new HttpHeaderCollection();
             _cookies = new HttpCookieCollection();
@@ -800,7 +806,7 @@ namespace McSherry.Zener.Net
 
             this.BufferOutput = true;
 
-            var hdr = _request.Headers[HDR_CLAUTH].DefaultIfEmpty(null).First();
+            var hdr = this.Request.Headers[HDR_CLAUTH].DefaultIfEmpty(null).First();
             // If hdr is null, it means that the client hasn't sent an
             // Authorization header. This means we now need to respond with
             // a 401 and request authorization.
@@ -808,7 +814,7 @@ namespace McSherry.Zener.Net
             {
                 if (String.IsNullOrEmpty(realm))
                 {
-                    realm = _request.Path;
+                    realm = this.Request.Path;
                 }
 
                 // Remove any characters that cannot be present within
@@ -841,9 +847,9 @@ namespace McSherry.Zener.Net
                     // This results in the above branch being executed
                     // and the sending of a WWW-Authenticate header to
                     // the client.
-                    _request.Headers.IsReadOnly = false;
-                    _request.Headers.Remove(hdr.Field);
-                    _request.Headers.IsReadOnly = true;
+                    this.Request.Headers.IsReadOnly = false;
+                    this.Request.Headers.Remove(hdr.Field);
+                    this.Request.Headers.IsReadOnly = true;
 
                     this.BasicAuthenticate(username, password, realm);
                 }
@@ -862,7 +868,7 @@ namespace McSherry.Zener.Net
                 catch (ArgumentException aex)
                 {
                     throw new HttpRequestException(
-                        _request,
+                        this.Request,
                         "The client's Authorization header contains an invalid Base64 string.",
                         aex
                         );
@@ -870,7 +876,7 @@ namespace McSherry.Zener.Net
                 catch (InvalidOperationException ioex)
                 {
                     throw new HttpRequestException(
-                        _request,
+                        this.Request,
                         "The client's Authorization header contains an invalid Base64 string.",
                         ioex
                         );
@@ -885,9 +891,9 @@ namespace McSherry.Zener.Net
                     // This results in the above branch being executed
                     // and the sending of a WWW-Authenticate header to
                     // the client.
-                    _request.Headers.IsReadOnly = false;
-                    _request.Headers.Remove(hdr.Field);
-                    _request.Headers.IsReadOnly = true;
+                    this.Request.Headers.IsReadOnly = false;
+                    this.Request.Headers.Remove(hdr.Field);
+                    this.Request.Headers.IsReadOnly = true;
 
                     this.BasicAuthenticate(username, password, realm);
                 }
