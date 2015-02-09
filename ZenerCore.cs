@@ -88,8 +88,9 @@ namespace McSherry.Zener
                         .Find(
                             String.Format(
                                 "{0}{1}",
-                                INTERNAL_PREFIX, (int)exc.StatusCode
+                                INTERNAL_PREFIX, exc.StatusCode.GetCode()
                         ))
+                        .Where(rt => rt.Item1.Format.StartsWith(INTERNAL_PREFIX))
                         .DefaultIfEmpty(null)
                         .First();
 
