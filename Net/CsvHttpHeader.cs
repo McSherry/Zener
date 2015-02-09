@@ -114,22 +114,22 @@ namespace McSherry.Zener.Net
                         itemBuilder.Append(c);
                     }
                 }
-
-                // The last item won't be added to the collection
-                // automatically because there isn't a separator
-                // character. This means we need to add it ourselves.
-                //
-                // If we finish in a quoted string, we'll also want to
-                // add a quote to the start of the item. Any opening
-                // quotes without a closing quote we'll consider a quote
-                // literal.
-                if (qStr)
-                {
-                    itemBuilder.Insert(0, QUOTE);
-                }
-
-                this.Items.Add(itemBuilder.ToString());
             }
+
+            // The last item won't be added to the collection
+            // automatically because there isn't a separator
+            // character. This means we need to add it ourselves.
+            //
+            // If we finish in a quoted string, we'll also want to
+            // add a quote to the start of the item. Any opening
+            // quotes without a closing quote we'll consider a quote
+            // literal.
+            if (qStr)
+            {
+                itemBuilder.Insert(0, QUOTE);
+            }
+
+            this.Items.Add(itemBuilder.ToString());
         }
 
         /// <summary>
