@@ -552,6 +552,7 @@ namespace McSherry.Zener.Net
             }
 
             this.StatusCode = HttpStatus.OK;
+            this.BufferOutput = true;
             this.Encoding = Encoding.UTF8;
             _rstr = responseStream;
             _headers = new HttpHeaderCollection();
