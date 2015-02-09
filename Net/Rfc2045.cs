@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace McSherry.Zener.Net
 {
@@ -178,9 +179,137 @@ namespace McSherry.Zener.Net
         /// </summary>
         /// <param name="data">The data to decode.</param>
         /// <returns>The bytes decoded from the string.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided data is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided string does not contain
+        ///     any valid Base64 characters.
+        ///     
+        ///     Thrown when the number of valid Base64 characters
+        ///     in the provided string is not a multiple of four.
+        /// </exception>
+        /// <exception cref="System.IO.InvalidDataException">
+        ///     Thrown when the data contains padding characters
+        ///     in an invalid location.
+        /// </exception>
         public static IEnumerable<byte> Base64Decode(string data)
         {
-            throw new NotImplementedException();
+            // We need to make sure that the string isn't null before
+            // we attempt to filter it. If we don't do this, we may end
+            // up with a leaky abstraction throwing NullReferenceException.
+            if (data == null)
+            {
+                throw new ArgumentException(
+                    "The provided string must not be null."
+                    );
+            }
+
+            var alpha = BASE64_ALPHA.ToCharArray();
+            var fdata = data
+                .Where(c => alpha.Contains(c) || c == BASE64_PADCHAR)
+                .ToArray();
+
+            // We couldn't test length before because it was possible that
+            // the string contained non-Base64 characters. Now that we've
+            // removed these characters, if the enumerable is empty we know
+            // that there are no valid characters in the string.
+            if (fdata.Length == 0)
+            {
+                throw new ArgumentException(
+                    "The provided string does not contain any valid characters."
+                    );
+            }
+            // Base64 transforms 24 bits of data in to 32 bits of data, padding
+            // where required. This means that the length of the Base64 string
+            // needs to be a multiple of 32 bits (4 bytes) to be valid. If it
+            // isn't a multiple of 4 bytes, it isn't valid Base64.
+            if (fdata.Length % 4 != 0)
+            {
+                throw new ArgumentException(
+                    "The number of valid Base64 characters is not a multiple of four."
+                    );
+            }
+            
+            char[] cbuf = new char[4];
+            var ms = new MemoryStream();
+            for (int i = 0; i < fdata.Length; i += 4)
+            {
+                // Copy the characters in to the buffer.
+                Array.ConstrainedCopy(fdata, i, cbuf, 0, cbuf.Length);
+
+                // The padding characters will never be first or second in a
+                // four-character group. If it is there, something's gone wrong.
+                if (cbuf[0] == BASE64_PADCHAR || cbuf[1] == BASE64_PADCHAR)
+                {
+                    throw new System.IO.InvalidDataException(
+                        "The data contains padding characters in an invalid location."
+                        );
+                }
+                int padCount = 0;
+                // Similarly, we need to make sure that the padding characters are
+                // at the end of the string. If there are padding characters in the
+                // middle of the string, again, something's gone wrong.
+                if (cbuf[2] == BASE64_PADCHAR || cbuf[3] == BASE64_PADCHAR)
+                {
+                    // We're in the middle of the string.
+                    if (i + 4 < fdata.Length)
+                    {
+                        throw new System.IO.InvalidDataException(
+                            "The data contains padding characters in an invalid location."
+                            );
+                    }
+                    else
+                    {
+                        // We're at the end. We need to know how many padding characters
+                        // there are.
+                        padCount = cbuf.Count(BASE64_PADCHAR.Equals);
+                    }
+                }
+
+                // No padding characters, or four data characters.
+                if (padCount == 0)
+                {
+                    uint cat =
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[0])) << 0x12) |
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[1])) << 0x0C) |
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[2])) << 0x06) |
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[3])) << 0x00) ;
+
+                    ms.Write(new[] {
+                        (byte)((cat & 0x00FF0000) >> 0x10),
+                        (byte)((cat & 0x0000FF00) >> 0x08),
+                        (byte)((cat & 0x000000FF) >> 0x00)
+                    }, 0, 3);
+                }
+                else if (padCount == 1)
+                {
+                    uint cat =
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[0])) << 0x0C) |
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[1])) << 0x06) |
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[2])) << 0x00) ;
+
+                    ms.Write(new[] {
+                        (byte)((cat & 0x0000FF00) >> 0x08),
+                        (byte)((cat & 0x000000FF) >> 0x00)
+                    }, 0, 2);
+                }
+                else
+                {
+                    uint cat =
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[0])) << 0x06) |
+                        (((uint)BASE64_ALPHA.IndexOf(cbuf[1])) << 0x00) ;
+
+                    ms.Write(new[] {
+                        (byte)((cat & 0xFF0) >> 0x04)
+                    }, 0, 1);
+                }
+            }
+
+            using (ms)
+            {
+                return ms.ToArray();
+            }
         }
     }
 }
