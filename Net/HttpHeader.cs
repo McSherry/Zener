@@ -24,7 +24,7 @@ namespace McSherry.Zener.Net
         /// Creates a new basic HTTP header.
         /// </summary>
         /// <param name="fieldName">The header/field name (e.g. Content-Type).</param>
-        /// <param name="value">The value of the header/field (e.g. text/html).</param>
+        /// <param name="fieldValue">The value of the header/field (e.g. text/html).</param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when:
         ///         1. The provided field name is null, zero-length, or whitespace.
@@ -32,10 +32,10 @@ namespace McSherry.Zener.Net
         ///         3. The field name contains a carriage return or line feed character.
         ///         4. The value contains a carriage return or line feed character.
         /// </exception>
-        public HttpHeader(string fieldName, string value)
+        public HttpHeader(string fieldName, string fieldValue)
         {
             fieldName = fieldName.Trim(Whitespace.ToCharArray());
-            value = value.Trim(Whitespace.ToCharArray());
+            fieldValue = fieldValue.Trim(Whitespace.ToCharArray());
 
             if (String.IsNullOrWhiteSpace(fieldName))
             {
@@ -43,7 +43,7 @@ namespace McSherry.Zener.Net
                 ("A field name must be provided.", "fieldName");
             }
 
-            if (String.IsNullOrWhiteSpace(value))
+            if (String.IsNullOrWhiteSpace(fieldValue))
             {
                 throw new ArgumentException
                 ("A value must be provided.", "value");
@@ -54,14 +54,14 @@ namespace McSherry.Zener.Net
                 ("Header field may not contain colon/CR/LF.", "fieldName");
             }
 
-            if (value.Any(c => c == '\n' || c == '\r'))
+            if (fieldValue.Any(c => c == '\n' || c == '\r'))
             {
                 throw new ArgumentException
                 ("Header value may not contain CR/LF.", "value");
             }
 
             this.Field = fieldName;
-            this.Value = value;
+            this.Value = fieldValue;
         }
 
         /// <summary>
