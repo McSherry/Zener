@@ -67,6 +67,7 @@ namespace McSherry.Zener.Net
 
             HDRF_SVAUTH_BASIC   = "Basic realm=\"{0}\"",
             HDRF_CLAUTH_STBSC   = "Basic ",
+
             // Invalid characters in Basic authentication
             // "realm" field values.
             HTTP_SVBASIC_RLMINV = "\"\r\n"

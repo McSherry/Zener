@@ -18,14 +18,7 @@ namespace McSherry.Zener.Net
     /// </summary>
     public class HttpHeader
     {
-        /// <summary>
-        /// The characters to be trimmed from the start and end of
-        /// HTTP headers.
-        /// </summary>
-        protected static readonly char[] TRIM_CHARS = new[] 
-        {
-            ' ', '\t'
-        };
+        protected const string Whitespace = " \t\v\r\xFF";
 
         /// <summary>
         /// Creates a new basic HTTP header.
@@ -41,8 +34,8 @@ namespace McSherry.Zener.Net
         /// </exception>
         public HttpHeader(string fieldName, string value)
         {
-            fieldName = fieldName.Trim(TRIM_CHARS);
-            value = value.Trim(TRIM_CHARS);
+            fieldName = fieldName.Trim(Whitespace.ToCharArray());
+            value = value.Trim(Whitespace.ToCharArray());
 
             if (String.IsNullOrWhiteSpace(fieldName))
             {
@@ -103,8 +96,9 @@ namespace McSherry.Zener.Net
         public static HttpHeader Parse(string headerLine)
         {
             headerLine = headerLine.Trim(
-                TRIM_CHARS
-                    .Concat(new[] { ' ', '\r', '\n' })
+                Whitespace
+                    .ToCharArray()
+                    .Concat(new[] { '\n' })
                     .ToArray()
                 );
 
@@ -174,7 +168,7 @@ namespace McSherry.Zener.Net
             var linesToMerge = Enumerable
                 .Range(0, lines.Count)
                 .Zip(lines, (i, l) => new { i, l })
-                .Where(ao => TRIM_CHARS.Contains(ao.l[0]))
+                .Where(ao => Whitespace.Contains(ao.l[0]))
                 .ToList();
 
             foreach (var ml in linesToMerge)
@@ -200,7 +194,7 @@ namespace McSherry.Zener.Net
                     // The bit we're merging needs to go after. Before we can
                     // merge it, we need to trim from the start and end any
                     // whitespace.
-                    ml.l.Trim(TRIM_CHARS)
+                    ml.l.Trim(Whitespace.ToCharArray())
                     );
 
                 // We've merged the lines, so now we need to remove the line
