@@ -493,12 +493,27 @@ namespace McSherry.Zener.Net
             // that we have begun responding, and so cannot modify headers.
             _beginRespond = true;
         }
-        private void _CheckClosed()
+        
+        /// <summary>
+        /// Checks whether the response has been closed, and
+        /// throws an InvalidOperationException if it has.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the resonse has been closed.
+        /// </exception>
+        internal void CheckClosed()
         {
             if (_closed) throw new InvalidOperationException
             ("Cannot modify the response after the connection has been closed.");
         }
-        private void _CheckResponding()
+        /// <summary>
+        /// Checks whether the headers have been sent, and
+        /// throws an InvalidOperationException if they have.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        ///     Thrown when the response headers have been sent.
+        /// </exception>
+        internal void CheckHeadersSent()
         {
             if (_beginRespond) throw new InvalidOperationException(
                 "Cannot modify the headers after the response body has been written to."
@@ -582,8 +597,8 @@ namespace McSherry.Zener.Net
             get { return _httpStatus; }
             set
             {
-                this._CheckClosed();
-                this._CheckResponding();
+                this.CheckClosed();
+                this.CheckHeadersSent();
 
                 _httpStatus = value;
             }
@@ -611,7 +626,7 @@ namespace McSherry.Zener.Net
             get { return _bufferOutput; }
             set
             {
-                _CheckResponding();
+                CheckHeadersSent();
 
                 if (value && _obstr == null)
                 {
@@ -686,7 +701,7 @@ namespace McSherry.Zener.Net
         public void Write(IEnumerable<byte> value)
         {
             // Ensure that the response has not been closed.
-            _CheckClosed();
+            CheckClosed();
             // Send headers if necessary.
             _ConditionalSendHeaders();
 
