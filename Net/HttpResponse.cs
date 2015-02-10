@@ -274,7 +274,11 @@ namespace McSherry.Zener.Net
             // True when the Close() method has been called.
             _closed, 
             // Whether output buffering is enabled.
-            _bufferOutput;
+            _bufferOutput,
+            // Whether to compress output. Requires output
+            // buffering be enabled.
+            _enableCompression
+            ;
         private Encoding _encoding;
 
         private void _Write(byte[] bytes)
@@ -696,8 +700,17 @@ namespace McSherry.Zener.Net
         /// </summary>
         public bool EnableCompression
         {
-            get;
-            set;
+            get
+            {
+                return _enableCompression;
+            }
+            set
+            {
+                CheckClosed();
+                CheckHeadersSent();
+
+                _enableCompression = value;
+            }
         }
         /// <summary>
         /// The encoding used when writing strings to the response. Defaults
