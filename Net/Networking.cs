@@ -72,6 +72,146 @@ namespace McSherry.Zener.Net
             // "realm" field values.
             HTTP_SVBASIC_RLMINV = "\"\r\n"
             ;
+        #region String Parsing Method Fields/Constants
+        private const char 
+            BACKSLASH       = '\\',
+            DOUBLEQUOTE     = '"',
+            COMMA           = ',',
+            SPACE           = ' '
+            ;
+        private const string
+            OCT_NUMERICS    = "01234567",
+            HEX_NUMERICS    = "0123456789ABCDEFabcdef"
+            ;
+        private static readonly Dictionary<char, char>
+            C_ESCAPES = new Dictionary<char, char>()
+            {
+                { 'n', '\n' },
+                { 'r', '\r' },
+                { '0', '\0' },
+                { 'b', '\b' },
+                { 't', '\t' },
+                { 'v', '\v' },
+                { 'a', '\a' },
+                { 'f', '\f' }
+            };
+        #endregion
+
+        /// <summary>
+        /// Parses a set of semi-quoted strings, delimited by the
+        /// specified delimiter. Semi-quoted means that whitespace
+        /// will be ignored outside of a pair of quotes, but will be
+        /// preserved within a set of quotes.
+        /// </summary>
+        /// <param name="source">
+        ///     The source string to parse quoted strings from.
+        /// </param>
+        /// <param name="quote">The quotation character to use.</param>
+        /// <param name="delimiter">The delimiting character to use.</param>
+        /// <param name="recogniseCEscapes">
+        ///     Whether C escape sequences should be recognised within
+        ///     the quoted string segments.
+        /// </param>
+        /// <returns>A set of quoted strings in the order they occur.</returns>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided string source is null, empty, or
+        ///     entirely white-space.
+        /// </exception>
+        public static IList<string> ParseDelimitedSemiQuotedStrings(
+            string source,
+            char quote = DOUBLEQUOTE, char delimiter = COMMA,
+            bool recogniseCEscapes = true
+            )
+        {
+            if (String.IsNullOrWhiteSpace(source))
+            {
+                throw new ArgumentException(
+                    "The provided string is null, empty, or white-space."
+                    );
+            }
+
+            // Whether we're currently in a quoted section.
+            bool quoted = false;
+            List<string> parts = new List<string>();
+            StringBuilder partBuilder = new StringBuilder();
+            for (int i = 0; i < source.Length; i++)
+            {
+                if (quoted)
+                {
+                    if (source[i] == quote)
+                    {
+                        quoted = false;
+                    }
+                    else if (source[i] == BACKSLASH)
+                    {
+                        if (i + 1 > source.Length)
+                        {
+                            partBuilder.Append(BACKSLASH);
+                        }
+                        else if (C_ESCAPES.ContainsKey(source[i + 1]))
+                        {
+                            partBuilder.Append(C_ESCAPES[source[++i]]);
+                        }
+                        else if (
+                            source[i + 1] == 'x' &&
+                            i + 3 < source.Length &&
+                            HEX_NUMERICS.Contains(source[i + 2]) &&
+                            HEX_NUMERICS.Contains(source[i + 3])
+                            )
+                        {
+                            var hex = source.Substring(i + 2, 2);
+                            partBuilder.Append((char)Convert.ToByte(hex, 16));
+                            i += 3;
+                        }
+                        else if (
+                            i + 3 < source.Length &&
+                            OCT_NUMERICS.Contains(source[i + 1]) &&
+                            OCT_NUMERICS.Contains(source[i + 2]) &&
+                            OCT_NUMERICS.Contains(source[i + 3])
+                            )
+                        {
+                            var oct = source.Substring(i + 1, 3);
+                            partBuilder.Append((char)Convert.ToByte(oct, 8));
+                            i += 3;
+                        }
+                        else
+                        {
+                            partBuilder.Append(source[i]);
+                        }
+                    }
+                    else
+                    {
+                        partBuilder.Append(source[i]);
+                    }
+                }
+                else
+                {
+                    if (source[i] == SPACE)
+                    {
+                        continue;
+                    }
+                    else if (source[i] == delimiter)
+                    {
+                        parts.Add(partBuilder.ToString());
+                        partBuilder.Clear();
+                    }
+                    else if (source[i] == quote)
+                    {
+                        quoted = true;
+                    }
+                    else
+                    {
+                        partBuilder.Append(source[i]);
+                    }
+                }
+
+            }
+
+            if (partBuilder.Length > 0)
+                parts.Add(partBuilder.ToString());
+
+            return parts;
+        }
 
         /// <summary>
         /// Gets the message associated with the status code.
