@@ -325,8 +325,8 @@ namespace McSherry.Zener.Net
                 // variable containing the number of bytes to be written to 
                 // the maximum that would be written at once. Otherwise, set it
                 // to the number of bytes remaining to be written.
-                count = bytes.Length - runningTotal;
-                count = count > TX_BUFFER_SIZE ? TX_BUFFER_SIZE : count;
+                count = (bytes.Length - runningTotal) > TX_BUFFER_SIZE 
+                    ? TX_BUFFER_SIZE : count;
             }
         }
         private void _ConditionalSendHeaders()
