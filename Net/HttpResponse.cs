@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 
@@ -246,10 +247,13 @@ namespace McSherry.Zener.Net
             HDR_SERVER          = "Server",
             HDR_CONTENTTYPE     = "Content-Type",
             HDR_DATE            = "Date",
+            HDR_ACCEPTENCODING  = "Accept-Encoding",
+            HDR_CONTENTENCODING = "Content-Encoding",
 
             HDRF_CHUNKEDXFER    = "Chunked",
             HDRF_SERVER         = "Zener/{0}",
             HDRF_CONTENTTYPE    = "text/html",
+            HDRF_ENCODING_GZIP  = "gzip",
 
             HTTP_VERSION        = "1.1",
             HTTP_NEWLINE        = "\r\n"
@@ -362,6 +366,50 @@ namespace McSherry.Zener.Net
                 if (!_closed) return;
                 else
                 {
+                    // If we've got a request object available to us,
+                    // we can check whether the client supports compression.
+                    if (this.Request != null)
+                    {
+                        var hdr = this.Request.Headers[HDR_ACCEPTENCODING]
+                            .DefaultIfEmpty(null)
+                            .First();
+
+                        // If the header is present, we can check whether it
+                        // includes "gzip" in its supported compression.
+                        if (hdr != null)
+                        {
+                            var enc = new CsvHttpHeader(hdr).Items;
+                            // If the client supports gzip compression, we'll
+                            // pass it through a GZipStream to compress it.
+                            if (
+                                enc.Contains(
+                                    HDRF_ENCODING_GZIP,
+                                    StringComparer.OrdinalIgnoreCase
+                                ))
+                            {
+                                // Add a header to indicate that we've applied
+                                // gzip encoding to the data.
+                                this.Headers.Add(
+                                    fieldName:  HDR_CONTENTENCODING,
+                                    fieldValue: HDRF_ENCODING_GZIP
+                                    );
+
+                                var ms = new MemoryStream();
+                                _obstr.Position = 0;
+                                using (_obstr)
+                                using (var gs = new GZipStream(
+                                    stream:     ms,
+                                    mode:       CompressionMode.Compress,
+                                    leaveOpen:  true
+                                    ))
+                                {
+                                    _obstr.CopyTo(gs);
+                                }
+                                _obstr = ms;
+                            }
+                        }
+                    }
+
                     // If we've reached this point, we were using
                     // output buffering and the response has been
                     // closed. This means that we're now free to
