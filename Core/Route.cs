@@ -294,6 +294,22 @@ namespace McSherry.Zener.Core
             if (dynObj.Count > 0) param = dynObj;
             else param = new Empty();
 
+            if (paramNameBuilder.Length > 0)
+            {
+                // If there is a parameter in the format, but the path is
+                // zero-length, we cannot consider it a match, because
+                // parameters cannot be empty.
+                //
+                // This change resolves a bug where a format with a variable
+                // at the very start (such as "/[file]") would match a request
+                // for the index (path "/").
+                if (pathBuilder.Length == 0)
+                {
+                    param = new Empty();
+                    return false;
+                }
+            }
+
             return formatBuilder.ToString().Equals(
                 pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
                 );
