@@ -690,6 +690,16 @@ namespace McSherry.Zener.Net
             }
         }
         /// <summary>
+        /// Whether to enable HTTP compression, if available. Compression
+        /// is only available if the client supports it and if output
+        /// buffering is enabled.
+        /// </summary>
+        public bool EnableCompression
+        {
+            get;
+            set;
+        }
+        /// <summary>
         /// The encoding used when writing strings to the response. Defaults
         /// to UTF-8.
         /// </summary>
