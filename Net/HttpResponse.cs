@@ -273,6 +273,17 @@ namespace McSherry.Zener.Net
             _bufferOutput;
         private Encoding _encoding;
 
+        private void _Write(byte[] bytes)
+        {
+            if (this.BufferOutput)
+            {
+                _BufferedWrite(bytes);
+            }
+            else
+            {
+                _ChunkedNetworkWrite(bytes);
+            }
+        }
         private void _BufferedWrite(byte[] bytes)
         {
             _obstr.Write(bytes, 0, bytes.Length);
@@ -699,20 +710,7 @@ namespace McSherry.Zener.Net
             // Send headers if necessary.
             _ConditionalSendHeaders();
 
-            // The function signature uses IEnumerable<byte>
-            // to ease use, but in the end we do need a byte
-            // array to pass to the streams.
-            var valueArray = value.ToArray();
-            // If output buffering is enabled, we need to write
-            // to a different stream.
-            if (this.BufferOutput)
-            {
-                _BufferedWrite(valueArray);
-            }
-            else
-            {
-                _ChunkedNetworkWrite(valueArray);
-            }
+            _Write(value is byte[] ? (byte[])value : value.ToArray());
         }
         /// <summary>
         /// Writes the provided values to the response in the
