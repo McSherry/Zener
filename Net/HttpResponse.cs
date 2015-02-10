@@ -372,7 +372,11 @@ namespace McSherry.Zener.Net
                 {
                     // If we've got a request object available to us,
                     // we can check whether the client supports compression.
-                    if (this.Request != null)
+                    //
+                    // We also need to check whether the programmer has enabled
+                    // compression. If compression is not enabled, we must not
+                    // compress the output. Compression is enabled by default.
+                    if (this.Request != null && this.EnableCompression)
                     {
                         var hdr = this.Request.Headers[HDR_ACCEPTENCODING]
                             .DefaultIfEmpty(null)
