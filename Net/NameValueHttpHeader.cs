@@ -27,7 +27,10 @@ namespace McSherry.Zener.Net
                 { 'r', '\r' },
                 { '0', '\0' },
                 { 'b', '\b' },
-                { 't', '\t' }
+                { 't', '\t' },
+                { 'v', '\v' },
+                { 'a', '\a' },
+                { 'f', '\f' },
             };
 
         private Dictionary<string, string> _nvPairs;
