@@ -389,6 +389,15 @@ namespace McSherry.Zener.Archives
         }
 
         /// <summary>
+        /// The CRC-32 checksum used to verify the integrity
+        /// of the GzipArchive's data.
+        /// </summary>
+        public uint DataChecksum
+        {
+            get { return _crc32; }
+        }
+
+        /// <summary>
         /// Releases the resources used by the class. This is not implemented.
         /// </summary>
         public override void Dispose()
