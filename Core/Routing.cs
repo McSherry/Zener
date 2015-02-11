@@ -242,7 +242,12 @@ namespace McSherry.Zener.Core
 
                 if (!(pIndex < path.Length) && !(fIndex < format.Length))
                 {
-                    if (inParam) dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                    if (inParam)
+                    {
+                        dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                        paramNameBuilder.Clear();
+                        paramValBuilder.Clear();
+                    }
                     break;
                 }
                 else
