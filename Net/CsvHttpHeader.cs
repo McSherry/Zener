@@ -55,81 +55,8 @@ namespace McSherry.Zener.Net
         public CsvHttpHeader(string fieldName, string fieldValue)
             : base(fieldName, fieldValue)
         {
-            this.Items = new List<string>();
-
-            fieldValue = fieldValue.Trim(Whitespace.ToCharArray());
-            // Whether we're in a quoted string.
-            bool qStr = false;
-            // What we'll be using to build each item in the collection.
-            StringBuilder itemBuilder = new StringBuilder();
-            foreach (char c in fieldValue)
-            {
-                if (qStr)
-                {
-                    if (c == QUOTE)
-                    {
-                        qStr = false;
-                        this.Items.Add(itemBuilder.ToString());
-                    }
-                    else
-                    {
-                        itemBuilder.Append(c);
-                    }
-                }
-                else
-                {
-                    if (c == QUOTE)
-                    {
-                        // If the quote is in the middle of an item,
-                        // we'll assume it's meant to be a quote literal
-                        // and not the start of a quoted string.
-                        //
-                        // We can tell whether the quote is in the middle
-                        // of an item by testing the length of the string
-                        // builder. If the length is greater than 0, we're
-                        // in the middle of an item.
-                        if (itemBuilder.Length == 0)
-                        {
-                            qStr = true;
-                        }
-                        else
-                        {
-                            itemBuilder.Append(c);
-                        }
-                    }
-                    else if (c == SEPARATOR)
-                    {
-                        this.Items.Add(itemBuilder.ToString());
-                        itemBuilder.Clear();
-                    }
-                    /* If we're not in a quoted string, we'll
-                     * ignore any whitespace.
-                     */
-                    else if (Whitespace.Contains(c))
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        itemBuilder.Append(c);
-                    }
-                }
-            }
-
-            // The last item won't be added to the collection
-            // automatically because there isn't a separator
-            // character. This means we need to add it ourselves.
-            //
-            // If we finish in a quoted string, we'll also want to
-            // add a quote to the start of the item. Any opening
-            // quotes without a closing quote we'll consider a quote
-            // literal.
-            if (qStr)
-            {
-                itemBuilder.Insert(0, QUOTE);
-            }
-
-            this.Items.Add(itemBuilder.ToString());
+            base.Value = base.Value.Trim(Whitespace.ToCharArray());
+            this.Items = Networking.ParseDelimitedSemiQuotedStrings(base.Value);
         }
 
         /// <summary>
