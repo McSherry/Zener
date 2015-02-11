@@ -21,10 +21,15 @@ namespace McSherry.Zener.Core
     public class Router
     {
         private List<Route> _routes;
+        private MediaTypeMap _map;
 
+        /// <summary>
+        /// Creates a new Router class.
+        /// </summary>
         public Router()
         {
             _routes = new List<Route>();
+            this.MediaTypes = MediaTypeMap.Default;
         }
 
         /// <summary>
@@ -94,6 +99,27 @@ namespace McSherry.Zener.Core
             }
 
             return ret;
+        }
+
+        /// <summary>
+        /// A mapping of media types to file extensions. Used when
+        /// serving files to determine the media type to transmit
+        /// them with.
+        /// </summary>
+        public MediaTypeMap MediaTypes
+        {
+            get { return _map; }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(
+                        "The media type map must not be set to null."
+                        );
+                }
+
+                _map = value;
+            }
         }
 
         /// <summary>
