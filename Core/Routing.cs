@@ -279,6 +279,18 @@ namespace McSherry.Zener.Core
                 pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
                 );
         }
+        /// <summary>
+        /// Determines whether the virtual host can be
+        /// considered a default route.
+        /// </summary>
+        /// <param name="host">The host to check.</param>
+        /// <returns>True if the virtual host can be considered default.</returns>
+        public static bool IsDefault(this VirtualHost host)
+        {
+            return
+                String.IsNullOrWhiteSpace(host.Format) ||
+                host.Format.Equals('*');
+        }
 
         /// <summary>
         /// Adds a directory handler to the router. A directory handler

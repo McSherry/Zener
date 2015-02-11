@@ -59,7 +59,7 @@ namespace McSherry.Zener.Core
             // If our format string is null/empty/whitespace, or
             // is an asterisk, it will be considered a wildcard
             // and/or default virtual host.
-            if (String.IsNullOrEmpty(this.Format) || this.Format.Equals(ASTERISK))
+            if (this.IsDefault())
             {
                 parameters = new Empty();
                 return true;
