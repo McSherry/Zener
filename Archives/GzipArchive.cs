@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using System.IO;
 using System.IO.Compression;
 
+using McSherry.Zener.Core;
+
 namespace McSherry.Zener.Archives
 {
     /// <summary>
@@ -151,6 +153,9 @@ namespace McSherry.Zener.Archives
             // The offset of the ISIZE field within the
             // archive's trailer.
             ISIZE_OFFSET    = 0x04,
+            // The offset of the CRC32 field within the
+            // archive's trailer.
+            CRC32_OFFSET    = 0x00,
             
             // The gzip magic number bytes. These are the first
             // two bytes within any gzip archive file.
@@ -190,6 +195,8 @@ namespace McSherry.Zener.Archives
         // The original file name, if present. Otherwise,
         // the hex representation of the archive's CRC-32.
         private string _name;
+        // The CRC-32 of the archive's contents.
+        private uint _crc32;
         // The length of the uncompressed data.
         private uint _isize;
         // The uncompressed data.
@@ -210,6 +217,9 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.IO.InvalidDataException">
         ///     Thrown when the provided stream's first two bytes are
         ///     not the Gzip archive magic number.
+        ///     
+        ///     Thrown when a checksum of the archive's data does not
+        ///     match the checksum stored in the archive.
         /// </exception>
         /// <exception cref="System.NotSupportedException">
         ///     Thrown when the compression method specified in the
@@ -314,13 +324,17 @@ namespace McSherry.Zener.Archives
             byte[] trailerBuf = new byte[TRAILER_LENGTH];
             stream.Read(trailerBuf, 0, TRAILER_LENGTH);
 
-            if (BitConverter.IsLittleEndian)
-                _isize = BitConverter.ToUInt32(trailerBuf, ISIZE_OFFSET);
-            else
-                _isize = BitConverter.ToUInt32(
-                    trailerBuf.Skip(ISIZE_OFFSET).Reverse().ToArray(),
-                    0
-                    );
+            var isize = trailerBuf.Skip(ISIZE_OFFSET).Take(4);
+            var crc32 = trailerBuf.Skip(CRC32_OFFSET).Take(4);
+            
+            if (!BitConverter.IsLittleEndian)
+            {
+                isize = isize.Reverse();
+                crc32 = crc32.Reverse();
+            }
+
+            _isize = BitConverter.ToUInt32(isize.ToArray(), 0);
+            _crc32 = BitConverter.ToUInt32(crc32.ToArray(), 0);
 
             // Arrays only support up to 2^31 - 1 bytes, so we can't store
             // files above this size.
@@ -342,10 +356,19 @@ namespace McSherry.Zener.Archives
             // If the archive doesn't contain the original file name,
             // set the file name to the file's CRC-32 as a hex string.
             if (_name == null)
-                _name = trailerBuf
-                    .Take(4)
-                    .Aggregate(new StringBuilder(), (sb, b) => sb.Append(b.ToString("x")))
-                    .ToString();
+            {
+                _name = _crc32.ToString("x");
+            }
+
+            // We're going to verify the integrity of the archive's
+            // contents.
+            uint dataCrc32 = Rfc1952.GenerateCrc32(this.Data);
+            if (dataCrc32 != _crc32)
+            {
+                throw new InvalidDataException(
+                    "The archive's data is corrupt."
+                    );
+            }
         }
 
         /// <summary>
