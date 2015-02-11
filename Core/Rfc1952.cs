@@ -57,6 +57,84 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Generates an RFC 1952-compliant CRC-32 checksum from
+        /// the provided string. Assumes that the string is UTF-8.
+        /// </summary>
+        /// <param name="data">The string to generate a checksum from.</param>
+        /// <returns>
+        ///     An unsigned 32-bit integer containing the generated
+        ///     checksum.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided data or encoding is
+        ///     null.
+        /// </exception>
+        public static uint GenerateCrc32(string data)
+        {
+            return Rfc1952.GenerateCrc32(data, Encoding.UTF8);
+        }
+        /// <summary>
+        /// Generates an RFC 1952-compliant CRC-32 checksum from
+        /// the provided string.
+        /// </summary>
+        /// <param name="data">The string to generate a checksum from.</param>
+        /// <param name="encoding">The encoding of the string.</param>
+        /// <returns>
+        ///     An unsigned 32-bit integer containing the generated
+        ///     checksum.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided data or encoding is
+        ///     null.
+        /// </exception>
+        public static uint GenerateCrc32(string data, Encoding encoding)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided string must not be null."
+                    );
+            }
+
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided encoding must not be null."
+                    );
+            }
+
+            return Rfc1952.GenerateCrc32(encoding.GetBytes(data));
+        }
+        /// <summary>
+        /// Generates an RFC 1952-compliant CRC-32 checksum
+        /// from the provided bytes.
+        /// </summary>
+        /// <param name="data">The bytes to generate a checksum from.</param>
+        /// <returns>
+        ///     An unsigned 32-bit integer containing the generated
+        ///     checksum.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided set of bytes is null.
+        /// </exception>
+        public static uint GenerateCrc32(IEnumerable<byte> data)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided set of bytes must not be null."
+                    );
+            }
+
+            byte[] dataArr = data is byte[]
+                ? (byte[])data : data.ToArray();
+
+            using (MemoryStream ms = new MemoryStream(dataArr))
+            {
+                return Rfc1952.GenerateCrc32(ms);
+            }
+        }
+        /// <summary>
         /// Generates an RFC 1952-compliant CRC-32 checksum
         /// from the provided stream.
         /// </summary>
