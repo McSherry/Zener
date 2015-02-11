@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Dynamic;
 
 using McSherry.Zener.Net;
 
@@ -109,6 +110,169 @@ namespace McSherry.Zener.Core
             }
 
             return route.Methods.Contains(method, Route.MethodComparer);
+        }
+        /// <summary>
+        /// Determines whether the provided path matches the specified
+        /// format string. The format string is not a C# format string,
+        /// but is the format string used by Zener in its routes.
+        /// </summary>
+        /// <param name="path">The path to check.</param>
+        /// <param name="parameters">
+        ///     The parameters, if any, extracted from the path and
+        ///     format string.
+        /// </param>
+        /// <param name="format">The format string to check against.</param>
+        /// <param name="delimiter">The character to delimit sections.</param>
+        /// <param name="allowUnbounded">
+        ///     Whether to permit the use of unbounded variables in
+        ///     format strings.
+        /// </param>
+        /// <returns>True if the specified path matches the given format.</returns>
+        public static bool IsFormatMatch(
+            string path, string format,
+            out dynamic parameters,
+            char delimiter      = '/',
+            bool allowUnbounded = true
+            )
+        {
+            format = format.Trim(' ', delimiter);
+            string formatOriginal = format;
+            format = format.ToLower();
+
+            var dynObj = new ExpandoObject() as IDictionary<string, object>;
+            // Indices within format and path
+            int fIndex = 0, pIndex = 0;
+            StringBuilder
+                formatBuilder = new StringBuilder(),
+                pathBuilder = new StringBuilder(),
+                paramNameBuilder = new StringBuilder(),
+                paramValBuilder = new StringBuilder();
+            string paramName = String.Empty;
+            bool inParam = false, loop = true;
+            bool paramIsUnbounded = false;
+
+            while (loop)
+            {
+                while (fIndex < format.Length)
+                {
+                    // Find start of a param wild-card
+                    if (!inParam && format[fIndex] == '[')
+                    {
+                        // If the next character after the opening
+                        // square bracket is an asterisk, the
+                        // variable is unbounded (i.e. its value
+                        // can contain any characters).
+                        if (format[fIndex + 1] == '*' && allowUnbounded)
+                        {
+                            paramIsUnbounded = true;
+                            // The asterisk isn't part of the
+                            // variable's name, so we can skip
+                            // past it.
+                            fIndex++;
+                        }
+
+                        inParam = true;
+                        fIndex++;
+                    }
+                    // Find end of a param wild-card
+                    else if (inParam && format[fIndex] == ']')
+                    {
+                        inParam = false;
+                        fIndex++;
+                        break;
+                    }
+                    // General format text
+                    else if (!inParam)
+                    {
+                        formatBuilder.Append(format[fIndex++]);
+                    }
+                    // Param name
+                    else
+                    {
+                        paramNameBuilder.Append(formatOriginal[fIndex++]);
+                    }
+                }
+
+                while (pIndex < path.Length)
+                {
+                    if (!inParam)
+                    {
+                        pathBuilder.Append(path[pIndex]);
+
+                        if (formatBuilder.ToString().StartsWith(
+                            pathBuilder.ToString(), true,
+                            System.Globalization.CultureInfo.InvariantCulture
+                            ))
+                        {
+                            pIndex++;
+                        }
+                        else
+                        {
+                            if (paramNameBuilder.Length == 0)
+                            {
+                                pIndex = int.MaxValue;
+                                break;
+                            }
+
+                            inParam = true;
+                            pathBuilder.Remove(pathBuilder.Length - 1, 1);
+                        }
+                    }
+                    else if (inParam && !paramIsUnbounded && path[pIndex] == delimiter)
+                    {
+                        // Zero-length parameters should be rejected.
+                        // See GitHub issue #7.
+                        if (paramValBuilder.Length == 0)
+                        {
+                            pIndex++;
+                            continue;
+                        }
+
+                        inParam = false;
+                        dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                        paramNameBuilder.Clear();
+                        paramValBuilder.Clear();
+                        break;
+                    }
+                    else if (inParam)
+                    {
+                        paramValBuilder.Append(path[pIndex++]);
+                    }
+                }
+
+                if (!(pIndex < path.Length) && !(fIndex < format.Length))
+                {
+                    if (inParam) dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                    break;
+                }
+                else
+                {
+                    inParam = false;
+                }
+            }
+
+            if (dynObj.Count > 0) parameters = dynObj;
+            else parameters = new Empty();
+
+            if (paramNameBuilder.Length > 0)
+            {
+                // If there is a parameter in the format, but the path is
+                // zero-length, we cannot consider it a match, because
+                // parameters cannot be empty.
+                //
+                // This change resolves a bug where a format with a variable
+                // at the very start (such as "/[file]") would match a request
+                // for the index (path "/").
+                if (pathBuilder.Length == 0)
+                {
+                    parameters = new Empty();
+                    return false;
+                }
+            }
+
+            return formatBuilder.ToString().Equals(
+                pathBuilder.ToString(), StringComparison.OrdinalIgnoreCase
+                );
         }
 
         /// <summary>
