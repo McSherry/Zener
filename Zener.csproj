@@ -73,6 +73,7 @@
     <Compile Include="Archives\UstarArchive.cs" />
     <Compile Include="Archives\ZlibArchive.cs" />
     <Compile Include="Core\MediaTypeMap.cs" />
+    <Compile Include="Core\Rfc1952.cs" />
     <Compile Include="Core\Route.cs" />
     <Compile Include="Core\Router.cs" />
     <Compile Include="Core\Routing.cs" />
