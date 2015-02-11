@@ -18,7 +18,8 @@ namespace McSherry.Zener.Core
     /// <summary>
     /// A class used to route requests to their handlers.
     /// </summary>
-    public class Router
+    public sealed class Router
+        : ICollection<Route>
     {
         private List<Route> _routes;
         private MediaTypeMap _map;
@@ -174,6 +175,43 @@ namespace McSherry.Zener.Core
             _routes.RemoveAll(r => r.Format.Equals(route.Format) || r.Name.Equals(route.Name));
 
             _routes.Add(route);
+        }
+
+        void ICollection<Route>.Add(Route route)
+        {
+            _routes.Add(route);
+        }
+        void ICollection<Route>.Clear()
+        {
+            _routes.Clear();
+        }
+        bool ICollection<Route>.Contains(Route route)
+        {
+            return _routes.Contains(route);
+        }
+        void ICollection<Route>.CopyTo(Route[] array, int arrayIndex)
+        {
+            _routes.CopyTo(array, arrayIndex);
+        }
+        bool ICollection<Route>.Remove(Route route)
+        {
+            return _routes.Remove(route);
+        }
+        IEnumerator<Route> IEnumerable<Route>.GetEnumerator()
+        {
+            return _routes.GetEnumerator();
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return _routes.GetEnumerator();
+        }
+        int ICollection<Route>.Count
+        {
+            get { return _routes.Count; }
+        }
+        bool ICollection<Route>.IsReadOnly
+        {
+            get { return false; }
         }
     }
 }
