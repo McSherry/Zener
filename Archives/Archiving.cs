@@ -110,13 +110,6 @@ namespace McSherry.Zener.Archives
             Archive archive, bool caseSensitive = false
             )
         {
-            if (!Routing.GetParameters(format).Contains(RTR_ADDARCHIVE_PARAM))
-                throw new FormatException(
-                    String.Format(
-                        @"The provided format string does not contain a variable named ""{0}"".",
-                        RTR_ADDARCHIVE_PARAM
-                    ));
-
             if (router == null)
                 throw new ArgumentNullException(
                     "The provided router cannot be null."
@@ -150,6 +143,13 @@ namespace McSherry.Zener.Archives
             }
             else
             {
+                if (!Routing.GetParameters(format).Contains(RTR_ADDARCHIVE_PARAM))
+                    throw new FormatException(
+                        String.Format(
+                            @"The provided format string does not contain a variable named ""{0}"".",
+                            RTR_ADDARCHIVE_PARAM
+                        ));
+
                 StringComparison comparison = caseSensitive
                     ? StringComparison.Ordinal
                     : StringComparison.OrdinalIgnoreCase
@@ -174,90 +174,6 @@ namespace McSherry.Zener.Archives
                         response.Write(archive.GetFile(name));
                     });
             }
-        }
-
-        /// <summary>
-        /// Adds a handler which serves from a single-file archive
-        /// to the router.
-        /// </summary>
-        /// <param name="router">The router to add the handler to.</param>
-        /// <param name="format">The format string for the handler.</param>
-        /// <param name="archive">The archvie to serve from.</param>
-        /// <exception cref="System.ArgumetNullException">
-        ///     Thrown when the provided router or the provided
-        ///     archive is null.
-        /// </exception>
-        public static void AddArchive(
-            this Router router,
-            string format, SingleFileArchive archive
-            )
-        {
-            router.AddArchive(
-                format, new string[0],
-                archive
-                );
-        }
-        /// <summary>
-        /// Adds a handler which serves from a single-file archive
-        /// to the router.
-        /// </summary>
-        /// <param name="router">The router to add the handler to.</param>
-        /// <param name="format">The format string for the handler.</param>
-        /// <param name="method">The method for this route to be constrained to.</param>
-        /// <param name="archive">The archvie to serve from.</param>
-        /// <exception cref="System.ArgumetNullException">
-        ///     Thrown when the provided router or the provided
-        ///     archive is null.
-        /// </exception>
-        public static void AddArchive(
-            this Router router,
-            string format, string method,
-            SingleFileArchive archive
-            )
-        {
-            router.AddArchive(format, new string[1] { method }, archive);
-        }
-        /// <summary>
-        /// Adds a handler which serves from a single-file archive
-        /// to the router.
-        /// </summary>
-        /// <param name="router">The router to add the handler to.</param>
-        /// <param name="format">The format string for the handler.</param>
-        /// <param name="methods">The methods for this route to be constrained to.</param>
-        /// <param name="archive">The archive to serve from.</param>
-        /// <exception cref="System.ArgumetNullException">
-        ///     Thrown when the provided router or the provided
-        ///     archive is null.
-        /// </exception>
-        public static void AddArchive(
-            this Router router,
-            string format, IEnumerable<string> methods,
-            SingleFileArchive archive
-            )
-        {
-            if (router == null)
-            {
-                throw new ArgumentNullException(
-                    "The provided router must not be null."
-                    );
-            }
-
-            if (archive == null)
-            {
-                throw new ArgumentNullException(
-                    "The provided archive must not be null."
-                    );
-            }
-
-            string mt = Routing.MediaTypes.Find(archive.Filename, FindParameterType.NameOrPath);
-
-            router.AddHandler(
-                format, methods,
-                (request, response, parameters) =>
-                {
-                    response.Headers.Add("Content-Type", mt);
-                    response.Write(archive.Data);
-                });
         }
 
         /// <summary>
