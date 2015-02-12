@@ -38,7 +38,7 @@ namespace McSherry.Zener.Core
         ///     VirtualHost classes as well as any parameters
         ///     extracted from the format and host strings.
         /// </returns>
-        public IList<Tuple<VirtualHost, dynamic>> Find(
+        public Tuple<VirtualHost, dynamic> Find(
             string host,
             ushort port = VirtualHost.AnyPort
             )
@@ -53,19 +53,12 @@ namespace McSherry.Zener.Core
 
             List<dynamic> hostParams = new List<dynamic>();
 
-            var matchingHosts = _hosts
+            return _hosts
                 .Where(v => v.TryMatch(host, port, hostParams.Add))
-                .ToList();
-
-            if (matchingHosts.Count == 0)
-            {
-                return new Tuple<VirtualHost, dynamic>[0].ToList();
-            }
-
-            return matchingHosts
+                .ToList()
                 .Zip(hostParams, (v, p) => new Tuple<VirtualHost, dynamic>(v, p))
                 .OrderByDescending(t => t.Item2 is Empty)
-                .ToList();
+                .FirstOrDefault();
         }
 
         /// <summary>
