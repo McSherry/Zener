@@ -186,7 +186,7 @@ namespace McSherry.Zener.Net
             res.WriteLine(exception);
         }
 
-       static HttpServer()
+        static HttpServer()
         {
             _rng = new Random();
         }
