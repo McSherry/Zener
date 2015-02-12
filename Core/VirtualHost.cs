@@ -87,9 +87,9 @@ namespace McSherry.Zener.Core
 
             return Routing.IsFormatMatch(
                 path:           host,
-                format:         this.Format,
-                parameters:     out parameters,
+                format:         Format,
                 delimiter:      DELIMITER,
+                parameters:     out parameters,
                 allowUnbounded: false
                 );
         }
