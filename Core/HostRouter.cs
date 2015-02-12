@@ -25,9 +25,6 @@ namespace McSherry.Zener.Core
         public HostRouter()
         {
             _hosts = new List<VirtualHost>();
-            // Make sure the router has a default route after
-            // initialisation.
-            _hosts.Add(new VirtualHost(String.Empty));
         }
 
         /// <summary>
