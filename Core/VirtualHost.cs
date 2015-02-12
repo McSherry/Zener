@@ -38,7 +38,7 @@ namespace McSherry.Zener.Core
             // (even though multiple values can be used for wildcard),
             // we can make sure that HostRouter removes any other
             // virtual hosts with the same format-port pair.
-            if (this.IsWildcard())
+            if (this.IsDomainWildcard())
             {
                 this.Format = "*";
             }
@@ -89,24 +89,48 @@ namespace McSherry.Zener.Core
         /// <returns>True if the provided hostname is a match.</returns>
         public bool TryMatch(string host, ushort port, out dynamic parameters)
         {
-            // If our format string is null/empty/whitespace, or
-            // is an asterisk, it will be considered a wildcard
-            // and/or default virtual host.
-            if (this.IsWildcard())
+            // If the port doesn't match, there's no point in checking whether
+            // the hostname matches. As a result, we set the parameters to empty
+            // and return false.
+            if (!this.IsPortWildcard() || (port != this.Port))
             {
                 parameters = new Empty();
+
+                return false;
+            }
+
+            // Domain wildcards, as with port wildcards, match any hostname.
+            if (this.IsDomainWildcard())
+            {
+                // If it's a wildcard, it can't have any parameters, so
+                // we set the parameters argument to empty.
+                parameters = new Empty();
+                // Wildcards match everything, so we return true.
                 return true;
             }
 
-            return 
-                Routing.IsFormatMatch(
-                    path:           host,
-                    format:         Format,
-                    delimiter:      DELIMITER,
-                    parameters:     out parameters,
-                    allowUnbounded: false
-                    )
-                && (port == this.Port);
+            // If we're here, we know that ports are a match (so we don't need a
+            // complex condition), and we know that the hostname isn't a wildcard.
+            //
+            // Thankfully, route-matching code has been split off from the Route
+            // class in to its own method, so we can eliminate dupe code and check
+            // hostname/host format equality with a simple call to a single method.
+            //
+            // Hostname variables cannot be unbounded, as the variables are likely
+            // to only ever occur at the start (or in the middle) of a virtual host
+            // format string (see below).
+            //
+            //      [username].example.com
+            //      directory.[server].example.org
+            //
+            // Unbounded variables in these locations would never have a match.
+            return Routing.IsFormatMatch(
+                path:           host,
+                format:         Format,
+                delimiter:      DELIMITER,
+                parameters:     out parameters,
+                allowUnbounded: false
+                );
         }
         /// <summary>
         /// Attempts to match the provided host with this
