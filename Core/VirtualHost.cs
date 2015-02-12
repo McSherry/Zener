@@ -77,7 +77,7 @@ namespace McSherry.Zener.Core
         ///     provided hostname
         /// </param>
         /// <returns>True if the provided hostname is a match.</returns>
-        public bool TryMatch(string host, out dynamic parameters)
+        public bool TryMatch(string host, ushort port, out dynamic parameters)
         {
             // If our format string is null/empty/whitespace, or
             // is an asterisk, it will be considered a wildcard
@@ -88,13 +88,15 @@ namespace McSherry.Zener.Core
                 return true;
             }
 
-            return Routing.IsFormatMatch(
-                path:           host,
-                format:         Format,
-                delimiter:      DELIMITER,
-                parameters:     out parameters,
-                allowUnbounded: false
-                );
+            return 
+                Routing.IsFormatMatch(
+                    path:           host,
+                    format:         Format,
+                    delimiter:      DELIMITER,
+                    parameters:     out parameters,
+                    allowUnbounded: false
+                    )
+                && (port == this.Port);
         }
     }
 }
