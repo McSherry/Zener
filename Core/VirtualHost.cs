@@ -22,9 +22,29 @@ namespace McSherry.Zener.Core
             ASTERISK    = '*'
             ;
 
-        public VirtualHost(string format)
+        /// <summary>
+        /// Creates a new VirtualHost.
+        /// </summary>
+        /// <param name="format">The hostname for this virtual host.</param>
+        /// <param name="routes">The routes associated with this host.</param>
+        public VirtualHost(string format, params Route[] routes)
+        {
+            var router = (ICollection<Route>)new Router();
+            foreach (var route in routes)
+                router.Add(route);
+
+            this.Format = format.Trim(' ', DELIMITER);
+            this.Router = (Router)router;
+        }
+        /// <summary>
+        /// Creates a new VirtualHost.
+        /// </summary>
+        /// <param name="format">The hostname for this virtual host.</param>
+        /// <param name="routes">The routes associated with this host.</param>
+        public VirtualHost(string format, Router routes)
         {
             this.Format = format.Trim(' ', DELIMITER);
+            this.Router = routes;
         }
 
         /// <summary>
