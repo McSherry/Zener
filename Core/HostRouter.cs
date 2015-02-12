@@ -31,6 +31,47 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Finds any matching virtual hosts based on the
+        /// provided hostname and port.
+        /// </summary>
+        /// <param name="host">The requested hostname.</param>
+        /// <param name="port">The port of the requested host.</param>
+        /// <returns>
+        ///     A list of tuples containing matching
+        ///     VirtualHost classes as well as any parameters
+        ///     extracted from the format and host strings.
+        /// </returns>
+        public IList<Tuple<VirtualHost, dynamic>> Find(
+            string host,
+            ushort port = VirtualHost.AnyPort
+            )
+        {
+            /* Virtual host formats are much the same as
+             * route formats. They can contain variables
+             * (although not unbounded ones), and, as with
+             * route formats, any formats without variables
+             * should be considered a better match than
+             * any formats with variables.
+             */
+
+            List<dynamic> hostParams = new List<dynamic>();
+
+            var matchingHosts = _hosts
+                .Where(v => v.TryMatch(host, port, hostParams.Add))
+                .ToList();
+
+            if (matchingHosts.Count == 0)
+            {
+                return new Tuple<VirtualHost, dynamic>[0].ToList();
+            }
+
+            return matchingHosts
+                .Zip(hostParams, (v, p) => new Tuple<VirtualHost, dynamic>(v, p))
+                .OrderByDescending(t => t.Item2 is Empty)
+                .ToList();
+        }
+
+        /// <summary>
         /// Adds a virtual host to the set of hosts.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
