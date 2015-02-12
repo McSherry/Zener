@@ -179,7 +179,12 @@ namespace McSherry.Zener.Core
 
         void ICollection<Route>.Add(Route route)
         {
-            _routes.Add(route);
+            this.AddHandler(
+                format:     route.Format,
+                methods:    route.Methods,
+                handler:    route.Handler,
+                name:       route.Name
+                );
         }
         void ICollection<Route>.Clear()
         {
