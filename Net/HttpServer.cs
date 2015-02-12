@@ -203,6 +203,7 @@ namespace McSherry.Zener.Net
                 try
                 {
                     var tcl = _listener.AcceptTcpClient();
+                    ThreadPool.QueueUserWorkItem(HttpRequestHandler, tcl);
                 }
                 catch (SocketException sex)
                 {
@@ -213,7 +214,6 @@ namespace McSherry.Zener.Net
                         throw;
                 }
 
-                ThreadPool.QueueUserWorkItem(HttpRequestHandler, tcl);
             }
         }
         private void HttpRequestHandler(object tclo)
