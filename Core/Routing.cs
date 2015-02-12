@@ -280,16 +280,23 @@ namespace McSherry.Zener.Core
                 );
         }
         /// <summary>
-        /// Determines whether the virtual host can be
-        /// considered a default route.
+        /// Determines whether the virtual host's hostname is a wildcard.
         /// </summary>
         /// <param name="host">The host to check.</param>
-        /// <returns>True if the virtual host can be considered default.</returns>
-        public static bool IsWildcard(this VirtualHost host)
+        /// <returns>True if the virtual host's hostname is a wildcard.</returns>
+        public static bool IsDomainWildcard(this VirtualHost host)
         {
             return
-                (String.IsNullOrWhiteSpace(host.Format) || host.Format.Equals('*'))
-                && host.Port == VirtualHost.AnyPort;
+                (String.IsNullOrWhiteSpace(host.Format) || host.Format.Equals('*'));
+        }
+        /// <summary>
+        /// Determines whether the virtual host's port is a wildcard.
+        /// </summary>
+        /// <param name="host">The host to check.</param>
+        /// <returns>True if the virtual host's port is a wildcard.</returns>
+        public static bool IsPortWildcard(this VirtualHost host)
+        {
+            return host.Port == VirtualHost.AnyPort;
         }
 
         /// <summary>
