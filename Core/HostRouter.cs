@@ -75,10 +75,11 @@ namespace McSherry.Zener.Core
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided router is null.
         /// </exception>
-        public void AddHost(string format)
+        public void AddHost(string format, ushort port = VirtualHost.AnyPort)
         {
             this.AddHost(
                 format: format,
+                port:   port,
                 routes: new Router()
                 );
         }
