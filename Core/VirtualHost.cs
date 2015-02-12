@@ -26,31 +26,34 @@ namespace McSherry.Zener.Core
         /// Creates a new VirtualHost.
         /// </summary>
         /// <param name="format">The hostname for this virtual host.</param>
+        /// <param name="port">The port that this virtual host will accept.</param>
         /// <param name="routes">The routes associated with this host.</param>
-        public VirtualHost(string format, params Route[] routes)
-        {
-            var router = (ICollection<Route>)new Router();
-            foreach (var route in routes)
-                router.Add(route);
-
-            this.Format = format.Trim(' ', DELIMITER);
-            this.Router = (Router)router;
-        }
-        /// <summary>
-        /// Creates a new VirtualHost.
-        /// </summary>
-        /// <param name="format">The hostname for this virtual host.</param>
-        /// <param name="routes">The routes associated with this host.</param>
-        public VirtualHost(string format, Router routes)
+        public VirtualHost(string format, ushort port, Router routes)
         {
             this.Format = format.Trim(' ', DELIMITER);
+            this.Port = port;
             this.Router = routes;
         }
+
+        /// <summary>
+        /// The value to use if any port is acceptable for the virtual
+        /// host.
+        /// </summary>
+        public const ushort AnyPort = 0x0000;
 
         /// <summary>
         /// The format of the virtual host's hostname.
         /// </summary>
         public string Format
+        {
+            get;
+            private set;
+        }
+        /// <summary>
+        /// The TCP port that is considered acceptable for
+        /// this virtual host.
+        /// </summary>
+        public ushort Port
         {
             get;
             private set;
@@ -79,7 +82,7 @@ namespace McSherry.Zener.Core
             // If our format string is null/empty/whitespace, or
             // is an asterisk, it will be considered a wildcard
             // and/or default virtual host.
-            if (this.IsDefault())
+            if (this.IsWildcard())
             {
                 parameters = new Empty();
                 return true;

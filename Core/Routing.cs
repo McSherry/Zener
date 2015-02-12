@@ -285,11 +285,11 @@ namespace McSherry.Zener.Core
         /// </summary>
         /// <param name="host">The host to check.</param>
         /// <returns>True if the virtual host can be considered default.</returns>
-        public static bool IsDefault(this VirtualHost host)
+        public static bool IsWildcard(this VirtualHost host)
         {
             return
-                String.IsNullOrWhiteSpace(host.Format) ||
-                host.Format.Equals('*');
+                (String.IsNullOrWhiteSpace(host.Format) || host.Format.Equals('*'))
+                && host.Port == VirtualHost.AnyPort;
         }
 
         /// <summary>
