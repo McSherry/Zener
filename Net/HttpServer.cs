@@ -200,7 +200,18 @@ namespace McSherry.Zener.Net
         {
             while (_acceptConnections)
             {
-                var tcl = _listener.AcceptTcpClient();
+                try
+                {
+                    var tcl = _listener.AcceptTcpClient();
+                }
+                catch (SocketException sex)
+                {
+                    // This will throw an exception (WSACancelBlockingCall-related)
+                    // when Stop is called. We want to catch this exception, but let
+                    // any others propagate.
+                    if (sex.SocketErrorCode != SocketError.Interrupted)
+                        throw;
+                }
 
                 ThreadPool.QueueUserWorkItem(HttpRequestHandler, tcl);
             }
