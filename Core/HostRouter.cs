@@ -124,6 +124,8 @@ namespace McSherry.Zener.Core
             _hosts.RemoveAll(
                 v => v.Format.Equals(vhost.Format) && v.Port == vhost.Port
                 );
+
+            _hosts.Add(vhost);
         }
     }
 }
