@@ -72,6 +72,7 @@ namespace McSherry.Zener.Core
         /// virtual host's domain.
         /// </summary>
         /// <param name="host">The hostname to attempt to match.</param>
+        /// <param name="port">The port to attempt to match to.</param>
         /// <param name="parameters">
         ///     The parameters extracted from the format string and
         ///     provided hostname
@@ -97,6 +98,23 @@ namespace McSherry.Zener.Core
                     allowUnbounded: false
                     )
                 && (port == this.Port);
+        }
+        /// <summary>
+        /// Attempts to match the provided host with this
+        /// virtual host's domain.
+        /// </summary>
+        /// <param name="host">The hostname to attempt to match.</param>
+        /// <param name="port">The port to attempt to match to.</param>
+        /// <param name="callback">A callback that is passed any parameters.</param>
+        /// <returns>True if the provided hostname is a match.</returns>
+        public bool TryMatch(string host, ushort port, Action<dynamic> callback)
+        {
+            dynamic parameters;
+            bool success = this.TryMatch(host, port, out parameters);
+
+            if (success) callback(parameters);
+
+            return success;
         }
     }
 }
