@@ -753,9 +753,9 @@ namespace McSherry.Zener.Net
         ///     sent, or when it is called after the connection has been
         ///     closed.
         /// </exception>
-        public void Write(object value)
+        public void Write(object obj)
         {
-            this.Write(value: value.ToString());
+            this.Write(value: obj.ToString());
         }
         /// <summary>
         /// Writes the provided string to the response.
@@ -773,20 +773,20 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Writes the provided bytes to the response.
         /// </summary>
-        /// <param name="value">The value to write to the response.</param>
+        /// <param name="bytes">The value to write to the response.</param>
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the method is called after the headers or
         ///     sent, or when it is called after the connection has been
         ///     closed.
         /// </exception>
-        public void Write(IEnumerable<byte> value)
+        public void Write(IEnumerable<byte> bytes)
         {
             // Ensure that the response has not been closed.
             CheckClosed();
             // Send headers if necessary.
             _ConditionalSendHeaders();
 
-            _Write(value is byte[] ? (byte[])value : value.ToArray());
+            _Write(bytes is byte[] ? (byte[])bytes : bytes.ToArray());
         }
         /// <summary>
         /// Writes the provided values to the response in the
@@ -813,9 +813,9 @@ namespace McSherry.Zener.Net
         ///     sent, or when it is called after the connection has been
         ///     closed.
         /// </exception>
-        public void WriteLine(object value)
+        public void WriteLine(object obj)
         {
-            this.Write(value: String.Format("{0}{1}", value.ToString(), HTTP_NEWLINE));
+            this.Write("{0}{1}", obj.ToString(), HTTP_NEWLINE);
         }
         /// <summary>
         /// Writes the provided string to the response,
@@ -829,7 +829,7 @@ namespace McSherry.Zener.Net
         /// </exception>
         public void WriteLine(string value)
         {
-            this.WriteLine(value: String.Format("{0}{1}", value, HTTP_NEWLINE));
+            this.Write("{0}{1}", value, HTTP_NEWLINE);
         }
         /// <summary>
         /// Writes the provided values to the response in the
