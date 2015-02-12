@@ -33,6 +33,15 @@ namespace McSherry.Zener.Core
             this.Format = format.Trim(' ', DELIMITER);
             this.Port = port;
             this.Router = routes;
+
+            // By changing the format so that it is a single value
+            // (even though multiple values can be used for wildcard),
+            // we can make sure that HostRouter removes any other
+            // virtual hosts with the same format-port pair.
+            if (this.IsWildcard())
+            {
+                this.Format = "*";
+            }
         }
 
         /// <summary>
