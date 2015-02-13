@@ -119,6 +119,19 @@ namespace McSherry.Zener.Core
                 );
 
             _hosts.Add(vhost);
+
+            // If there are no handlers, this will be
+            // null, and we won't be able to fire it.
+            if (this.HostAdded != null)
+            {
+                // Fire the event.
+                this.HostAdded(this, vhost);
+            }
         }
+
+        /// <summary>
+        /// Fired when a virtual host is added to the host router.
+        /// </summary>
+        public event EventHandler<VirtualHost> HostAdded;
     }
 }
