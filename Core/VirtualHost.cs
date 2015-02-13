@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
 
 namespace McSherry.Zener.Core
 {
@@ -26,11 +27,35 @@ namespace McSherry.Zener.Core
         /// Creates a new VirtualHost.
         /// </summary>
         /// <param name="format">The hostname for this virtual host.</param>
+        /// <param name="bindAddress">The IP address to bind this virtual host to.</param>
         /// <param name="port">The port that this virtual host will accept.</param>
         /// <param name="routes">The routes associated with this host.</param>
-        public VirtualHost(string format, ushort port, Router routes)
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided bind address or the provided
+        ///     Router are null.
+        /// </exception>
+        public VirtualHost(
+            string format, 
+            IPAddress bindAddress, ushort port, 
+            Router routes
+            )
         {
+            if (bindAddress == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided IPAddress must not be null."
+                    );
+            }
+
+            if (routes == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided Router must not be null."
+                    );
+            }
+
             this.Format = format.Trim(' ', DELIMITER);
+            this.BindAddress = bindAddress;
             this.Port = port;
             this.Router = routes;
 
@@ -54,6 +79,14 @@ namespace McSherry.Zener.Core
         /// The format of the virtual host's hostname.
         /// </summary>
         public string Format
+        {
+            get;
+            private set;
+        }
+        /// <summary>
+        /// The IP address to bind this virtual host to.
+        /// </summary>
+        public IPAddress BindAddress
         {
             get;
             private set;
