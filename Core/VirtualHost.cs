@@ -41,6 +41,13 @@ namespace McSherry.Zener.Core
             Router routes
             )
         {
+            if (String.IsNullOrWhiteSpace(format))
+            {
+                throw new ArgumentNullException(
+                    "The provided format string must not be empty, whitespace, or null."
+                    );
+            }
+
             if (bindAddress == null)
             {
                 throw new ArgumentNullException(
@@ -59,15 +66,6 @@ namespace McSherry.Zener.Core
             this.BindAddress = bindAddress;
             this.Port = port;
             this.Router = routes;
-
-            // By changing the format so that it is a single value
-            // (even though multiple values can be used for wildcard),
-            // we can make sure that HostRouter removes any other
-            // virtual hosts with the same format-port pair.
-            if (this.IsDomainWildcard())
-            {
-                this.Format = "*";
-            }
         }
 
         /// <summary>
@@ -75,6 +73,11 @@ namespace McSherry.Zener.Core
         /// host.
         /// </summary>
         public const ushort AnyPort = 0x0000;
+        /// <summary>
+        /// The value to use if any hostname is acceptable for the
+        /// virtual host.
+        /// </summary>
+        public const string AnyHostname = "*";
 
         /// <summary>
         /// The format of the virtual host's hostname.
