@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Net;
 
 namespace McSherry.Zener.Core
 {
@@ -18,13 +19,51 @@ namespace McSherry.Zener.Core
     public sealed class HostRouter
     {
         private List<VirtualHost> _hosts;
+        private IPAddress _defaultIp;
 
         /// <summary>
         /// Creates a new HostRouter.
         /// </summary>
-        public HostRouter()
+        /// <param name="defaultBindAddress">
+        ///     The default IP address for each virtual
+        ///     host. This will be used if an IP address
+        ///     to bind to is not specified.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the provided default IP
+        ///     address is null.
+        /// </exception>
+        public HostRouter(IPAddress defaultBindAddress)
         {
+            if (defaultBindAddress == null)
+            {
+                throw new ArgumentNullException(
+                    "The default IP address must not be null."
+                    );
+            }
+
             _hosts = new List<VirtualHost>();
+        }
+
+        /// <summary>
+        /// The IP address that virtual hosts will be bound to by
+        /// default. This is used when no IP address is specified
+        /// whilst adding virtual hosts to the router.
+        /// </summary>
+        public IPAddress DefaultBindAddress
+        {
+            get { return _defaultIp; }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(
+                        "Cannot set the default bind address to null."
+                        );
+                }
+
+                _defaultIp = value;
+            }
         }
 
         /// <summary>
