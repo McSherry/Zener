@@ -104,67 +104,84 @@ namespace McSherry.Zener.Core
         /// Adds a virtual host to the set of hosts.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
-        /// <exception cref="System.ArgumentNullException">
-        ///     Thrown when the provided router is null.
-        /// </exception>
-        public void AddHost(string format, ushort port = VirtualHost.AnyPort)
-        {
-            this.AddHost(
-                format: format,
-                port:   port,
-                routes: new Router()
-                );
-        }
-        /// <summary>
-        /// Adds a virtual host to the set of hosts.
-        /// </summary>
-        /// <param name="format">The hostname of the virtual host.</param>
-        /// <param name="routes">The router to use with this virtual host.</param>
-        /// <exception cref="System.ArgumentNullException">
-        ///     Thrown when the provided router is null.
-        /// </exception>
+        /// <param name="routes">The set of routes associated with the virtual host.</param>
         public void AddHost(string format, Router routes)
         {
-            this.AddHost(
-                format:     format,
-                port:       VirtualHost.AnyPort,
-                routes:     routes
+            var vhost = new VirtualHost(
+                format:         format,
+                bindAddress:    this.DefaultBindAddress,
+                port:           VirtualHost.AnyPort,
+                routes:         routes
                 );
+
+            this.AddHost(vhost);
         }
         /// <summary>
-        /// Adds a virtual host to the set of hosts.
+        /// Adds a virtual host to the set of hosts,
+        /// using the default bind address as the address
+        /// to bind to.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
-        /// <param name="port">The port the virtual host will accept.</param>
-        /// <param name="routes">The router to use with this virtual host.</param>
+        /// <param name="port">The TCP port to bind the virtual host to.</param>
+        /// <param name="routes">The set of routes associated with the virtual host.</param>
         /// <exception cref="System.ArgumentNullException">
-        ///     Thrown when the provided router is null.
+        ///     Thrown when the Router passed to the method is null.
         /// </exception>
         public void AddHost(string format, ushort port, Router routes)
         {
-            if (routes == null)
-            {
-                throw new ArgumentNullException(
-                    "The provided router must not be null."
-                    );
-            }
-
-            var vhost = new VirtualHost(format, port, routes);
-
-            // Remove any equivalent virtual hosts from the
-            // set of hosts.
-            _hosts.RemoveAll(
-                v => v.Format.Equals(vhost.Format) && v.Port == vhost.Port
+            var vhost = new VirtualHost(
+                format:         format,
+                bindAddress:    this.DefaultBindAddress,
+                port:           port,
+                routes:         routes
                 );
 
-            _hosts.Add(vhost);
+            this.AddHost(vhost);
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <param name="bindAddress">The IP address to bind the virtual host to.</param>
+        /// <param name="port">The TCP port to bind the virtual host to.</param>
+        /// <param name="routes">The set of routes associated with the virtual host.</param>
+        /// <exception cref="System.ArgumentNullException">
+        ///     Thrown when the IPAddress or Router passed to
+        ///     the method is null.
+        /// </exception>
+        public void AddHost(
+            string format,
+            IPAddress bindAddress, ushort port,
+            Router routes
+            )
+        {
+            var vhost = new VirtualHost(
+                format:         format,
+                bindAddress:    bindAddress,
+                port:           port,
+                routes:         routes
+                );
+
+            this.AddHost(vhost);
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts.
+        /// </summary>
+        /// <param name="host">The virtual host to add.</param>
+        public void AddHost(VirtualHost host)
+        {
+            _hosts.RemoveAll(
+                v => v.Format.Equals(host.Format) && v.Port == host.Port
+                );
+
+            _hosts.Add(host);
 
             // If there are no handlers, this will be
             // null, and we won't be able to fire it.
             if (this.HostAdded != null)
             {
                 // Fire the event.
-                this.HostAdded(this, vhost);
+                this.HostAdded(this, host);
             }
         }
 
