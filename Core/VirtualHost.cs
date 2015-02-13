@@ -17,6 +17,7 @@ namespace McSherry.Zener.Core
     /// A class representing a virtual host.
     /// </summary>
     public sealed class VirtualHost
+        : EventArgs
     {
         private const char 
             DELIMITER   = '.',
