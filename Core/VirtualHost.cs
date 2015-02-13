@@ -35,6 +35,10 @@ namespace McSherry.Zener.Core
         ///     Thrown when the provided bind address or the provided
         ///     Router are null.
         /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the specified port is outwith the allowable
+        ///     range.
+        /// </exception>
         public VirtualHost(
             string format, 
             IPAddress bindAddress, ushort port, 
@@ -62,17 +66,19 @@ namespace McSherry.Zener.Core
                     );
             }
 
+            if (port == 0)
+            {
+                throw new ArgumentException(
+                    "The specified port must be in the range 1-65535."
+                    );
+            }
+
             this.Format = format.Trim(' ', DELIMITER);
             this.BindAddress = bindAddress;
             this.Port = port;
             this.Router = routes;
         }
 
-        /// <summary>
-        /// The value to use if any port is acceptable for the virtual
-        /// host.
-        /// </summary>
-        public const ushort AnyPort = 0x0000;
         /// <summary>
         /// The value to use if any hostname is acceptable for the
         /// virtual host.
@@ -129,15 +135,15 @@ namespace McSherry.Zener.Core
             // If the port doesn't match, there's no point in checking whether
             // the hostname matches. As a result, we set the parameters to empty
             // and return false.
-            if (!this.IsPortWildcard() || (port != this.Port))
+            if (port != this.Port)
             {
                 parameters = new Empty();
 
                 return false;
             }
 
-            // Domain wildcards, as with port wildcards, match any hostname.
-            if (this.IsDomainWildcard())
+            // Domain wildcards match any hostname.
+            if (this.IsWildcard())
             {
                 // If it's a wildcard, it can't have any parameters, so
                 // we set the parameters argument to empty.

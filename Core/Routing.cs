@@ -284,18 +284,9 @@ namespace McSherry.Zener.Core
         /// </summary>
         /// <param name="host">The host to check.</param>
         /// <returns>True if the virtual host's hostname is a wildcard.</returns>
-        public static bool IsDomainWildcard(this VirtualHost host)
+        public static bool IsWildcard(this VirtualHost host)
         {
             return host.Format.Equals(VirtualHost.AnyHostname);
-        }
-        /// <summary>
-        /// Determines whether the virtual host's port is a wildcard.
-        /// </summary>
-        /// <param name="host">The host to check.</param>
-        /// <returns>True if the virtual host's port is a wildcard.</returns>
-        public static bool IsPortWildcard(this VirtualHost host)
-        {
-            return host.Port == VirtualHost.AnyPort;
         }
 
         /// <summary>

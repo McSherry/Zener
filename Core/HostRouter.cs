@@ -78,10 +78,7 @@ namespace McSherry.Zener.Core
         ///     VirtualHost classes as well as any parameters
         ///     extracted from the format and host strings.
         /// </returns>
-        public Tuple<VirtualHost, dynamic> Find(
-            string host,
-            ushort port = VirtualHost.AnyPort
-            )
+        public Tuple<VirtualHost, dynamic> Find(string host, ushort port)
         {
             /* Virtual host formats are much the same as
              * route formats. They can contain variables
@@ -97,38 +94,24 @@ namespace McSherry.Zener.Core
                 .Where(v => v.TryMatch(host, port, hostParams.Add))
                 .ToList()
                 .Zip(hostParams, (v, p) => new Tuple<VirtualHost, dynamic>(v, p))
-                .OrderBy(t => t.Item1.IsDomainWildcard() || t.Item1.IsPortWildcard())
-                .ThenBy(t => t.Item1.IsDomainWildcard() && t.Item1.IsPortWildcard())
+                .OrderBy(t => t.Item1.IsWildcard())
                 .ThenByDescending(t => t.Item2 is Empty)
                 .FirstOrDefault();
         }
 
         /// <summary>
-        /// Adds a virtual host to the set of hosts,
-        /// using the default IP address, accepting any
-        /// port, and with an empty set of routes.
-        /// </summary>
-        /// <param name="format">The hostname of the virtual host.</param>
-        public void AddHost(string format)
-        {
-            this.AddHost(
-                format: format,
-                routes: new Router()
-                );
-        }
-        /// <summary>
         /// Adds a virtual host to the set of hosts, using
         /// the default IP address and accepting any port.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
-        /// <param name="routes">The set of routes associated with the virtual host.</param>
-        public void AddHost(string format, Router routes)
+        /// <param name="port">The port to bind the virtual host to.</param>
+        public void AddHost(string format, ushort port)
         {
             var vhost = new VirtualHost(
                 format:         format,
                 bindAddress:    this.DefaultBindAddress,
-                port:           VirtualHost.AnyPort,
-                routes:         routes
+                port:           port,
+                routes:         new Router()
                 );
 
             this.AddHost(vhost);
@@ -139,7 +122,7 @@ namespace McSherry.Zener.Core
         /// to bind to.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
-        /// <param name="port">The TCP port to bind the virtual host to.</param>
+        /// <param name="port">The port to bind the virtual host to.</param>
         /// <param name="routes">The set of routes associated with the virtual host.</param>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the Router passed to the method is null.
@@ -160,7 +143,7 @@ namespace McSherry.Zener.Core
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
         /// <param name="bindAddress">The IP address to bind the virtual host to.</param>
-        /// <param name="port">The TCP port to bind the virtual host to.</param>
+        /// <param name="port">The port to bind the virtual host to.</param>
         /// <param name="routes">The set of routes associated with the virtual host.</param>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the IPAddress or Router passed to
