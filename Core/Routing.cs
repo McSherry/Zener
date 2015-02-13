@@ -286,8 +286,7 @@ namespace McSherry.Zener.Core
         /// <returns>True if the virtual host's hostname is a wildcard.</returns>
         public static bool IsDomainWildcard(this VirtualHost host)
         {
-            return
-                (String.IsNullOrWhiteSpace(host.Format) || host.Format.Equals('*'));
+            return String.IsNullOrWhiteSpace(host.Format) || host.Format.Equals("*");
         }
         /// <summary>
         /// Determines whether the virtual host's port is a wildcard.

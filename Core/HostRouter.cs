@@ -43,6 +43,7 @@ namespace McSherry.Zener.Core
             }
 
             _hosts = new List<VirtualHost>();
+            _defaultIp = defaultBindAddress;
         }
 
         /// <summary>
@@ -96,7 +97,9 @@ namespace McSherry.Zener.Core
                 .Where(v => v.TryMatch(host, port, hostParams.Add))
                 .ToList()
                 .Zip(hostParams, (v, p) => new Tuple<VirtualHost, dynamic>(v, p))
-                .OrderByDescending(t => t.Item2 is Empty)
+                .OrderBy(t => t.Item1.IsDomainWildcard() || t.Item1.IsPortWildcard())
+                .ThenBy(t => t.Item1.IsDomainWildcard() && t.Item1.IsPortWildcard())
+                .ThenByDescending(t => t.Item2 is Empty)
                 .FirstOrDefault();
         }
 
