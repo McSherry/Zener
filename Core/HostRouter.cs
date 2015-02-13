@@ -101,7 +101,21 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
-        /// Adds a virtual host to the set of hosts.
+        /// Adds a virtual host to the set of hosts,
+        /// using the default IP address, accepting any
+        /// port, and with an empty set of routes.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        public void AddHost(string format)
+        {
+            this.AddHost(
+                format: format,
+                routes: new Router()
+                );
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts, using
+        /// the default IP address and accepting any port.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
         /// <param name="routes">The set of routes associated with the virtual host.</param>
