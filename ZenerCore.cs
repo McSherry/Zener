@@ -124,7 +124,7 @@ namespace McSherry.Zener
         public ZenerCore(ZenerContext context)
         {
             this.Routes = new Router();
-            _http = new HttpServer(context.IpAddress, context.TcpPort);
+            _http = new HttpServer(context.DefaultIpAddress, context.TcpPort);
             _http.MessageEmitted += this.HttpServerMessageHandler;
 
             context.AddApiRoutes(this.Routes);

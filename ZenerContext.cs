@@ -281,7 +281,9 @@ namespace McSherry.Zener
         /// <summary>
         /// Creates a new ZenerCoreContext.
         /// </summary>
-        /// <param name="address">The IP address for the ZenerCore to bind to.</param>
+        /// <param name="address">
+        ///     The default IP address to use for virtual hosts.
+        /// </param>
         /// <param name="port">The TCP port for the ZenerCore to bind to.</param>
         /// <param name="useFilesystem">Whether to enable the file system API.</param>
         /// <param name="methods">The methods to make available via the method call API.</param>
@@ -293,7 +295,7 @@ namespace McSherry.Zener
             Dictionary<string, Method> methods = null
             )
         {
-            this.IpAddress = address;
+            this.DefaultIpAddress = address;
             this.TcpPort = port;
 
             this.EnableFileSystemApi = useFilesystem;
@@ -304,7 +306,7 @@ namespace McSherry.Zener
         /// <summary>
         /// The IP address for the ZenerCore to bind to.
         /// </summary>
-        public IPAddress IpAddress
+        public IPAddress DefaultIpAddress
         {
             get;
             set;
