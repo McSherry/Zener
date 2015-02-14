@@ -62,6 +62,11 @@ namespace McSherry.Zener.Core
             {   "xml",          "application/xml"           },
             {   "cbor",         "application/cbor"          },
         };
+        private const string
+            // Valid characters for the super/subtypes in a media type. All
+            // comparisons we do will be in lowercase, so we don't need capitals.
+            SuperSubTypeCharacters  = "abcedfghijklmnopqrstuvwxyz0123456789-."
+            ;
         private const char
             SubTypeSeparator        = '/',
             ParameterSeparator      = ';',
@@ -87,15 +92,12 @@ namespace McSherry.Zener.Core
         /// </summary>
         /// <param name="mediaType">The string to parse.</param>
         /// <returns>A MediaType class equivalent to the string.</returns>
-        public static MediaType Parse(string mediaType)
+        public static MediaType Create(string mediaType)
         {
             throw new NotImplementedException();
         }
 
-        public MediaType()
-        {
-            throw new NotImplementedException();
-        }
+        private MediaType() { }
 
         /// <summary>
         /// The media type's category, or registration tree.
@@ -133,13 +135,20 @@ namespace McSherry.Zener.Core
             private set;
         }
         /// <summary>
+        /// Whether the media type has a parameter.
+        /// </summary>
+        public bool HasParameter
+        {
+            get;
+            private set;
+        }
+        /// <summary>
         /// The parameters included with the media type. This
-        /// generally contains zero or more key-value pairs,
-        /// but the specific format is media type-specific.
+        /// is typically zero or one name-value pairs.
         /// 
         /// This property is null if no parameters are present.
         /// </summary>
-        public string Parameters
+        public KeyValuePair<string, string> Parameter
         {
             get;
             private set;
@@ -154,11 +163,13 @@ namespace McSherry.Zener.Core
         public bool Equals(MediaType type)
         {
             return
-                type.Category == this.Category &&
-                type.SuperType == this.SuperType &&
-                type.SubType == this.SubType &&
-                type.Parameters == this.Parameters &&
-                type.Suffix == this.Suffix; ;
+                type.Category           == this.Category        &&
+                type.SuperType          == this.SuperType       &&
+                type.SubType            == this.SubType         &&
+                type.Parameter.Key      == this.Parameter.Key   &&
+                type.Parameter.Value    == this.Parameter.Value &&
+                type.HasParameter       == this.HasParameter    &&
+                type.Suffix             == this.Suffix          ;;
         }
         /// <summary>
         /// Determines whether the provided MediaType
@@ -268,11 +279,12 @@ namespace McSherry.Zener.Core
             unchecked
             {
                 hashCode =
-                    Category.GetHashCode()  +
-                    SuperType.GetHashCode() +
-                    SubType.GetHashCode()   +
-                    Suffix.GetHashCode()    +
-                    Parameters.GetHashCode();
+                    Category.GetHashCode()      +
+                    SuperType.GetHashCode()     +
+                    SubType.GetHashCode()       +
+                    Suffix.GetHashCode()        +
+                    Parameter.GetHashCode()     +
+                    HasParameter.GetHashCode()  ;
             }
 
             return hashCode;
@@ -324,10 +336,13 @@ namespace McSherry.Zener.Core
             // specify character encoding.
             //
             //      text/html; charset=UTF-8
-            if (this.Parameters != null)
+            if (this.HasParameter)
             {
                 // Parameters are separated from the media type by a semicolon.
-                sb.AppendFormat("; {0}", this.Parameters);
+                sb.AppendFormat(
+                    "; {0}={1}",
+                    this.Parameter.Key, this.Parameter.Value
+                    );
             }
 
             return sb.ToString();
