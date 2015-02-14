@@ -52,6 +52,16 @@ namespace McSherry.Zener.Core
             {   MediaTypeCategory.Personal,       "prs"     },
             {   MediaTypeCategory.Unregistered,   "x"       },
         };
+        private static readonly Dictionary<string, string>
+            MTSfxEquivalencyMap = new Dictionary<string, string>()
+        {
+            {   "json",         "application/json"          },
+            {   "fastinfoset",  "application/fastinfoset"   },
+            {   "wbxml",        "application/vnd.wab.wbxml" },
+            {   "zip",          "application/zip"           },
+            {   "xml",          "application/xml"           },
+            {   "cbor",         "application/cbor"          },
+        };
         private const char
             SubTypeSeparator        = '/',
             ParameterSeparator      = ';',
@@ -136,6 +146,103 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Determines whether the provided media type is
+        /// equal to this media type.
+        /// </summary>
+        /// <param name="type">The media type to compare.</param>
+        /// <returns>True if the media types are equal.</returns>
+        public bool Equals(MediaType type)
+        {
+            return
+                type.Category == this.Category &&
+                type.SuperType == this.SuperType &&
+                type.SubType == this.SubType &&
+                type.Parameters == this.Parameters &&
+                type.Suffix == this.Suffix; ;
+        }
+        /// <summary>
+        /// Determines whether the provided MediaType
+        /// may be compatible, based on the suffix (if
+        /// one is present).
+        /// </summary>
+        /// <param name="type">
+        /// The MediaType to determine compatibility with.
+        /// </param>
+        /// <returns>
+        /// True if the provided MediaType could be compatible
+        /// with this media type.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided MediaType is null.
+        /// </exception>
+        public bool IsCompatible(MediaType type)
+        {
+            if (type == null)
+            {
+                throw new ArgumentNullException(
+                    "The MediaType to compare must not be null."
+                    );
+            }
+
+            bool
+                // Whether this MediaType has no suffix.
+                thisNoSfx = this.Suffix == null,
+                // Whether the MediaType to compare has
+                // no suffix.
+                thatNoSfx = type.Suffix == null;
+
+            // If both of the suffixes are null, it isn't
+            // possible to determine tentative compatibility.
+            if (thisNoSfx && thatNoSfx) return false;
+            // If both MediaTypes have a suffix, we can just
+            // compare the suffixes.
+            else if (!thisNoSfx && !thatNoSfx)
+            {
+                return this.Suffix == type.Suffix;
+            }
+            // If this MediaType doesn't have a suffix, we have
+            // to compare this MediaType's Super+SubType with the
+            // Super+SubType pair that is equivalent to the provided
+            // MediaType's suffix.
+            else
+            {
+                MediaType suffixed, unsuffixed;
+                if (thisNoSfx)
+                {
+                    suffixed    = type;
+                    unsuffixed  = this;
+                }
+                else
+                {
+                    suffixed    = this;
+                    unsuffixed  = type;
+                }
+
+                string
+                    // Will contain the media type Super+SubType pair
+                    // that is equivalent to the suffix.
+                    equiv,
+                    // Will contain the Super+SubType pair that is being
+                    // compared to the suffix's equivalent pair.
+                    actual = String.Format(
+                        "{0}/{1}",
+                        unsuffixed, SuperType, unsuffixed.SubType
+                        );
+                // Attempt to retrieve a media type Super+SubType pair
+                // from the equivalency map.
+                if (!MTSfxEquivalencyMap.TryGetValue(suffixed.Suffix, out equiv))
+                {
+                    // We don't know what the suffix means, and so
+                    // we aren't able to determine its equivalent
+                    // Super+SubType pair.
+                    return false;
+                }
+
+                return equiv == actual;
+            }
+        }
+
+        /// <summary>
         /// Determines whether the provided object is equal
         /// to this media type.
         /// </summary>
@@ -147,21 +254,6 @@ namespace McSherry.Zener.Core
 
             if (mt == null) return false;
             else            return mt.Equals(type: mt);
-        }
-        /// <summary>
-        /// Determines whether the provided media type is
-        /// equal to this media type.
-        /// </summary>
-        /// <param name="type">The media type to compare.</param>
-        /// <returns>True if the media types are equal.</returns>
-        public bool Equals(MediaType type)
-        {
-            return
-                type.Category   == this.Category    &&
-                type.SuperType  == this.SuperType   &&
-                type.SubType    == this.SubType     &&
-                type.Parameters == this.Parameters  &&
-                type.Suffix     == this.Suffix      ;;
         }
         /// <summary>
         /// Retrieves a hash code for the MediaType. This is
