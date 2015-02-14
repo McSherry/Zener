@@ -192,5 +192,18 @@ namespace McSherry.Zener.Core
 
             return success;
         }
+
+        /// <summary>
+        /// Retrieves the string representation of this virtual host.
+        /// </summary>
+        /// <returns>The string representation of the virtual host.</returns>
+        public override string ToString()
+        {
+            return String.Format(
+                "{0}::{1}",
+                this.Format,
+                this.Port
+                );
+        }
     }
 }
