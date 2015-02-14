@@ -74,7 +74,6 @@
     <Compile Include="Archives\ZlibArchive.cs" />
     <Compile Include="Core\HostRouter.cs" />
     <Compile Include="Core\MediaType.cs" />
-    <Compile Include="Core\ReadOnlyDictionary.cs" />
     <Compile Include="Core\VirtualHost.cs" />
     <Compile Include="Core\MediaTypeMap.cs" />
     <Compile Include="Core\Rfc1952.cs" />

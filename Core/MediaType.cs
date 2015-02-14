@@ -36,12 +36,7 @@ namespace McSherry.Zener.Core
         /// The media type is an unregistered or private type, and
         /// bears the "x." prefix. This prefix is officially deprecated.
         /// </summary>
-        Unregistered,
-        /// <summary>
-        /// The media type bears an unofficial or
-        /// unrecognised prefix.
-        /// </summary>
-        Unknown
+        Unregistered
     }
 
     /// <summary>
@@ -49,12 +44,14 @@ namespace McSherry.Zener.Core
     /// </summary>
     public sealed class MediaType
     {
-        private const string
-            StandardTreePrefix      = "",
-            VendorTreePrefix        = "vnd",
-            PersonalTreePrefix      = "prs",
-            UnregisteredTreePrefix  = "x"
-            ;
+        private static readonly Dictionary<MediaTypeCategory, string>
+            MediaTypeCategoryStrings = new Dictionary<MediaTypeCategory, string>()
+        {
+            {   MediaTypeCategory.Standard,       ""        },
+            {   MediaTypeCategory.Vendor,         "vnd"     },
+            {   MediaTypeCategory.Personal,       "prs"     },
+            {   MediaTypeCategory.Unregistered,   "x"       },
+        };
         private const char
             SubTypeSeparator        = '/',
             ParameterSeparator      = ';',
@@ -71,30 +68,9 @@ namespace McSherry.Zener.Core
         /// <returns>
         /// The string associated with the category, sans trailing period.
         /// </returns>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when the "Unknown" category is passed to the method, or when
-        /// the MediaTypeCategory value passed to the method is not recognised.
-        /// </exception>
         public static string GetCategoryString(MediaTypeCategory category)
         {
-            if (category == MediaTypeCategory.Unknown)
-            {
-                throw new ArgumentException(
-                    @"The category ""Unknown"" has no standardised prefix."
-                    );
-            }
-
-            switch (category)
-            {
-                case MediaTypeCategory.Standard:        return StandardTreePrefix;
-                case MediaTypeCategory.Vendor:          return VendorTreePrefix;
-                case MediaTypeCategory.Personal:        return PersonalTreePrefix;
-                case MediaTypeCategory.Unregistered:    return UnregisteredTreePrefix;
-            }
-
-            throw new ArgumentException(
-                "The provided category enum value is invalid."
-                );
+            return MediaTypeCategoryStrings[category];
         }
 
         public MediaType()
@@ -102,14 +78,6 @@ namespace McSherry.Zener.Core
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// The media type's full type string, including type,
-        /// subtype, prefix, suffix, and parameters.
-        /// </summary>
-        public string FullType
-        {
-            get { throw new NotImplementedException(); }
-        }
         /// <summary>
         /// The media type's category, or registration tree.
         /// </summary>
