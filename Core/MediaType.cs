@@ -113,6 +113,18 @@ namespace McSherry.Zener.Core
             get;
             private set;
         }
+        /// <summary>
+        /// The parameters included with the media type. This
+        /// generally contains zero or more key-value pairs,
+        /// but the specific format is media type-specific.
+        /// 
+        /// This property is null if no parameters are present.
+        /// </summary>
+        public string Parameters
+        {
+            get;
+            private set;
+        }
 
         /// <summary>
         /// Determines whether the provided object is equal
@@ -139,6 +151,7 @@ namespace McSherry.Zener.Core
                 type.Category   == this.Category    &&
                 type.SuperType  == this.SuperType   &&
                 type.SubType    == this.SubType     &&
+                type.Parameters == this.Parameters  &&
                 type.Suffix     == this.Suffix      ;;
         }
         /// <summary>
@@ -157,7 +170,8 @@ namespace McSherry.Zener.Core
                     Category.GetHashCode()  +
                     SuperType.GetHashCode() +
                     SubType.GetHashCode()   +
-                    Suffix.GetHashCode()    ;
+                    Suffix.GetHashCode()    +
+                    Parameters.GetHashCode();
             }
 
             return hashCode;
