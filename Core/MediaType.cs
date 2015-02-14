@@ -72,6 +72,15 @@ namespace McSherry.Zener.Core
         {
             return MediaTypeCategoryStrings[category];
         }
+        /// <summary>
+        /// Creates a MediaType class from a string.
+        /// </summary>
+        /// <param name="mediaType">The string to parse.</param>
+        /// <returns>A MediaType class equivalent to the string.</returns>
+        public static MediaType Parse(string mediaType)
+        {
+            throw new NotImplementedException();
+        }
 
         public MediaType()
         {
