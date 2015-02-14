@@ -34,6 +34,18 @@ namespace McSherry.Zener.Core
     }
 
     /// <summary>
+    /// The delegate used by media type handlers. Media type handlers
+    /// are passed data before it is served to the user, and the data
+    /// they return is what is served to the user.
+    /// 
+    /// Media type handlers could, for example, be used to implement
+    /// server-side scripting.
+    /// </summary>
+    /// <param name="data">The data for the handler to transform.</param>
+    /// <returns>The transformed data.</returns>
+    public delegate byte[] MediaTypeHandler(byte[] data);
+
+    /// <summary>
     /// A class used to map media types to file extensions.
     /// </summary>
     public class MediaTypeMap
