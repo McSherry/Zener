@@ -113,5 +113,54 @@ namespace McSherry.Zener.Core
             get;
             private set;
         }
+
+        /// <summary>
+        /// Determines whether the provided object is equal
+        /// to this media type.
+        /// </summary>
+        /// <param name="obj">The object to compare.</param>
+        /// <returns>True if the object is equal to this media type.</returns>
+        public override bool Equals(object obj)
+        {
+            var mt = obj as MediaType;
+
+            if (mt == null) return false;
+            else            return mt.Equals(type: mt);
+        }
+        /// <summary>
+        /// Determines whether the provided media type is
+        /// equal to this media type.
+        /// </summary>
+        /// <param name="type">The media type to compare.</param>
+        /// <returns>True if the media types are equal.</returns>
+        public bool Equals(MediaType type)
+        {
+            return
+                type.Category == this.Category    &&
+                type.Type     == this.Type        &&
+                type.SubType  == this.SubType     &&
+                type.Suffix   == this.Suffix      ;;
+        }
+        /// <summary>
+        /// Retrieves a hash code for the MediaType. This is
+        /// not guaranteed to be unique, but will be identical for
+        /// identical MediaType instances.
+        /// </summary>
+        /// <returns>An integer containing the hash code.</returns>
+        public override int GetHashCode()
+        {
+            int hashCode;
+
+            unchecked
+            {
+                hashCode =
+                    Category.GetHashCode()  +
+                    Type.GetHashCode()      +
+                    SubType.GetHashCode()   +
+                    Suffix.GetHashCode()    ;
+            }
+
+            return hashCode;
+        }
     }
 }
