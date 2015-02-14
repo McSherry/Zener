@@ -176,5 +176,60 @@ namespace McSherry.Zener.Core
 
             return hashCode;
         }
+        /// <summary>
+        /// Returns the string representation of the
+        /// media type.
+        /// </summary>
+        /// <returns>The string representation of the media type.</returns>
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            // The media type's super type identifies the general
+            // remit of the media type (e.g. text, image, video),
+            // and is separated from the subtype/etc by a forward
+            // slash.
+            sb.AppendFormat("{0}/", this.SuperType);
+
+            // The standard registration tree/category does not
+            // have a prefix. If it isn't a standard-category
+            // media type, it will have a prefix.
+            if (this.Category != MediaTypeCategory.Standard)
+            {
+                sb.AppendFormat("{0}.", MediaType.GetCategoryString(this.Category));
+            }
+
+            // The subtype comes after the vendor prefix, and specifies
+            // within the general remit of the media type the specific
+            // application. HTML text, for example, is "text/html," and
+            // PNG images are "image/png."
+            sb.Append(this.SubType);
+
+            // Media types may have a suffix. If this media type
+            // doesn't have a suffix, the value of the property
+            // will be null.
+            if (this.Suffix != null)
+            {
+                // Suffixes are separated from the subtype by a plus sign.
+                // The suffix specifies what the media type is based on.
+                // The most common suffix is probably "+xml," which indicates
+                // that the media type is based on XML (for example, in
+                // Atom feeds or XHTML documents).
+                sb.AppendFormat("+{0}", this.Suffix);
+            }
+
+            // Media types can have parameters appended to them. The text/html
+            // media type, for example, can have a "charset" parameter to
+            // specify character encoding.
+            //
+            //      text/html; charset=UTF-8
+            if (this.Parameters != null)
+            {
+                // Parameters are separated from the media type by a semicolon.
+                sb.AppendFormat("; {0}", this.Parameters);
+            }
+
+            return sb.ToString();
+        }
     }
 }
