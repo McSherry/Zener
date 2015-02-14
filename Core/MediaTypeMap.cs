@@ -53,6 +53,16 @@ namespace McSherry.Zener.Core
         private static MediaTypeMap _default;
         private Dictionary<string, List<string>> _map;
 
+        /// <summary>
+        /// The default media type handler.
+        /// </summary>
+        /// <param name="data">The data for the handler to transform.</param>
+        /// <returns>The transformed data.</returns>
+        public static byte[] DefaultMediaTypeHandler(byte[] data)
+        {
+            return data;
+        }
+
         static MediaTypeMap()
         {
             _default = new MediaTypeMap()
