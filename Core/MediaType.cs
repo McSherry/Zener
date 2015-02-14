@@ -90,7 +90,7 @@ namespace McSherry.Zener.Core
         /// The type of this media type. Usually "text," "image," "video,"
         /// et cetera.
         /// </summary>
-        public string Type
+        public string SuperType
         {
             get;
             private set;
@@ -136,10 +136,10 @@ namespace McSherry.Zener.Core
         public bool Equals(MediaType type)
         {
             return
-                type.Category == this.Category    &&
-                type.Type     == this.Type        &&
-                type.SubType  == this.SubType     &&
-                type.Suffix   == this.Suffix      ;;
+                type.Category   == this.Category    &&
+                type.SuperType  == this.SuperType   &&
+                type.SubType    == this.SubType     &&
+                type.Suffix     == this.Suffix      ;;
         }
         /// <summary>
         /// Retrieves a hash code for the MediaType. This is
@@ -155,7 +155,7 @@ namespace McSherry.Zener.Core
             {
                 hashCode =
                     Category.GetHashCode()  +
-                    Type.GetHashCode()      +
+                    SuperType.GetHashCode() +
                     SubType.GetHashCode()   +
                     Suffix.GetHashCode()    ;
             }
