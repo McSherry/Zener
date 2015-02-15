@@ -434,7 +434,7 @@ namespace McSherry.Zener.Core
                         // and with an empty value.
                         type.Parameters.Add(
                             mediaType.Substring(paramStart),
-                            String.Empty
+                            null
                             );
                     }
                     // There IS an equals sign in the parameter. This means we need
@@ -741,8 +741,18 @@ namespace McSherry.Zener.Core
             //      video/example; parameter=value; parameter=value
             foreach (var kvp in this.Parameters)
             {
-                // Parameters are separated from the media type by a semicolon.
-                sb.AppendFormat("; {0}={1}", kvp.Key, kvp.Value);
+                // If the value is null, it means that the parameter had
+                // no value. Since there was no value, we'll have to use
+                // a different format when appending.
+                if (kvp.Value == null)
+                {
+                    sb.AppendFormat("; {0}", kvp.Key);
+                }
+                else
+                {
+                    // Parameters are separated from the media type by a semicolon.
+                    sb.AppendFormat("; {0}={1}", kvp.Key, kvp.Value);
+                }
             }
 
             return sb.ToString();
