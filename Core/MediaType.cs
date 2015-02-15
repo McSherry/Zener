@@ -491,22 +491,14 @@ namespace McSherry.Zener.Core
 
             return type;
         }
-        /// <summary>
-        /// Creates a MediaType class from a string. Calls MediaType.Create
-        /// internally.
-        /// </summary>
-        /// <param name="mediaType">The string to parse.</param>
-        /// <returns>A MediaType class equivalent to the string.</returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when the provided media type string is null., empty,
-        /// or white-space.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when the provided media type string is invalid.
-        /// </exception>
+        
         public static implicit operator MediaType(string mediaType)
         {
             return MediaType.Create(mediaType);
+        }
+        public static implicit operator string(MediaType type)
+        {
+            return type.ToString();
         }
 
         private MediaType() { }
