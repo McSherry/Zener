@@ -136,20 +136,12 @@ namespace McSherry.Zener.Core
             private set;
         }
         /// <summary>
-        /// Whether the media type has a parameter.
-        /// </summary>
-        public bool HasParameter
-        {
-            get;
-            private set;
-        }
-        /// <summary>
         /// The parameters included with the media type. This
         /// is typically zero or one name-value pairs.
         /// 
         /// This property is null if no parameters are present.
         /// </summary>
-        public KeyValuePair<string, string> Parameter
+        public IDictionary<string, string> Parameters
         {
             get;
             private set;
@@ -167,9 +159,7 @@ namespace McSherry.Zener.Core
                 type.Category           == this.Category        &&
                 type.SuperType          == this.SuperType       &&
                 type.SubType            == this.SubType         &&
-                type.Parameter.Key      == this.Parameter.Key   &&
-                type.Parameter.Value    == this.Parameter.Value &&
-                type.HasParameter       == this.HasParameter    &&
+                type.Parameters         == this.Parameters      &&
                 type.Suffix             == this.Suffix          ;;
         }
         /// <summary>
@@ -284,8 +274,7 @@ namespace McSherry.Zener.Core
                     SuperType.GetHashCode()     +
                     SubType.GetHashCode()       +
                     Suffix.GetHashCode()        +
-                    Parameter.GetHashCode()     +
-                    HasParameter.GetHashCode()  ;
+                    Parameters.GetHashCode()    ;
             }
 
             return hashCode;
@@ -337,13 +326,14 @@ namespace McSherry.Zener.Core
             // specify character encoding.
             //
             //      text/html; charset=UTF-8
-            if (this.HasParameter)
+            //
+            // Multiple parameters are generally separated by semicolons.
+            //
+            //      video/example; parameter=value; parameter=value
+            foreach (var kvp in this.Parameters)
             {
                 // Parameters are separated from the media type by a semicolon.
-                sb.AppendFormat(
-                    "; {0}={1}",
-                    this.Parameter.Key, this.Parameter.Value
-                    );
+                sb.AppendFormat("; {0}={1}", kvp.Key, kvp.Value);
             }
 
             return sb.ToString();
