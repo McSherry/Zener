@@ -119,7 +119,10 @@ namespace McSherry.Zener.Core
             }
             mediaType = mediaType.Trim();
 
-            MediaType type = new MediaType();
+            MediaType type = new MediaType()
+            {
+                Parameters = new Dictionary<string, string>()
+            };
             StringBuilder storage = new StringBuilder();
             PState state = PState.SuperType;
 
@@ -155,10 +158,8 @@ namespace McSherry.Zener.Core
                     // subtype.
                     if (c == SubTypeSeparator)
                     {
-                        // Move past the separator character.
-                        i++;
                         // Set the section start variable.
-                        sectionStart = i;
+                        sectionStart = i + 1;
                         // It's possible that there will be a prefix before
                         // the subtype, so we need to switch to this state
                         // before the subtype state.
@@ -219,11 +220,11 @@ namespace McSherry.Zener.Core
                         // If the length of the data in storage is longer
                         // than the longest prefix, it won't be a prefix
                         // we recognise.
-                        storage.Length < longestPrefix ||
+                        storage.Length > longestPrefix ||
                         // If the longest possible length is shorter than
                         // the shortest prefix, it, again, won't be a prefix
                         // that we recognise.
-                        (mediaType.Length - i) + storage.Length > shortestPrefix
+                        (mediaType.Length - i) + storage.Length < shortestPrefix
                         )
                     {
                         // We won't be recognising a prefix, so switch to the
@@ -261,14 +262,21 @@ namespace McSherry.Zener.Core
                             storage.Clear();
                             // Set the MediaType's property.
                             type.Category = pfx;
-                            // Advance past the separator.
-                            i++;
                             // Set the new section start value.
-                            sectionStart = i;
+                            sectionStart = i + 1;
                         }
 
                         // Regardless of the above outcome, we need to
                         // switch to the subtype state.
+                        state = PState.SubType;
+                    }
+                    // If we find one of these characters, we probably aren't
+                    // in a prefix, and we may instead be in a subtype.
+                    else if (c == SuffixSeparator || c == ParameterSeparator)
+                    {
+                        // Cancel out the for-loop's increment.
+                        --i;
+                        // Switch to the subtype-parsing state.
                         state = PState.SubType;
                     }
                     // Otherwise, we need to check that the character is valid.
@@ -311,8 +319,6 @@ namespace McSherry.Zener.Core
                     // have to switch to a new state.
                     if (c == SuffixSeparator || c == ParameterSeparator)
                     {
-                        // Advance past the separator.
-                        i++;
                         // Set the MediaType's subtype property.
                         type.SubType = storage.ToString().ToLower();
                         // Clear storage.
@@ -364,10 +370,8 @@ namespace McSherry.Zener.Core
                     // parameter parsing.
                     if (c == ParameterSeparator)
                     {
-                        // Advance past separator.
-                        i++;
                         // Set the new section start value.
-                        sectionStart = i;
+                        sectionStart = i + 1;
                         // Set the MediaType's suffix value.
                         type.Suffix = storage.ToString().ToLower();
                         // Clear the storage.
@@ -388,8 +392,6 @@ namespace McSherry.Zener.Core
                 }
                 else if (state == PState.Parameter)
                 {
-                    type.Parameters = new Dictionary<string, string>();
-
                     // Move past any leading whitespace.
                     while (Char.IsWhiteSpace(mediaType[i])) i++;
                     // Set new current character.
@@ -399,8 +401,8 @@ namespace McSherry.Zener.Core
                     // Read up to the first equals sign, which signifies
                     // the end of the parameter's key.
                     while (
-                        mediaType[i] != EqualsSign &&
-                        i < mediaType.Length
+                        i < mediaType.Length &&
+                        mediaType[i] != EqualsSign
                         ) i++;
 
                     // There is no equals sign in the parameter. We'll still
@@ -429,20 +431,18 @@ namespace McSherry.Zener.Core
                         // Read up until a semicolon, which separates
                         // parameters.
                         while (
-                            mediaType[i] == ParameterSeparator &&
-                            i < mediaType.Length
+                            i < mediaType.Length &&
+                            mediaType[i] != ParameterSeparator
                             ) i++;
 
-                        // There isn't a semicolon, which indicates that there
-                        // is only one key-value parameter.
-                        if (i >= mediaType.Length)
-                        {
-                            type.Parameters.Add(
-                                key,
-                                mediaType.Substring(paramStart)
-                                );
-                        }
-                        else
+                        string val = mediaType.Substring(
+                            paramStart, i - paramStart);
+                        type.Parameters.Add(
+                            key,
+                            val
+                            );
+
+                        if (i < mediaType.Length)
                         {
                             // Skip past the semicolon.
                             i++;
