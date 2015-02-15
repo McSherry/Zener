@@ -70,10 +70,12 @@ namespace McSherry.Zener.Core
             {   "xml",          "application/xml"           },
             {   "cbor",         "application/cbor"          },
         };
+        private static readonly HashSet<char>
+            SuperSubTypeCharacters = new HashSet<char>(SuperSubTypeCharactersS);
         private const string
             // Valid characters for the super/subtypes in a media type. All
             // comparisons we do will be in lowercase, so we don't need capitals.
-            SuperSubTypeCharacters  = "abcedfghijklmnopqrstuvwxyz0123456789-."
+            SuperSubTypeCharactersS = "abcedfghijklmnopqrstuvwxyz0123456789-."
             ;
         private const char
             SubTypeSeparator        = '/',
