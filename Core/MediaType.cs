@@ -44,6 +44,14 @@ namespace McSherry.Zener.Core
     /// </summary>
     public sealed class MediaType
     {
+        private enum PState
+        {
+            SuperType,
+            Prefix,
+            SubType,
+            Suffix,
+            Parameter
+        }
         private static readonly Dictionary<MediaTypeCategory, string>
             MediaTypeCategoryStrings = new Dictionary<MediaTypeCategory, string>()
         {
@@ -72,7 +80,8 @@ namespace McSherry.Zener.Core
             ParameterSeparator      = ';',
             SuffixSeparator         = '+',
             PrefixSeparator         = '.',
-            Dash                    = '-'
+            Dash                    = '-',
+            EqualsSign              = '='
             ;
 
         /// <summary>
@@ -93,9 +102,371 @@ namespace McSherry.Zener.Core
         /// </summary>
         /// <param name="mediaType">The string to parse.</param>
         /// <returns>A MediaType class equivalent to the string.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided media type string is null., empty,
+        /// or white-space.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided media type string is invalid.
+        /// </exception>
         public static MediaType Create(string mediaType)
         {
-            throw new NotImplementedException();
+            if (String.IsNullOrWhiteSpace(mediaType))
+            {
+                throw new ArgumentNullException(
+                    "The provided string must not be null, empty, or white-space."
+                    );
+            }
+            mediaType = mediaType.Trim();
+
+            MediaType type = new MediaType();
+            StringBuilder storage = new StringBuilder();
+            PState state = PState.SuperType;
+
+            int sectionStart = 0;
+            for (int i = 0; i < mediaType.Length; i++)
+            {
+                char c = mediaType[i];
+                if (state == PState.SuperType)
+                {
+                    // There are certain characters we will
+                    // consider invalid if they're at the start
+                    // of the super-type section.
+                    if (i == sectionStart)
+                    {
+                        if (c == PrefixSeparator)
+                        {
+                            throw new ArgumentException(
+                                "The media type's super-type cannot start with" +
+                                " a period."
+                                );
+                        }
+                        else if (c == Dash)
+                        {
+                            throw new ArgumentException(
+                                "The media type's super-type cannot start with" +
+                                " a dash."
+                                );
+                        }
+                    }
+
+                    // If we reach this character, we've reached the end
+                    // of the super-type, and now have to switch to the
+                    // subtype.
+                    if (c == SubTypeSeparator)
+                    {
+                        // Move past the separator character.
+                        i++;
+                        // Set the section start variable.
+                        sectionStart = i;
+                        // It's possible that there will be a prefix before
+                        // the subtype, so we need to switch to this state
+                        // before the subtype state.
+                        state = PState.Prefix;
+                        // Set the SuperType property of the MediaType.
+                        type.SuperType = storage.ToString().ToLower();
+                        // Clear the storage.
+                        storage.Clear();
+                    }
+                    // Otherwise, we need to check that the character is
+                    // valid.
+                    else if (SuperSubTypeCharacters.Contains(c))
+                    {
+                        // The character is valid, so we add it to
+                        // storage.
+                        storage.Append(c);
+                    }
+                    // If we end up here, the character is invalid.
+                    else
+                    {
+                        throw new ArgumentException(
+                            "The media type contains an invalid super-type."
+                            );
+                    }
+                }
+                else if (state == PState.Prefix)
+                {
+                    // As with the super-type, certain characters
+                    // are not permitted at the start of the subtype.
+                    if (i == sectionStart)
+                    {
+                        if (c == PrefixSeparator)
+                        {
+                            throw new ArgumentException(
+                                "The media type's subtype must not start with " +
+                                "a period."
+                                );
+                        }
+                        else if (c == Dash)
+                        {
+                            throw new ArgumentException(
+                                "The media type's subtype must not start with " +
+                                "a dash."
+                                );
+                        }
+                    }
+
+                    // Gets the length of the longest prefix we can
+                    // recognise.
+                    var prefixes = MTSfxEquivalencyMap
+                        .OrderByDescending(kvp => kvp.Key.Length)
+                        .Select(kvp => kvp.Key.Length);
+                    int longestPrefix = prefixes.First(),
+                       shortestPrefix = prefixes.Last();
+
+
+                    if (
+                        // If the length of the data in storage is longer
+                        // than the longest prefix, it won't be a prefix
+                        // we recognise.
+                        storage.Length < longestPrefix ||
+                        // If the longest possible length is shorter than
+                        // the shortest prefix, it, again, won't be a prefix
+                        // that we recognise.
+                        (mediaType.Length - i) + storage.Length > shortestPrefix
+                        )
+                    {
+                        // We won't be recognising a prefix, so switch to the
+                        // subtype state.
+                        state = PState.SubType;
+                    }
+                    // If we encounter the prefix separator, we need to check
+                    // that it's a prefix we recognise.
+                    else if (c == PrefixSeparator)
+                    {
+                        var pfx = MediaTypeCategoryStrings
+                            // Check the prefix string against all prefix strings
+                            // we know of.
+                            .Where(
+                                kvp => kvp.Value.Equals(storage.ToString().ToLower())
+                                )
+                            // Select the enum value from the results.
+                            .Select(kvp => kvp.Key)
+                            // If there are no matches, set it to a default
+                            // value that we'll be able to recognise.
+                            .DefaultIfEmpty((MediaTypeCategory)(-1))
+                            // Get the first result.
+                            .First();
+
+                        // If this is equal, we don't recognise the string.
+                        if ((int)pfx == -1)
+                        {
+                            // Append the separator character to storage.
+                            storage.Append(c);
+                        }
+                        // If not, we know what the prefix is.
+                        else
+                        {
+                            // Clear the storage of the prefix string.
+                            storage.Clear();
+                            // Set the MediaType's property.
+                            type.Category = pfx;
+                            // Advance past the separator.
+                            i++;
+                            // Set the new section start value.
+                            sectionStart = i;
+                        }
+
+                        // Regardless of the above outcome, we need to
+                        // switch to the subtype state.
+                        state = PState.SubType;
+                    }
+                    // Otherwise, we need to check that the character is valid.
+                    else if (SuperSubTypeCharacters.Contains(c))
+                    {
+                        // Append the character to storage if it is valid.
+                        storage.Append(c);
+                    }
+                    // The character is invalid.
+                    else
+                    {
+                        throw new ArgumentException(
+                            "The media type's subtype/prefix contains invalid " +
+                            "characters."
+                            );
+                    }
+                }
+                // We're parsing the media type's subtype.
+                else if (state == PState.SubType)
+                {
+                    if (sectionStart == i)
+                    {
+                        if (c == PrefixSeparator)
+                        {
+                            throw new ArgumentException(
+                                "The media type's subtype must not start with " +
+                                "a period."
+                                );
+                        }
+                        else if (c == Dash)
+                        {
+                            throw new ArgumentException(
+                                "The media type's subtype must not start with " +
+                                "a dash."
+                                );
+                        }
+                    }
+
+                    // If we meet one of these characters, we're going to
+                    // have to switch to a new state.
+                    if (c == SuffixSeparator || c == ParameterSeparator)
+                    {
+                        // Advance past the separator.
+                        i++;
+                        // Set the MediaType's subtype property.
+                        type.SubType = storage.ToString().ToLower();
+                        // Clear storage.
+                        storage.Clear();
+
+                        if (c == SuffixSeparator)
+                        {
+                            state = PState.Suffix;
+                        }
+                        else
+                        {
+                            state = PState.Parameter;
+                        }
+                    }
+                    // The character is valid.
+                    else if (SuperSubTypeCharacters.Contains(c))
+                    {
+                        storage.Append(c);
+                    }
+                    else
+                    {
+                        throw new ArgumentException(
+                            "The media type's subtype contains an invalid character."
+                            );
+                    }
+                }
+                else if (state == PState.Suffix)
+                {
+                    if (sectionStart == i)
+                    {
+                        if (c == PrefixSeparator)
+                        {
+                            throw new ArgumentException(
+                                "The media type's suffix must not start with " +
+                                "a period."
+                                );
+                        }
+                        else if (c == Dash)
+                        {
+                            throw new ArgumentException(
+                                "The media type's suffix must not start with " +
+                                "a dash."
+                                );
+                        }
+                    }
+
+                    // If we hit one of these characters, we've reached
+                    // the end of the suffix and now have to move on to
+                    // parameter parsing.
+                    if (c == ParameterSeparator)
+                    {
+                        // Advance past separator.
+                        i++;
+                        // Set the new section start value.
+                        sectionStart = i;
+                        // Set the MediaType's suffix value.
+                        type.Suffix = storage.ToString().ToLower();
+                        // Clear the storage.
+                        storage.Clear();
+                        // Set the new state.
+                        state = PState.Parameter;
+                    }
+                    else if (SuperSubTypeCharacters.Contains(c))
+                    {
+                        storage.Append(c);
+                    }
+                    else
+                    {
+                        throw new ArgumentException(
+                            "The media type's suffix contains an invalid character."
+                            );
+                    }
+                }
+                else if (state == PState.Parameter)
+                {
+                    type.Parameters = new Dictionary<string, string>();
+
+                    // Move past any leading whitespace.
+                    while (Char.IsWhiteSpace(mediaType[i])) i++;
+                    // Set new current character.
+                    c = mediaType[i];
+
+                    int paramStart = i;
+                    // Read up to the first equals sign, which signifies
+                    // the end of the parameter's key.
+                    while (
+                        mediaType[i] != EqualsSign &&
+                        i < mediaType.Length
+                        ) i++;
+
+                    // There is no equals sign in the parameter. We'll still
+                    // consider this valid, but we need to handle it differently.
+                    if (i >= mediaType.Length)
+                    {
+                        // Add the extracted value with the string as the key
+                        // and with an empty value.
+                        type.Parameters.Add(
+                            mediaType.Substring(paramStart),
+                            String.Empty
+                            );
+                    }
+                    // There IS an equals sign in the parameter. This means we need
+                    // to treat is as a key-value parameter.
+                    else
+                    {
+                        // Extract the key from the media type string.
+                        string key = mediaType.Substring(
+                            paramStart, i - paramStart
+                            );
+                        // Skip past the equals sign.
+                        i++;
+                        // Set the new start as the index.
+                        paramStart = i;
+                        // Read up until a semicolon, which separates
+                        // parameters.
+                        while (
+                            mediaType[i] == ParameterSeparator &&
+                            i < mediaType.Length
+                            ) i++;
+
+                        // There isn't a semicolon, which indicates that there
+                        // is only one key-value parameter.
+                        if (i >= mediaType.Length)
+                        {
+                            type.Parameters.Add(
+                                key,
+                                mediaType.Substring(paramStart)
+                                );
+                        }
+                        else
+                        {
+                            // Skip past the semicolon.
+                            i++;
+                        }
+                    }
+                }
+            }
+
+            if (state == PState.SuperType)
+            {
+                throw new ArgumentException(
+                    "The provided string does not contain a subtype."
+                    );
+            }
+            else if (state == PState.Prefix || state == PState.SubType)
+            {
+                type.SubType = storage.ToString().ToLower();
+            }
+            else if (state == PState.Suffix)
+            {
+                type.Suffix = storage.ToString().ToLower();
+            }
+
+            return type;
         }
 
         private MediaType() { }
