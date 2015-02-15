@@ -327,6 +327,22 @@ namespace McSherry.Zener.Net
                     res
                     );
             }
+            catch (SocketException sex)
+            {
+                // As much as I hate just swallowing exceptions, these ones
+                // are extremely common (relative to the other SocketExceptions),
+                // and, while there is no real way to recover, the connection
+                // being reset shouldn't crash the web server.
+                if (
+                    sex.SocketErrorCode == SocketError.ConnectionAborted ||
+                    sex.SocketErrorCode == SocketError.ConnectionReset
+                    )
+                {
+                    return;
+                }
+
+                throw;
+            }
         }
 
         /// <summary>
