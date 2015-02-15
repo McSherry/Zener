@@ -71,7 +71,8 @@ namespace McSherry.Zener.Core
             SubTypeSeparator        = '/',
             ParameterSeparator      = ';',
             SuffixSeparator         = '+',
-            PrefixSeparator         = '.'
+            PrefixSeparator         = '.',
+            Dash                    = '-'
             ;
 
         /// <summary>
