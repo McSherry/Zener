@@ -228,6 +228,8 @@ namespace McSherry.Zener.Core
                         (mediaType.Length - i) + storage.Length < shortestPrefix
                         )
                     {
+                        // Cancel out increment.
+                        --i;
                         // We won't be recognising a prefix, so switch to the
                         // subtype state.
                         state = PState.SubType;
