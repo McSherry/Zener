@@ -125,6 +125,13 @@ namespace McSherry.Zener.Core
             };
             StringBuilder storage = new StringBuilder();
             PState state = PState.SuperType;
+            // Gets the length of the longest prefix we can
+            // recognise.
+            var prefixes = MediaType.MediaTypeCategoryStrings
+                .OrderByDescending(kvp => kvp.Value.Length)
+                .Select(kvp => kvp.Value.Length);
+            int longestPrefix = prefixes.First(),
+               shortestPrefix = prefixes.Last();
 
             int sectionStart = 0;
             for (int i = 0; i < mediaType.Length; i++)
@@ -206,14 +213,6 @@ namespace McSherry.Zener.Core
                                 );
                         }
                     }
-
-                    // Gets the length of the longest prefix we can
-                    // recognise.
-                    var prefixes = MTSfxEquivalencyMap
-                        .OrderByDescending(kvp => kvp.Key.Length)
-                        .Select(kvp => kvp.Key.Length);
-                    int longestPrefix = prefixes.First(),
-                       shortestPrefix = prefixes.Last();
 
 
                     if (
