@@ -141,7 +141,7 @@ namespace McSherry.Zener.Core
 
             MediaType type = new MediaType()
             {
-                Parameters = new Dictionary<string, string>()
+                Parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             };
             StringBuilder storage = new StringBuilder();
             PState state = PState.SuperType;
@@ -442,9 +442,11 @@ namespace McSherry.Zener.Core
                     else
                     {
                         // Extract the key from the media type string.
-                        string key = mediaType.Substring(
-                            paramStart, i - paramStart
-                            );
+                        string key = mediaType
+                            .Substring(
+                                paramStart, i - paramStart
+                                )
+                            .ToLower();
                         // Skip past the equals sign.
                         i++;
                         // Set the new start as the index.
