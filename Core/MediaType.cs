@@ -44,12 +44,30 @@ namespace McSherry.Zener.Core
     /// </summary>
     public sealed class MediaType
     {
+        /// <summary>
+        /// Internal state values for the MediaType parser.
+        /// </summary>
         private enum PState
         {
+            /// <summary>
+            /// Currently parsing the media type's super-type.
+            /// </summary>
             SuperType,
+            /// <summary>
+            /// Currently parsing the media type's subtype prefix.
+            /// </summary>
             Prefix,
+            /// <summary>
+            /// Currently parsing the media type's subtype.
+            /// </summary>
             SubType,
+            /// <summary>
+            /// Currently parsing the media type's subtype suffix.
+            /// </summary>
             Suffix,
+            /// <summary>
+            /// Currently parsing the media type's parameter(s).
+            /// </summary>
             Parameter
         }
         private static readonly Dictionary<MediaTypeCategory, string>
