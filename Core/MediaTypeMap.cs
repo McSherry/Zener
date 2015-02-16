@@ -323,7 +323,9 @@ namespace McSherry.Zener.Core
 
             // Trim the extensions of any whitespace, and remove any
             // leading or trailing periods.
-            extensions = extensions.Select(s => s.Trim(' ', '.')).ToList();
+            extensions = extensions
+                .Select(s => s.Trim(' ', '.').ToLower())
+                .ToList();
             
             // Check that the map does not contain any of the extensions
             // that have been passed to this method.
