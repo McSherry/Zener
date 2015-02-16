@@ -646,6 +646,55 @@ namespace McSherry.Zener.Core
                 return equiv == actual;
             }
         }
+        /// <summary>
+        /// Determines whether this MediaType is equivalent
+        /// to the provided MediaType.
+        /// </summary>
+        /// <param name="type">The type to determine rough equivalency for.</param>
+        /// <returns>True if the MediaType is roughly equivalent.</returns>
+        /// <remarks>
+        /// This method compares the registration tree, super-type, and
+        /// sub-type. The latter two are considered case-insensitive.
+        /// 
+        /// Additionally, if this MediaType has any parameters, this method
+        /// will only consider the provided MediaType equivalent if it has
+        /// parameters which are exactly equal.
+        /// 
+        /// Further, if both MediaTypes have a suffix, the suffixes will be
+        /// compared. Suffixes are considered case-insensitive.
+        /// </remarks>
+        public bool IsEquivalent(MediaType type)
+        {
+            // True by default.
+            bool paramEqual = true, suffixEqual = true;
+            // If we have parameters, we need to compare them with the provided
+            // type's parameters. If not, we won't compare them.
+            if (this.Parameters.Count > 0)
+            {
+                // If the lengths don't match, there's no point in
+                // comparing values.
+                if (type.Parameters.Count != this.Parameters.Count)
+                    paramEqual = false;
+
+                // paramEqual will be true if all values within both the
+                // dictionaries are equal.
+                paramEqual = this.Parameters
+                    .All(kvp => kvp.Value == type.Parameters[kvp.Key]);
+            }
+            // If there are suffixes, compare them.
+            if (this.Suffix != null && type.Suffix != null)
+            {
+                suffixEqual = this.Suffix
+                    .Equals(type.Suffix, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return
+                paramEqual &&
+                suffixEqual &&
+                this.RegistrationTree == type.RegistrationTree &&
+                this.SuperType.Equals(type.SuperType, StringComparison.OrdinalIgnoreCase) &&
+                this.SubType.Equals(type.SubType, StringComparison.OrdinalIgnoreCase);
+        }
 
         /// <summary>
         /// Determines whether the provided object is equal
