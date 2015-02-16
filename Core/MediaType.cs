@@ -15,7 +15,7 @@ namespace McSherry.Zener.Core
     /// <summary>
     /// The category the media type is in.
     /// </summary>
-    public enum MediaTypeCategory
+    public enum MediaTypeRegTree
     {
         /// <summary>
         /// The media type is a standard media type, and does not
@@ -70,13 +70,13 @@ namespace McSherry.Zener.Core
             /// </summary>
             Parameter
         }
-        private static readonly Dictionary<MediaTypeCategory, string>
-            MediaTypeCategoryStrings = new Dictionary<MediaTypeCategory, string>()
+        private static readonly Dictionary<MediaTypeRegTree, string>
+            MediaTypeRegTreeStrings = new Dictionary<MediaTypeRegTree, string>()
         {
-            {   MediaTypeCategory.Standard,       ""        },
-            {   MediaTypeCategory.Vendor,         "vnd"     },
-            {   MediaTypeCategory.Personal,       "prs"     },
-            {   MediaTypeCategory.Unregistered,   "x"       },
+            {   MediaTypeRegTree.Standard,       ""        },
+            {   MediaTypeRegTree.Vendor,         "vnd"     },
+            {   MediaTypeRegTree.Personal,       "prs"     },
+            {   MediaTypeRegTree.Unregistered,   "x"       },
         };
         private static readonly Dictionary<string, string>
             MTSfxEquivalencyMap = new Dictionary<string, string>()
@@ -113,9 +113,9 @@ namespace McSherry.Zener.Core
         /// <returns>
         /// The string associated with the category, sans trailing period.
         /// </returns>
-        public static string GetCategoryString(MediaTypeCategory category)
+        public static string GetCategoryString(MediaTypeRegTree category)
         {
-            return MediaTypeCategoryStrings[category];
+            return MediaTypeRegTreeStrings[category];
         }
         /// <summary>
         /// Creates a MediaType class from a string.
@@ -147,7 +147,7 @@ namespace McSherry.Zener.Core
             PState state = PState.SuperType;
             // Gets the length of the longest prefix we can
             // recognise.
-            var prefixes = MediaType.MediaTypeCategoryStrings
+            var prefixes = MediaType.MediaTypeRegTreeStrings
                 .OrderByDescending(kvp => kvp.Value.Length)
                 .Select(kvp => kvp.Value.Length);
             int longestPrefix = prefixes.First(),
@@ -256,7 +256,7 @@ namespace McSherry.Zener.Core
                     // that it's a prefix we recognise.
                     else if (c == PrefixSeparator)
                     {
-                        var pfx = MediaTypeCategoryStrings
+                        var pfx = MediaTypeRegTreeStrings
                             // Check the prefix string against all prefix strings
                             // we know of.
                             .Where(
@@ -266,7 +266,7 @@ namespace McSherry.Zener.Core
                             .Select(kvp => kvp.Key)
                             // If there are no matches, set it to a default
                             // value that we'll be able to recognise.
-                            .DefaultIfEmpty((MediaTypeCategory)(-1))
+                            .DefaultIfEmpty((MediaTypeRegTree)(-1))
                             // Get the first result.
                             .First();
 
@@ -282,7 +282,7 @@ namespace McSherry.Zener.Core
                             // Clear the storage of the prefix string.
                             storage.Clear();
                             // Set the MediaType's property.
-                            type.Category = pfx;
+                            type.RegistrationTree = pfx;
                             // Set the new section start value.
                             sectionStart = i + 1;
                         }
@@ -506,7 +506,7 @@ namespace McSherry.Zener.Core
         /// <summary>
         /// The media type's category, or registration tree.
         /// </summary>
-        public MediaTypeCategory Category
+        public MediaTypeRegTree RegistrationTree
         {
             get;
             private set;
@@ -559,11 +559,11 @@ namespace McSherry.Zener.Core
         public bool Equals(MediaType type)
         {
             return
-                type.Category           == this.Category        &&
-                type.SuperType          == this.SuperType       &&
-                type.SubType            == this.SubType         &&
-                type.Parameters         == this.Parameters      &&
-                type.Suffix             == this.Suffix          ;;
+                type.RegistrationTree   == this.RegistrationTree    &&
+                type.SuperType          == this.SuperType           &&
+                type.SubType            == this.SubType             &&
+                type.Parameters         == this.Parameters          &&
+                type.Suffix             == this.Suffix              ;;
         }
         /// <summary>
         /// Determines whether the provided MediaType
@@ -673,11 +673,11 @@ namespace McSherry.Zener.Core
             unchecked
             {
                 hashCode =
-                    Category.GetHashCode()      +
-                    SuperType.GetHashCode()     +
-                    SubType.GetHashCode()       +
-                    Suffix.GetHashCode()        +
-                    Parameters.GetHashCode()    ;
+                    RegistrationTree.GetHashCode()  +
+                    SuperType.GetHashCode()         +
+                    SubType.GetHashCode()           +
+                    Suffix.GetHashCode()            +
+                    Parameters.GetHashCode()        ;
             }
 
             return hashCode;
@@ -700,9 +700,12 @@ namespace McSherry.Zener.Core
             // The standard registration tree/category does not
             // have a prefix. If it isn't a standard-category
             // media type, it will have a prefix.
-            if (this.Category != MediaTypeCategory.Standard)
+            if (this.RegistrationTree != MediaTypeRegTree.Standard)
             {
-                sb.AppendFormat("{0}.", MediaType.GetCategoryString(this.Category));
+                sb.AppendFormat(
+                    "{0}.",
+                    MediaType.GetCategoryString(this.RegistrationTree)
+                    );
             }
 
             // The subtype comes after the vendor prefix, and specifies
