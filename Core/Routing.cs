@@ -646,6 +646,9 @@ namespace McSherry.Zener.Core
         /// Determines the media type to used based on a file extension,
         /// file path, or file name.
         /// </summary>
+        /// <param name="map">
+        /// The MediaTypeMap to find the MediaType in.
+        /// </param>
         /// <param name="fileExtension">
         /// The file extension, file path, or file name to determine the
         /// media type from.
@@ -660,9 +663,14 @@ namespace McSherry.Zener.Core
         /// extension/file path/file name and a handler for transforming
         /// content in that media type's format in to a format that can
         /// be served.
+        /// 
+        /// If there is no MediaType/MediaTypeHandler pair associated with
+        /// the provided file extension, this provides the default for the
+        /// specified MediaTypeMap.
         /// </returns>
         /// <exception cref="System.ArgumentNullException">
-        /// Thrown when the <paramref name="fileExtension"/> parameter is null.
+        /// Thrown when the <paramref name="fileExtension"/> or the
+        /// <paramref name="map"/> is null.
         /// </exception>
         /// <exception cref="System.ArgumentException">
         /// Thrown when, after being passed FindParameterType.NameOrPath, the
@@ -674,6 +682,13 @@ namespace McSherry.Zener.Core
             FindParameterType findType = FindParameterType.Extension
             )
         {
+            if (map == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided MediaTypeMap must not be null."
+                    );
+            }
+
             Tuple<MediaType, MediaTypeHandler> res;
             if (!map.TryFindMediaType(fileExtension, out res, findType))
             {
@@ -682,6 +697,7 @@ namespace McSherry.Zener.Core
                 {
                     handler = MediaTypeMap.DefaultMediaTypeHandler;
                 }
+
                 // Set 'res' to the default type and the appropriate
                 // handler.
                 res = new Tuple<MediaType, MediaTypeHandler>(
