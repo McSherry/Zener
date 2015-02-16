@@ -643,6 +643,56 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Determines the media type to used based on a file extension,
+        /// file path, or file name.
+        /// </summary>
+        /// <param name="fileExtension">
+        /// The file extension, file path, or file name to determine the
+        /// media type from.
+        /// </param>
+        /// <param name="findType">
+        /// Specifies what has been passed in the <paramref name="fileExtension"/>
+        /// parameter; whether the parameter is a file extension on its own, or a
+        /// file path/file name.
+        /// </param>
+        /// <returns>
+        /// The result, which is the MediaType associated with the file
+        /// extension/file path/file name and a handler for transforming
+        /// content in that media type's format in to a format that can
+        /// be served.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the <paramref name="fileExtension"/> parameter is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when, after being passed FindParameterType.NameOrPath, the
+        /// parameter <paramref name="fileExtension"/> does not contain a file
+        /// extension.
+        /// </exception>
+        public static Tuple<MediaType, MediaTypeHandler> FindMediaType(
+            this MediaTypeMap map, string fileExtension,
+            FindParameterType findType = FindParameterType.Extension
+            )
+        {
+            Tuple<MediaType, MediaTypeHandler> res;
+            if (!map.TryFindMediaType(fileExtension, out res, findType))
+            {
+                MediaTypeHandler handler;
+                if (!map.TryFindHandler(map.DefaultType, out handler))
+                {
+                    handler = MediaTypeMap.DefaultMediaTypeHandler;
+                }
+                // Set 'res' to the default type and the appropriate
+                // handler.
+                res = new Tuple<MediaType, MediaTypeHandler>(
+                    map.DefaultType, handler
+                    );
+            }
+
+            return res;
+        }
+
+        /// <summary>
         /// A map of media types and file extensions used to determine the media type of files.
         /// </summary>
         public static MediaTypeMap MediaTypes

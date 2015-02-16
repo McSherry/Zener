@@ -251,66 +251,6 @@ namespace McSherry.Zener.Core
 
             return this;
         }
-        /// <summary>
-        /// Determines the media type to used based on a file extension,
-        /// file path, or file name.
-        /// </summary>
-        /// <param name="fileExtension">
-        /// The file extension, file path, or file name to determine the
-        /// media type from.
-        /// </param>
-        /// <param name="findType">
-        /// Specifies what has been passed in the <paramref name="fileExtension"/>
-        /// parameter; whether the parameter is a file extension on its own, or a
-        /// file path/file name.
-        /// </param>
-        /// <returns>
-        /// The result, which is the MediaType associated with the file
-        /// extension/file path/file name and a handler for transforming
-        /// content in that media type's format in to a format that can
-        /// be served.
-        /// </returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when the <paramref name="fileExtension"/> parameter is null.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when, after being passed FindParameterType.NameOrPath, the
-        /// parameter <paramref name="fileExtension"/> does not contain a file
-        /// extension.
-        /// </exception>
-        public Tuple<MediaType, MediaTypeHandler> FindMediaType(
-            string fileExtension,
-            FindParameterType findType = FindParameterType.Extension
-            )
-        {
-            Tuple<MediaType, MediaTypeHandler> res;
-            if (!this.TryFindMediaType(fileExtension, out res, findType))
-            {
-                // There's no file extension, so we need to treat it as
-                // the default media type and retrieve the appropriate
-                // handler.
-                Tuple<MediaTypeHandler, List<string>> def;
-                MediaTypeHandler handler;
-                if (!this.TryFindHandler(this.DefaultType, out def))
-                {
-                    handler = def.Item1;
-                }
-                // If the default type doesn't have a handler, use the
-                // default handler.
-                else
-                {
-                    handler = DefaultMediaTypeHandler;
-                }
-
-                // Set 'res' to the default type and the appropriate
-                // handler.
-                res = new Tuple<MediaType, MediaTypeHandler>(
-                    this.DefaultType, handler
-                    );
-            }
-
-            return res;
-        }
 
         /// <summary>
         /// Finds the handler and extensions for a MediaType.
