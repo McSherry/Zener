@@ -254,18 +254,98 @@ namespace McSherry.Zener.Core
 
 
         /// <summary>
-        /// Determines the media type to use based on a file
+        /// Finds the handler and extensions for a MediaType.
         /// </summary>
-        /// <param name="fileExtension"></param>
-        /// <param name="fallbackType"></param>
-        /// <param name="findType"></param>
-        /// <returns></returns>
-        public bool TryFind(
+        /// <param name="mediaType">
+        /// The MediaType to find the handler and extensions for.
+        /// </param>
+        /// <param name="result">
+        /// The handler and extensions associated with the MediaType.
+        /// </param>
+        /// <returns>
+        /// True if a result was found.
+        /// </returns>
+        public bool TryFindHandler(
+            MediaType mediaType,
+            out Tuple<MediaTypeHandler, List<string>> result
+            )
+        {
+            var resIndex = Enumerable
+                .Range(0, _types.Count)
+                .Zip(_types, (i, t) => new { i, t })
+                // We want the MediaTypes with the most parameters to
+                // be checked first. This allows the user to specify
+                // a different handler for MediaTypes with specific
+                // parameter values. For example, these three MediaTypes
+                // could have three different handlers:
+                //
+                //      application/example; version=0
+                //      application/example; version=1
+                //      application/example
+                //
+                // Most users probably won't use this, but it's nice to
+                // have it.
+                .OrderByDescending(o => o.t.Parameters.Count)
+                .Where(o => mediaType.IsEquivalent(o.t))
+                .Select(o => o.i)
+                .DefaultIfEmpty(-1)
+                .First();
+
+            if (resIndex == -1)
+            {
+                result = null;
+
+                return false;
+            }
+
+            result = new Tuple<MediaTypeHandler, List<string>>(
+                _handlers[resIndex], _extensions[resIndex]
+                );
+
+            return true;
+        }
+        /// <summary>
+        /// Determines the media type to use based on a file extension,
+        /// path, or name.
+        /// </summary>
+        /// <param name="fileExtension">
+        /// The file extension, file path, or file name to determine the
+        /// media type from.
+        /// </param>
+        /// <param name="result">
+        /// The result, which is the MediaType associated with the file
+        /// extension/path/name and a handler for transforming content
+        /// in that media type's format in to a format that can be served.
+        /// </param>
+        /// <param name="findType">
+        /// Specifies what has been passed in the <paramref name="fileExtension"/>
+        /// parameter; whether the parameter is a file extension on its own, or a
+        /// file path/name.
+        /// </param>
+        /// <returns>
+        /// True if a result was found.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the <paramref name="fileExtension"/> parameter is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when, after being passed FindParameterType.NameOrPath, the
+        /// parameter <paramref name="fileExtension"/> does not contain a file
+        /// extension.
+        /// </exception>
+        public bool TryFindMediaType(
             string fileExtension,
             out Tuple<MediaType, MediaTypeHandler> result,
             FindParameterType findType = FindParameterType.Extension
             )
         {
+            if (fileExtension == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided file extension/path/name must not be null."
+                    );
+            }
+
             if (findType == FindParameterType.Extension)
             {
                 fileExtension = fileExtension.ToLower().Trim(' ', '.');
