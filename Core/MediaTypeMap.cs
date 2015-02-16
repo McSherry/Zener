@@ -201,6 +201,7 @@ namespace McSherry.Zener.Core
         private List<MediaType> _types;
         private List<List<string>> _extensions;
         private List<MediaTypeHandler> _handlers;
+        private MediaType _defaultType;
 
         /// <summary>
         /// Creates a new MediaTypeMap.
@@ -345,49 +346,54 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
-        /// Determines the media type for a given file extension.
+        /// Determines the media type to use based on a file
         /// </summary>
-        /// <param name="str">The string representing the file to find the media type for.</param>
-        /// <param name="type">Indicates what is being passed in the <paramref name="str"/> parameter.</param>
-        /// <param name="default">The media type to default to if no match is found.</param>
-        /// <exception cref="System.ArgumentException">
-        ///     Thrown when the value passed in <paramref name="type"/> is
-        ///     not recognised or is invalid.
-        /// </exception>
-        public string Find(
-            string str, 
-            FindParameterType type = FindParameterType.Extension,
-            string @default = FallbackType
+        /// <param name="fileExtension"></param>
+        /// <param name="fallbackType"></param>
+        /// <param name="findType"></param>
+        /// <returns></returns>
+        public bool TryFind(
+            string fileExtension,
+            out Tuple<MediaType, MediaTypeHandler> result,
+            FindParameterType findType = FindParameterType.Extension
             )
         {
-            string fileExtension;
-
-            if (type == FindParameterType.Extension)
+            if (findType == FindParameterType.Extension)
             {
-                fileExtension = str.ToLower().Trim();
-
-                if (str[0] != '.')
-                    fileExtension = String.Format(".{0}", str);
+                fileExtension = fileExtension.ToLower().Trim(' ', '.');
             }
-            else if (type == FindParameterType.NameOrPath)
+            else if (findType == FindParameterType.NameOrPath)
             {
-                if (!Path.HasExtension(str))
+                if (!Path.HasExtension(fileExtension))
                 {
-                    return @default;
+                    throw new ArgumentException(
+                        "The specified name or path has no file extension."
+                        );
                 }
 
-                fileExtension = Path.GetExtension(str);
+                fileExtension = Path.GetExtension(fileExtension);
             }
-            else throw new ArgumentException(
-                "Unrecognised enum value.", "type"
-                );
 
-
-            return _map
-                .Where(mt => mt.Value.Contains(fileExtension))
-                .Select(mt => mt.Key)
-                .DefaultIfEmpty(FallbackType)
+            var resultIndex = Enumerable
+                .Range(0, _types.Count)
+                .Zip(_extensions, (i, x) => new { i, x })
+                .Where(o => o.x.Contains(fileExtension))
+                .Select(o => o.i)
+                .DefaultIfEmpty(-1)
                 .First();
+
+            // No results.
+            if (resultIndex == -1)
+            {
+                result = null;
+                return false;
+            }
+
+            // A result!
+            result = new Tuple<MediaType, MediaTypeHandler>(
+                _types[resultIndex], _handlers[resultIndex]
+                );
+            return true;
         }
         /// <summary>
         /// Produces a copy of a MediaTypeMap.
@@ -396,8 +402,30 @@ namespace McSherry.Zener.Core
         {
             return new MediaTypeMap()
             {
-                _map = new Dictionary<string,List<string>>(_map)
+                _defaultType = this._defaultType,
+                _types = new List<MediaType>(this._types),
+                _handlers = new List<MediaTypeHandler>(this._handlers),
+                _extensions = new List<List<string>>(this._extensions)
             };
+        }
+        /// <summary>
+        /// The media type to use as a fallback when a call to Find
+        /// returns no results.
+        /// </summary>
+        public MediaType DefaultType
+        {
+            get { return _defaultType; }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(
+                        "The default media type cannot be null."
+                        );
+                }
+
+                _defaultType = value;
+            }
         }
     }
 }
