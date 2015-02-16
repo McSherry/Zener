@@ -501,6 +501,42 @@ namespace McSherry.Zener.Core
             return type.ToString();
         }
 
+        /// <summary>
+        /// The media type for plain text content.
+        /// </summary>
+        public static MediaType PlainText
+        {
+            get { return "text/plain"; }
+        }
+        /// <summary>
+        /// The media type for Hypertext Markup Language content.
+        /// </summary>
+        public static MediaType Html
+        {
+            get { return "text/html"; }
+        }
+        /// <summary>
+        /// The media type for Extensible Markup Language content.
+        /// </summary>
+        public static MediaType Xml
+        {
+            get { return "application/xml"; }
+        }
+        /// <summary>
+        /// The media type for JavaScript content.
+        /// </summary>
+        public static MediaType JavaScript
+        {
+            get { return "application/javascript"; }
+        }
+        /// <summary>
+        /// The media type for JavaScript Object Notation content.
+        /// </summary>
+        public static MediaType JSON
+        {
+            get { return "application/json"; }
+        }
+
         private MediaType() { }
 
         /// <summary>
