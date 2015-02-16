@@ -371,7 +371,7 @@ namespace McSherry.Zener.Core
                         );
                 }
 
-                fileExtension = Path.GetExtension(fileExtension);
+                fileExtension = Path.GetExtension(fileExtension).Trim('.');
             }
 
             var resultIndex = Enumerable
