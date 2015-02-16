@@ -207,7 +207,9 @@ namespace McSherry.Zener.Core
         /// </summary>
         public MediaTypeMap()
         {
-            _map = new Dictionary<string, List<string>>();
+            _types = new List<MediaType>();
+            _extensions = new List<List<string>>();
+            _handlers = new List<MediaTypeHandler>();
         }
 
         /// <summary>
