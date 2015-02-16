@@ -51,17 +51,6 @@ namespace McSherry.Zener.Core
     public class MediaTypeMap
     {
         private static MediaTypeMap _default;
-        private Dictionary<string, List<string>> _map;
-
-        /// <summary>
-        /// The default media type handler.
-        /// </summary>
-        /// <param name="data">The data for the handler to transform.</param>
-        /// <returns>The transformed data.</returns>
-        public static byte[] DefaultMediaTypeHandler(byte[] data)
-        {
-            return data;
-        }
 
         static MediaTypeMap()
         {
@@ -187,16 +176,31 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// The fallback media type for use when a matching type isn't found.
+        /// </summary>
+        public const string FallbackType = "text/plain";
+        /// <summary>
+        /// The default media type handler.
+        /// </summary>
+        /// <param name="data">The data for the handler to transform.</param>
+        /// <returns>The transformed data.</returns>
+        public static byte[] DefaultMediaTypeHandler(byte[] data)
+        {
+            return data;
+        }
+        /// <summary>
         /// The default mapping of media types to file extensions.
         /// </summary>
         public static MediaTypeMap Default
         {
             get { return _default; }
         }
-        /// <summary>
-        /// The fallback media type for use when a matching type isn't found.
-        /// </summary>
-        public const string FallbackType = "text/plain";
+
+        /*****/
+
+        private List<MediaType> _types;
+        private List<List<string>> _extensions;
+        private List<MediaTypeHandler> _handlers;
 
         /// <summary>
         /// Creates a new MediaTypeMap.
@@ -207,29 +211,135 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
-        /// Associates a media type with file extensions.
+        /// Adds a new media type definition to the map with the
+        /// default handler.
         /// </summary>
-        public void Add(string mediaType, params string[] fileExtension)
+        /// <param name="mediaType">The media type to add.</param>
+        /// <param name="extensions">
+        /// The list of file extensions to associated with this media
+        /// type and handler.
+        /// </param>
+        /// <returns>
+        /// The MediaTypeMap that the media type was added to. This permits
+        /// chaining calls to MediaTypeMap.Add.
+        /// </returns>
+        public MediaTypeMap Add(
+            MediaType mediaType,
+            params string[] extensions
+            )
         {
-            mediaType = mediaType.ToLower().Trim();
-
-            if (_map.ContainsKey(mediaType))
-            {
-                var exts = _map[mediaType];
-
-                exts.AddRange(
-                    fileExtension
-                        .Select(e => e.ToLower().Trim())
-                        .Where(e => !exts.Contains(e))
-                    );
-            }
-            else
-            {
-                _map.Add(mediaType, fileExtension
-                    .Select(e => e.ToLower().Trim()).ToList()
-                    );
-            }
+            return this.Add(
+                mediaType:  mediaType,
+                extensions: extensions.ToList()
+                );
         }
+        /// <summary>
+        /// Adds a new media type definition to the map with the
+        /// default handler.
+        /// </summary>
+        /// <param name="mediaType">The media type to add.</param>
+        /// <param name="extensions">
+        /// The list of file extensions to associated with this media
+        /// type and handler.
+        /// </param>
+        /// <returns>
+        /// The MediaTypeMap that the media type was added to. This permits
+        /// chaining calls to MediaTypeMap.Add.
+        /// </returns>
+        public MediaTypeMap Add(
+            MediaType mediaType, List<string> extensions
+            )
+        {
+            return this.Add(
+                mediaType:  mediaType,
+                handler:    MediaTypeMap.DefaultMediaTypeHandler,
+                extensions: extensions
+                );
+        }
+        /// <summary>
+        /// Adds a new media type definition to the map.
+        /// </summary>
+        /// <param name="mediaType">The media type to add.</param>
+        /// <param name="handler">
+        /// The function to use when serving content that uses this
+        /// media type. This may be a transformation function (for example,
+        /// decompressing a Gzip archive before serving it).
+        /// </param>
+        /// <param name="extensions">
+        /// The list of file extensions to associated with this media
+        /// type and handler.
+        /// </param>
+        /// <returns>
+        /// The MediaTypeMap that the media type was added to. This permits
+        /// chaining calls to MediaTypeMap.Add.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided MediaType is null, the provided
+        /// MediaTypeHandler is null, or when the provided list of
+        /// extensions is null or empty.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the MediaTypeMap contains a MediaType identical
+        /// to the one passed to the method.
+        /// 
+        /// Thrown when one or more of the extensions passed in the list
+        /// of extensions is already present within the map.
+        /// </exception>
+        public MediaTypeMap Add(
+            MediaType mediaType,
+            MediaTypeHandler handler,
+            List<string> extensions
+            )
+        {
+            if (mediaType == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided MediaType must not be null."
+                    );
+            }
+            if (handler == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided handler must not be null."
+                    );
+            }
+            if (extensions == null || extensions.Count == 0)
+            {
+                throw new ArgumentNullException(
+                    "The provided list of extensions must not be null or empty."
+                    );
+            }
+
+            // We can't have exact duplicates within the list
+            // of media types.
+            if (_types.Any(m => m.Equals(mediaType)))
+            {
+                throw new ArgumentException(
+                    "There is an identical media type already within the map."
+                    );
+            }
+
+            // Trim the extensions of any whitespace, and remove any
+            // leading or trailing periods.
+            extensions = extensions.Select(s => s.Trim(' ', '.')).ToList();
+            
+            // Check that the map does not contain any of the extensions
+            // that have been passed to this method.
+            if (_extensions.SelectMany(l => l).Any(extensions.Contains))
+            {
+                throw new ArgumentException(
+                    "There is a file extension already within the map."
+                    );
+            }
+
+            // Add the new media type/etc to the map.
+            _types.Add(mediaType);
+            _extensions.Add(extensions);
+            _handlers.Add(handler);
+
+            return this;
+        }
+
         /// <summary>
         /// Determines the media type for a given file extension.
         /// </summary>
