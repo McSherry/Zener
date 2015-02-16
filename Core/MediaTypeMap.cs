@@ -116,6 +116,8 @@ namespace McSherry.Zener.Core
             _types = new List<MediaType>();
             _extensions = new List<List<string>>();
             _handlers = new List<MediaTypeHandler>();
+
+            this.DefaultType = MediaType.PlainText;
         }
 
         /// <summary>
@@ -250,6 +252,7 @@ namespace McSherry.Zener.Core
             return this;
         }
 
+
         /// <summary>
         /// Determines the media type to use based on a file
         /// </summary>
@@ -300,6 +303,7 @@ namespace McSherry.Zener.Core
                 );
             return true;
         }
+
         /// <summary>
         /// Produces a copy of a MediaTypeMap.
         /// </summary>
