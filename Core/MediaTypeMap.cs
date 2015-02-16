@@ -258,15 +258,14 @@ namespace McSherry.Zener.Core
         /// <param name="mediaType">
         /// The MediaType to find the handler and extensions for.
         /// </param>
-        /// <param name="result">
+        /// <param name="handler">
         /// The handler and extensions associated with the MediaType.
         /// </param>
         /// <returns>
         /// True if a result was found.
         /// </returns>
         public bool TryFindHandler(
-            MediaType mediaType,
-            out Tuple<MediaTypeHandler, List<string>> result
+            MediaType mediaType, out MediaTypeHandler handler
             )
         {
             var resIndex = Enumerable
@@ -290,18 +289,17 @@ namespace McSherry.Zener.Core
                 .DefaultIfEmpty(-1)
                 .First();
 
-            if (resIndex == -1)
+            bool found;
+            if ((found = resIndex == -1))
             {
-                result = null;
-
-                return false;
+                handler = null;
+            }
+            else
+            {
+                handler = _handlers[resIndex];
             }
 
-            result = new Tuple<MediaTypeHandler, List<string>>(
-                _handlers[resIndex], _extensions[resIndex]
-                );
-
-            return true;
+            return found;
         }
         /// <summary>
         /// Determines the media type to use based on a file extension,
