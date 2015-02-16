@@ -55,124 +55,29 @@ namespace McSherry.Zener.Core
         static MediaTypeMap()
         {
             _default = new MediaTypeMap()
-            {
-                _map = new Dictionary<string, List<string>>()
-                {
-                    #region text/* Media Types
-                    { 
-                        "text/plain",
-                        new List<string>() 
-                        { 
-                            ".txt"
-                        } 
-                    },
-                    {
-                        "text/css",
-                        new List<string>()
-                        {
-                            ".css"
-                        }
-                    },
-                    {
-                        "text/html",
-                        new List<string>()
-                        {
-                            ".htm", ".html"
-                        }
-                    },
-                    {
-                        "text/xml",
-                        new List<string>()
-                        {
-                            ".xml"
-                        }
-                    },
-                    #endregion
-                    #region image/* Media Types
-                    {
-                        "image/png",
-                        new List<string>()
-                        {
-                            ".png", ".apng"
-                        }
-                    },
-                    {
-                        "image/tiff",
-                        new List<string>()
-                        {
-                            ".tif", ".tiff"
-                        }
-                    },
-                    {
-                        "image/jpeg",
-                        new List<string>()
-                        {
-                            ".jpg", ".jpeg"
-                        }
-                    },
-                    {
-                        "image/gif",
-                        new List<string>()
-                        {
-                            ".gif"
-                        }
-                    },
-                    {
-                        "image/bmp",
-                        new List<string>()
-                        {
-                            ".bmp", ".dib"
-                        }
-                    },
-                    #endregion
-                    #region video/* Media Types
-                    {
-                        "video/mp4",
-                        new List<string>()
-                        {
-                            ".mp4", ".m4v",
-                        }
-                    },
-                    {
-                        "video/avi",
-                        new List<string>()
-                        {
-                            ".avi"
-                        }
-                    },
-                    #endregion
-                    #region application/* Media Types
-                    {
-                        "application/javascript",
-                        new List<string>()
-                        {
-                            ".js", ".jsonp"
-                        }
-                    },
-                    {
-                        "application/json",
-                        new List<string>()
-                        {
-                            ".json"
-                        }
-                    },
-                    {
-                        "application/dart",
-                        new List<string>()
-                        {
-                            ".dart"
-                        }
-                    },
-                    {
-                        "application/xhtml+xml",
-                        new List<string>()
-                        {
-                             ".xht", ".xhtml"
-                        }
-                    }
-                    #endregion
-                }
-            };
+            #region text/* Media Types
+                .Add("text/plain", ".txt")
+                .Add("text/css", ".css")
+                .Add("text/html", ".htm", ".html")
+            #endregion
+            #region image/* Media Types
+                .Add("image/png", ".png", ".apng")
+                .Add("image/tiff", ".tif", ".tiff")
+                .Add("image/jpeg", ".jpg", ".jpeg")
+                .Add("image/gif", ".gif")
+                .Add("image/bmp", ".bmp", ".dib")
+            #endregion
+            #region video/* Media Types
+                .Add("video/mp4", ".mp4", ".m4v")
+                .Add("video/avi", ".avi")
+            #endregion
+            #region application/* Media Types
+                .Add("application/javascript", ".js", ".jsonp")
+                .Add("application/json", ".json")
+                .Add("application/xml", ".xml")
+                .Add("application/xhtml+xml", ".xht", ".xhtml")
+            #endregion
+                ;
         }
 
         /// <summary>
