@@ -34,7 +34,7 @@ namespace McSherry.Zener.Core
         Personal,
         /// <summary>
         /// The media type is an unregistered or private type, and
-        /// bears the "x." prefix. This prefix is officially deprecated.
+        /// bears the "x." prefix.
         /// </summary>
         Unregistered
     }
