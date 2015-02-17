@@ -266,6 +266,34 @@ namespace McSherry.Zener
             }
         }
 
+        // If the config settings dictate that we're only going to
+        // add API routes to the first virtual host, we're going to
+        // need to store somewhere whether we've already added the
+        // routes to a host.
+        private bool _firstRouteOnlyAdded;
+        // Whether the ZenerContext is locked to prevent changes.
+        private bool _locked;
+        // Checks whether the ZenerContext is locked, and throws an
+        // InvalidOperationException if it is.
+        private void _checkLocked()
+        {
+            if (_locked)
+            {
+                throw new InvalidOperationException(
+                    "Cannot modify configuration settings after the ZenerContext " +
+                    "has been passed to the ZenerCore."
+                    );
+            }
+        }
+
+        private IPAddress _defIpAddr;
+        private ushort _defTcpPort;
+
+        private bool _incDefHost;
+
+        private ZenerApiAdditionRule _apiAddRule;
+        private bool _enableFsApi;
+
         /// <summary>
         /// Adds the routes for any active APIs to the
         /// provided router. To be called from the ZenerCore's
@@ -277,7 +305,7 @@ namespace McSherry.Zener
             // first host and we've already added it to a host, we mustn't add
             // it to another, so we return.
             if (
-                this.ApiAdditionRule == ZenerApiAdditionRule.FirstHost ||
+                this.ApiAdditionRule == ZenerApiAdditionRule.FirstHost &&
                 _firstRouteOnlyAdded
                 )
             {
@@ -294,6 +322,13 @@ namespace McSherry.Zener
             {
                 router.AddHandler(":call/[*method]", Api.MethodCall(this));
             }
+        }
+        /// <summary>
+        /// Locks the ZenerContext to prevent modification.
+        /// </summary>
+        internal void Lock()
+        {
+            _locked = true;
         }
 
         /// <summary>
@@ -355,8 +390,18 @@ namespace McSherry.Zener
         /// </summary>
         public IPAddress DefaultIpAddress
         {
-            get;
-            set;
+            get { return _defIpAddr; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(
+                        "The default IP address cannot be set to null."
+                        );
+
+                _checkLocked();
+
+                _defIpAddr = value;
+            }
         }
         /// <summary>
         /// The TCP port to use by default when adding virtual
@@ -364,8 +409,18 @@ namespace McSherry.Zener
         /// </summary>
         public ushort TcpPort
         {
-            get;
-            set;
+            get { return _defTcpPort; }
+            set
+            {
+                if (value == 0)
+                    throw new ArgumentException(
+                        "The default TCP port cannot be set to zero."
+                        );
+
+                _checkLocked();
+
+                _defTcpPort = value;
+            }
         }
 
         /// <summary>
@@ -375,8 +430,13 @@ namespace McSherry.Zener
         /// </summary>
         public bool IncludeDefaultHost
         {
-            get;
-            set;
+            get { return _incDefHost; }
+            set
+            {
+                _checkLocked();
+
+                _incDefHost = value;
+            }
         }
 
         /// <summary>
@@ -385,8 +445,18 @@ namespace McSherry.Zener
         /// </summary>
         public ZenerApiAdditionRule ApiAdditionRule
         {
-            get;
-            set;
+            get { return _apiAddRule; }
+            set
+            {
+                if (!Enum.IsDefined(typeof(ZenerApiAdditionRule), value))
+                    throw new ArgumentException(
+                        "The API addition rule must be set to a valid value."
+                        );
+
+                _checkLocked();
+
+                _apiAddRule = value;
+            }
         }
         /// <summary>
         /// Whether the file-system API should be enabled
@@ -394,8 +464,13 @@ namespace McSherry.Zener
         /// </summary>
         public bool EnableFileSystemApi
         {
-            get;
-            set;
+            get { return _enableFsApi; }
+            set
+            {
+                _checkLocked();
+
+                _enableFsApi = value;
+            }
         }
         /// <summary>
         /// The methods to make available via the method
