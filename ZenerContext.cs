@@ -285,11 +285,17 @@ namespace McSherry.Zener
         ///     The default IP address to use for virtual hosts.
         /// </param>
         /// <param name="port">The TCP port for the ZenerCore to bind to.</param>
+        /// <param name="defaultHost">
+        /// Whether to create a default, wildcard, virtual host in the ZenerCore's
+        /// router.
+        /// </param>
         /// <param name="useFilesystem">Whether to enable the file system API.</param>
         /// <param name="methods">The methods to make available via the method call API.</param>
         public ZenerContext(
             IPAddress address, 
             ushort port = 80,
+
+            bool defaultHost = true,
 
             bool useFilesystem = false,
             Dictionary<string, Method> methods = null
@@ -298,8 +304,9 @@ namespace McSherry.Zener
             this.DefaultIpAddress = address;
             this.TcpPort = port;
 
-            this.EnableFileSystemApi = useFilesystem;
+            this.IncludeDefaultHost = defaultHost;
 
+            this.EnableFileSystemApi = useFilesystem;
             this.Methods = methods ?? new Dictionary<string, Method>();
         }
 
@@ -315,6 +322,16 @@ namespace McSherry.Zener
         /// The TCP port to bind this ZenerCore to.
         /// </summary>
         public ushort TcpPort
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Whether to include a default, wildcard, virtual host in
+        /// the ZenerCore's router.
+        /// </summary>
+        public bool IncludeDefaultHost
         {
             get;
             set;
