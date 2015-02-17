@@ -273,6 +273,17 @@ namespace McSherry.Zener
         /// </summary>
         internal void AddApiRoutes(Router router)
         {
+            // If the ZenerContext is configured to only add API routes to the
+            // first host and we've already added it to a host, we mustn't add
+            // it to another, so we return.
+            if (
+                this.ApiAdditionRule == ZenerApiAdditionRule.FirstHost ||
+                _firstRouteOnlyAdded
+                )
+            {
+                return;
+            }
+
             if (this.EnableFileSystemApi)
             {
                 router.AddHandler(":fs", Api.Filesystem);
@@ -331,8 +342,11 @@ namespace McSherry.Zener
 
             this.IncludeDefaultHost = addDefaultHost;
 
+            this.ApiAdditionRule = apiAdd;
             this.EnableFileSystemApi = useFilesystem;
             this.Methods = methods ?? new Dictionary<string, Method>();
+
+            _firstRouteOnlyAdded = false;
         }
 
         /// <summary>
