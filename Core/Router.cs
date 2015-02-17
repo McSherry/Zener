@@ -30,7 +30,7 @@ namespace McSherry.Zener.Core
         public Router()
         {
             _routes = new List<Route>();
-            this.MediaTypes = MediaTypeMap.Default;
+            this.MediaTypes = MediaTypeMap.Default.Copy();
         }
 
         /// <summary>
