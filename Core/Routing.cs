@@ -26,7 +26,7 @@ namespace McSherry.Zener.Core
 
         static Routing()
         {
-            Routing.MediaTypes = MediaTypeMap.Default.Copy();
+
         }
 
         /// <summary>
@@ -366,20 +366,16 @@ namespace McSherry.Zener.Core
                 {
                     using (FileStream fs = File.OpenRead(filePath))
                     {
-                        if (!Path.HasExtension(filePath))
-                        {
-                            rs.Headers.Add("Content-Type", "text/plain");
-                        }
-                        else
-                        {
-                            string ext = Path.GetExtension(filePath);
-                            rs.Headers.Add("Content-Type", MediaTypes.Find(ext));
-                        }
+                        var mt = router.MediaTypes.FindMediaType(
+                            filePath, FindParameterType.NameOrPath
+                            );
+
+                        rs.Headers.Add("Content-Type", mt.Item1);
 
                         byte[] response = new byte[fs.Length];
                         fs.Read(response, 0, response.Length);
 
-                        rs.Write(response);
+                        rs.Write(mt.Item2(response));
                     }
                 }
                 catch (DirectoryNotFoundException dnfex)
@@ -475,22 +471,19 @@ namespace McSherry.Zener.Core
         {
             router.AddHandler(format, methods, (rq, rs, prm) =>
             {
-                string mediaType = MediaTypes.Find(filePath, FindParameterType.NameOrPath);
-                rs.Headers.Add("Content-Type", mediaType);
+                var mt = router.MediaTypes.FindMediaType(
+                    filePath, FindParameterType.NameOrPath
+                    );
+                rs.Headers.Add("Content-Type", mt.Item1);
 
                 try
                 {
                     using (FileStream fs = File.OpenRead(filePath))
                     {
-                        // The running total of bytes read from the stream
-                        int runningTotal = 0;
-                        byte[] buf = new byte[HttpResponse.TX_BUFFER_SIZE];
-                        while (runningTotal != fs.Length)
-                        {
-                            runningTotal += fs.Read(buf, 0, buf.Length);
+                        byte[] buf = new byte[fs.Length];
+                        fs.Read(buf, 0, buf.Length);
 
-                            rs.Write(buf);
-                        }
+                        rs.Write(mt.Item2(buf));
                     }
                 }
                 catch (DirectoryNotFoundException dnfex)
@@ -701,15 +694,6 @@ namespace McSherry.Zener.Core
             }
 
             return res;
-        }
-
-        /// <summary>
-        /// A map of media types and file extensions used to determine the media type of files.
-        /// </summary>
-        public static MediaTypeMap MediaTypes
-        {
-            get;
-            set;
         }
     }
 }

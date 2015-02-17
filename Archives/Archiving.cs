@@ -131,14 +131,17 @@ namespace McSherry.Zener.Archives
             if (archive is SingleFileArchive)
             {
                 var sfa = (SingleFileArchive)archive;
-                string mediaType = Routing.MediaTypes.Find(sfa.Filename, FindParameterType.NameOrPath);
+                var data = sfa.Data as byte[] ?? sfa.Data.ToArray();
+                var mt = router
+                    .MediaTypes
+                    .FindMediaType(sfa.Filename, FindParameterType.NameOrPath);
 
                 router.AddHandler(
                     format, methods,
                     (request, response, parameters) =>
                     {
-                        response.Headers.Add("Content-Type", mediaType);
-                        response.Write(sfa.Data);
+                        response.Headers.Add("Content-Type", mt.Item1);
+                        response.Write(mt.Item2(data));
                     });
             }
             else
@@ -167,11 +170,13 @@ namespace McSherry.Zener.Archives
                         if (name == default(string))
                             throw new HttpException(HttpStatus.NotFound, request);
 
-                        response.Headers.Add(
-                            "Content-Type",
-                            Routing.MediaTypes.Find(name, FindParameterType.NameOrPath)
-                            );
-                        response.Write(archive.GetFile(name));
+                        var data = archive.GetFile(name) as byte[]
+                            ?? archive.GetFile(name).ToArray();
+                        var mt = router.MediaTypes
+                            .FindMediaType(name, FindParameterType.NameOrPath);
+
+                        response.Headers.Add("Content-Type", mt.Item1);
+                        response.Write(mt.Item2(data));
                     });
             }
         }
