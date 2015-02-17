@@ -108,6 +108,30 @@ namespace McSherry.Zener.Core
         private List<MediaTypeHandler> _handlers;
         private MediaType _defaultType;
 
+        private int _getMediaTypeIndex(MediaType mt)
+        {
+            return Enumerable
+                .Range(0, _types.Count)
+                .Zip(_types, (i, t) => new { i, t })
+                // We want the MediaTypes with the most parameters to
+                // be checked first. This allows the user to specify
+                // a different handler for MediaTypes with specific
+                // parameter values. For example, these three MediaTypes
+                // could have three different handlers:
+                //
+                //      application/example; version=0
+                //      application/example; version=1
+                //      application/example
+                //
+                // Most users probably won't use this, but it's nice to
+                // have it.
+                .OrderByDescending(o => o.t.Parameters.Count)
+                .Where(o => mt.IsEquivalent(o.t))
+                .Select(o => o.i)
+                .DefaultIfEmpty(-1)
+                .First();
+        }
+
         /// <summary>
         /// Creates a new MediaTypeMap.
         /// </summary>
@@ -309,26 +333,7 @@ namespace McSherry.Zener.Core
             MediaType mediaType, out MediaTypeHandler handler
             )
         {
-            var resIndex = Enumerable
-                .Range(0, _types.Count)
-                .Zip(_types, (i, t) => new { i, t })
-                // We want the MediaTypes with the most parameters to
-                // be checked first. This allows the user to specify
-                // a different handler for MediaTypes with specific
-                // parameter values. For example, these three MediaTypes
-                // could have three different handlers:
-                //
-                //      application/example; version=0
-                //      application/example; version=1
-                //      application/example
-                //
-                // Most users probably won't use this, but it's nice to
-                // have it.
-                .OrderByDescending(o => o.t.Parameters.Count)
-                .Where(o => mediaType.IsEquivalent(o.t))
-                .Select(o => o.i)
-                .DefaultIfEmpty(-1)
-                .First();
+            var resIndex = _getMediaTypeIndex(mediaType);
 
             bool found;
             if ((found = resIndex > -1))
