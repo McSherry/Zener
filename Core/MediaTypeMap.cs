@@ -331,13 +331,13 @@ namespace McSherry.Zener.Core
                 .First();
 
             bool found;
-            if ((found = resIndex == -1))
+            if ((found = resIndex > -1))
             {
-                handler = null;
+                handler = _handlers[resIndex];
             }
             else
             {
-                handler = _handlers[resIndex];
+                handler = null;
             }
 
             return found;
