@@ -318,6 +318,59 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Changes the handler associated with a media type.
+        /// </summary>
+        /// <param name="mediaType">
+        /// The MediaType to change the handler for.
+        /// </param>
+        /// <param name="handler">
+        /// The new handler to associate with the MediaType.
+        /// </param>
+        /// <returns>
+        /// The MediaTypeMap the change was made to. This allows
+        /// chaining calls to the method.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided MediaType or MediaTypeHandler
+        /// is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified MediaType does not exist within
+        /// the map.
+        /// </exception>
+        public MediaTypeMap ChangeHandler(
+            MediaType mediaType, MediaTypeHandler handler
+            )
+        {
+            if (mediaType == null)
+            {
+                throw new ArgumentNullException(
+                    "The specified media type must not be null."
+                    );
+            }
+
+            if (handler == null)
+            {
+                throw new ArgumentNullException(
+                    "The specified handler must not be null."
+                    );
+            }
+
+            int resIndex = _getMediaTypeIndex(mediaType);
+
+            if (resIndex == -1)
+            {
+                throw new ArgumentException(
+                    "The specified media type does not exist within the map."
+                    );
+            }
+
+            _handlers[resIndex] = handler;
+
+            return this;
+        }
+
+        /// <summary>
         /// Finds the handler and extensions for a MediaType.
         /// </summary>
         /// <param name="mediaType">
