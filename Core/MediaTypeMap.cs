@@ -326,11 +326,6 @@ namespace McSherry.Zener.Core
         /// <exception cref="System.ArgumentNullException">
         /// Thrown when the <paramref name="fileExtension"/> parameter is null.
         /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when, after being passed FindParameterType.NameOrPath, the
-        /// parameter <paramref name="fileExtension"/> does not contain a file
-        /// extension.
-        /// </exception>
         public bool TryFindMediaType(
             string fileExtension,
             out Tuple<MediaType, MediaTypeHandler> result,
@@ -352,9 +347,12 @@ namespace McSherry.Zener.Core
             {
                 if (!Path.HasExtension(fileExtension))
                 {
-                    throw new ArgumentException(
-                        "The specified name or path has no file extension."
-                        );
+                    // If there's no extension, we can't attempt to determine
+                    // the media type. By returning false instead of throwing
+                    // an exception, the Routing.FindMediaType method can return
+                    // the default media type.
+                    result = null;
+                    return false;
                 }
 
                 fileExtension = Path.GetExtension(fileExtension).Trim('.');

@@ -672,11 +672,6 @@ namespace McSherry.Zener.Core
         /// Thrown when the <paramref name="fileExtension"/> or the
         /// <paramref name="map"/> is null.
         /// </exception>
-        /// <exception cref="System.ArgumentException">
-        /// Thrown when, after being passed FindParameterType.NameOrPath, the
-        /// parameter <paramref name="fileExtension"/> does not contain a file
-        /// extension.
-        /// </exception>
         public static Tuple<MediaType, MediaTypeHandler> FindMediaType(
             this MediaTypeMap map, string fileExtension,
             FindParameterType findType = FindParameterType.Extension
