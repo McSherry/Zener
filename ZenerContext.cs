@@ -366,6 +366,15 @@ namespace McSherry.Zener
         }
 
         /// <summary>
+        /// Specifies how ZenerCore APIs should be added to
+        /// virtual hosts.
+        /// </summary>
+        public ZenerApiAdditionRule ApiAdditionRule
+        {
+            get;
+            set;
+        }
+        /// <summary>
         /// Whether the file-system API should be enabled
         /// for the ZenerCore.
         /// </summary>
