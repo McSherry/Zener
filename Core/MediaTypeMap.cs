@@ -198,6 +198,47 @@ namespace McSherry.Zener.Core
         public MediaTypeMap Add(
             MediaType mediaType,
             MediaTypeHandler handler,
+            params string[] extensions
+            )
+        {
+            return this.Add(
+                mediaType:  mediaType,
+                handler:    handler,
+                extensions: extensions.ToList()
+                );
+        }
+        /// <summary>
+        /// Adds a new media type definition to the map.
+        /// </summary>
+        /// <param name="mediaType">The media type to add.</param>
+        /// <param name="handler">
+        /// The function to use when serving content that uses this
+        /// media type. This may be a transformation function (for example,
+        /// decompressing a Gzip archive before serving it).
+        /// </param>
+        /// <param name="extensions">
+        /// The list of file extensions to associated with this media
+        /// type and handler.
+        /// </param>
+        /// <returns>
+        /// The MediaTypeMap that the media type was added to. This permits
+        /// chaining calls to MediaTypeMap.Add.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided MediaType is null, the provided
+        /// MediaTypeHandler is null, or when the provided list of
+        /// extensions is null or empty.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the MediaTypeMap contains a MediaType identical
+        /// to the one passed to the method.
+        /// 
+        /// Thrown when one or more of the extensions passed in the list
+        /// of extensions is already present within the map.
+        /// </exception>
+        public MediaTypeMap Add(
+            MediaType mediaType,
+            MediaTypeHandler handler,
             List<string> extensions
             )
         {
