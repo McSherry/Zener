@@ -24,6 +24,22 @@ using RouteList = System.Collections.Generic
 namespace McSherry.Zener
 {
     /// <summary>
+    /// Used to indicate how ZenerCore API routes should be
+    /// added to virtual hosts.
+    /// </summary>
+    public enum ZenerApiAdditionRule
+    {
+        /// <summary>
+        /// The API routes should be added to the first host only.
+        /// </summary>
+        FirstHost,
+        /// <summary>
+        /// The API routes should be added to every host.
+        /// </summary>
+        AllHosts
+    }
+
+    /// <summary>
     /// Used to pass state information to a ZenerCore.
     /// </summary>
     public class ZenerContext
@@ -279,39 +295,49 @@ namespace McSherry.Zener
 
         }
         /// <summary>
-        /// Creates a new ZenerCoreContext.
+        /// Creates a new ZenerContext.
         /// </summary>
-        /// <param name="address">
-        ///     The default IP address to use for virtual hosts.
+        /// <param name="defaultAddress">
+        /// The default IP address to bind to when adding virtual
+        /// hosts to the ZenerCore.
         /// </param>
-        /// <param name="port">The TCP port for the ZenerCore to bind to.</param>
-        /// <param name="defaultHost">
-        /// Whether to create a default, wildcard, virtual host in the ZenerCore's
-        /// router.
+        /// <param name="defaultPort">
+        /// The default port to bind to when adding virtual hosts
+        /// to the ZenerCore.
+        /// </param>
+        /// <param name="addDefaultHost">
+        /// Whether to add a wildcard virtual host to the ZenerCore
+        /// during instantiation. This host uses the default IP address
+        /// and port.
+        /// </param>
+        /// <param name="apiAdd">
+        /// Specifies how API routes should be added to virtual hosts.
         /// </param>
         /// <param name="useFilesystem">Whether to enable the file system API.</param>
         /// <param name="methods">The methods to make available via the method call API.</param>
         public ZenerContext(
-            IPAddress address, 
-            ushort port = 80,
+            IPAddress defaultAddress,
+            ushort defaultPort          = 80,
 
-            bool defaultHost = true,
+            bool addDefaultHost         = true,
 
-            bool useFilesystem = false,
+            ZenerApiAdditionRule apiAdd = ZenerApiAdditionRule.FirstHost,
+            bool useFilesystem          = false,
             Dictionary<string, Method> methods = null
             )
         {
-            this.DefaultIpAddress = address;
-            this.TcpPort = port;
+            this.DefaultIpAddress = defaultAddress;
+            this.TcpPort = defaultPort;
 
-            this.IncludeDefaultHost = defaultHost;
+            this.IncludeDefaultHost = addDefaultHost;
 
             this.EnableFileSystemApi = useFilesystem;
             this.Methods = methods ?? new Dictionary<string, Method>();
         }
 
         /// <summary>
-        /// The IP address for the ZenerCore to bind to.
+        /// The IP address to use by default when adding virtual
+        /// hosts to the ZenerCore.
         /// </summary>
         public IPAddress DefaultIpAddress
         {
@@ -319,7 +345,8 @@ namespace McSherry.Zener
             set;
         }
         /// <summary>
-        /// The TCP port to bind this ZenerCore to.
+        /// The TCP port to use by default when adding virtual
+        /// hosts to the ZenerCore.
         /// </summary>
         public ushort TcpPort
         {
@@ -328,8 +355,9 @@ namespace McSherry.Zener
         }
 
         /// <summary>
-        /// Whether to include a default, wildcard, virtual host in
-        /// the ZenerCore's router.
+        /// Whether to include a default wildcard virtual host in
+        /// the ZenerCore's router. This route binds to the default
+        /// IP address and port.
         /// </summary>
         public bool IncludeDefaultHost
         {
