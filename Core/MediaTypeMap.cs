@@ -371,6 +371,46 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Gets a reference to the list of extensions associated
+        /// with the specified MediaType.
+        /// </summary>
+        /// <param name="mediaType">
+        /// The MediaType to retrieve the associated extensions
+        /// for.
+        /// </param>
+        /// <returns>
+        /// A reference to the list of extensions associated with
+        /// the provided MediaType.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided MediaType is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided MediaType does not exist
+        /// within the map.
+        /// </exception>
+        public IList<string> GetExtensions(MediaType mediaType)
+        {
+            if (mediaType == null)
+            {
+                throw new ArgumentNullException(
+                    "The specified media type must not be null."
+                    );
+            }
+
+            int resIndex = _getMediaTypeIndex(mediaType);
+
+            if (resIndex == -1)
+            {
+                throw new ArgumentException(
+                    "The specified media type does not exist within the map."
+                    );
+            }
+
+            return _extensions[resIndex];
+        }
+
+        /// <summary>
         /// Finds the handler and extensions for a MediaType.
         /// </summary>
         /// <param name="mediaType">
