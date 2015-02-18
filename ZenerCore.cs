@@ -32,7 +32,17 @@ namespace McSherry.Zener
     /// </summary>
     public class ZenerCore
     {
-        private const string INTERNAL_PREFIX = ":";
+        private const string 
+            INTERNAL_PREFIX     = ":",
+            HDR_HOST            = "Host",
+
+            URI_HTTP            = "http:",
+            HTTP_VERSION_1_1    = "HTTP/1.1",
+
+            // The names of items stored within
+            // thread-local storage.
+            TLS_VHOST           = "VirtualHost"
+            ;
         private static readonly Version _ver;
 
         // To support virtual hosting, and having individual error handlers
@@ -81,23 +91,23 @@ namespace McSherry.Zener
                               sv.Port == host.Port
                         )
                     .ToList();
-            }
 
-            if (servers.Count == 0)
-            {
-                // There are no matching servers at this time, so we
-                // need to add one.
+                if (servers.Count == 0)
+                {
+                    // There are no matching servers at this time, so we
+                    // need to add one.
 
-                // Create a new HttpServer listening on the specified
-                // IP address and port.
-                var sv = new HttpServer(host.BindAddress, host.Port);
-                // Add it to our set of servers.
-                servers.Add(sv);
-                // Bind the message handler to this HttpServer's
-                // EmitMessage event.
-                sv.MessageEmitted += this.HttpServerMessageHandler;
-                // Start the server.
-                sv.Start();
+                    // Create a new HttpServer listening on the specified
+                    // IP address and port.
+                    var sv = new HttpServer(host.BindAddress, host.Port);
+                    // Add it to our set of servers.
+                    servers.Add(sv);
+                    // Bind the message handler to this HttpServer's
+                    // EmitMessage event.
+                    sv.MessageEmitted += this.HttpServerMessageHandler;
+                    // Start the server.
+                    sv.Start();
+                }
             }
 
             // Add any API methods to the host's router.
@@ -114,33 +124,91 @@ namespace McSherry.Zener
                     HttpRequest req = (HttpRequest)msg.Arguments[0];
                     HttpResponse res = (HttpResponse)msg.Arguments[1];
 
-                    /* We want to be able to provide two different error
-                     * messages to aid debugging. If no route matches exist,
-                     * we want to provide a 404 (Not Found). However, if
-                     * matches exist but the request method is not acceptable,
-                     * we want to provide 405 (Method Not Acceptable).
+                    /* To properly use virtual hosting, we need to make sure that
+                     * the client is sending HTTP 'Host' headers. These headers are
+                     * what we'll use to determine the virtual host to add.
                      */
-                    var routes = this.Routes.Find(req.Path);
-
-                    // Absolutely no matches, 404.
-                    if (routes.Count() == 0)
+                    var hostHdr = req.Headers[HDR_HOST].FirstOrDefault();
+                    VirtualHost host;
+                    dynamic hostParams;
+                    // If hostHdr is the default value, the client hasn't sent a
+                    // 'Host' header.
+                    if (hostHdr == default(HttpHeader))
                     {
-                        throw new HttpException(HttpStatus.NotFound, req);
+                        // HTTP/1.1 clients are required to provide a 'Host' header.
+                        // We'll check the version to see whether the client is HTTP/1.1.
+                        // If it is, we follow the standard and return a Bad Request
+                        // response.
+                        if (req.HttpVersion.Equals(
+                            HTTP_VERSION_1_1, StringComparison.OrdinalIgnoreCase
+                            ))
+                        {
+                            throw new HttpRequestException(
+                                request:    req,
+                                message:    "The client reported HTTP/1.1 but did not" +
+                                            "provide a \"Host\" header."
+                                );
+                        }
+
+                        // If the client hasn't sent us a 'Host' header, we'll try
+                        // to respond using the default virtual host. To do this, we
+                        // need to check that a default virtual host exists.
+                        if (this.DefaultHost == null)
+                        {
+                            // If we're here, there is no default virtual host, so
+                            // we'll use an error handler to respond to the client.
+                            throw new HttpException(
+                                status:     HttpStatus.InternalServerError,
+                                request:    req,
+                                message:    "The client did not send a \"Host\" header, " +
+                                            "and the server does not have an appropriate" +
+                                            " error handler."
+                                );
+                        }
+
+                        host = this.DefaultHost;
+                        hostParams = new Empty();
+                    }
+                    else
+                    {
+                        // The client has sent a 'Host' header, so we now need to parse
+                        // that header. The host should be a valid URI, so we can use
+                        // the built-in Uri class to validate it.
+                        Uri hostUri;
+                        string uriString;
+                        // Some 'Host' headers may not start with a URI scheme. We don't
+                        // actually care about the scheme, but the Uri class needs one to
+                        // work properly. We check to see whether the URI string starts
+                        // 'http:'.
+                        if (!hostHdr.Value.StartsWith(URI_HTTP))
+                        {
+                            // We prefix the Uri with 'http://'. As long as the URI is
+                            // okay (for example, it's 'www.example.org'), this will
+                            // work just fine.
+                            uriString = String.Format("http://{0}", hostHdr.Value);
+                        }
+                        else
+                        {
+                            // The 'Host' header appears to have a URI scheme. Carry on.
+                            uriString = hostHdr.Value;
+                        }
+
+                        try
+                        {
+                            // The Uri class will validate the 'Host' header for us.
+                            hostUri = new Uri(uriString);
+                        }
+                        catch (UriFormatException ufex)
+                        {
+                            throw new HttpRequestException(
+                                request:        req,
+                                message:        "The client sent a malformed \"Host\" header.",
+                                innerException: ufex
+                                );
+                        }
                     }
 
-                    routes = routes
-                        .Where(t => t.Item1.MethodIsAcceptable(req.Method))
-                        .ToList();
-
-                    // No acceptable matches, 405.
-                    if (routes.Count() == 0)
-                    {
-                        throw new HttpException(HttpStatus.MethodNotAllowed, req);
-                    }
-
-                    // We've got a match!
-                    var route = routes.First();
-                    route.Item1.Handler(req, res, route.Item2);
+                    throw new NotImplementedException();
                 } break;
                 case MessageType.InvokeErrorHandler:
                 {
