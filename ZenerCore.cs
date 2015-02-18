@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.IO;
@@ -16,6 +17,8 @@ using System.Dynamic;
 
 using McSherry.Zener.Net;
 using McSherry.Zener.Core;
+
+using StrObjDict = System.Collections.Generic.Dictionary<string, object>;
 
 namespace McSherry.Zener
 {
@@ -45,8 +48,13 @@ namespace McSherry.Zener
         // Implementing it as a Dictionary rather than a ThreadStatic VirtualHost
         // field provides better forwards compatibility, as we can easily expand the
         // number of values we're storing.
-        [ThreadStatic]
-        private readonly Dictionary<string, object> TLS;
+        private static readonly ThreadLocal<StrObjDict> TLS;
+
+        static ZenerCore()
+        {
+            _ver = Assembly.GetCallingAssembly().GetName().Version;
+            TLS = new ThreadLocal<StrObjDict>(() => new StrObjDict());
+        }
 
         private List<HttpServer> _httpServers;
         private ZenerContext _context;
@@ -165,11 +173,6 @@ namespace McSherry.Zener
                     handler(null, res, rPr);
                 } break;
             }
-        }
-
-        static ZenerCore()
-        {
-            _ver = Assembly.GetCallingAssembly().GetName().Version;
         }
 
         /// <summary>
