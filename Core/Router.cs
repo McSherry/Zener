@@ -23,6 +23,7 @@ namespace McSherry.Zener.Core
     {
         private List<Route> _routes;
         private MediaTypeMap _map;
+        private object _lockbox;
 
         /// <summary>
         /// Creates a new Router class.
@@ -31,6 +32,7 @@ namespace McSherry.Zener.Core
         {
             _routes = new List<Route>();
             this.MediaTypes = MediaTypeMap.Default.Copy();
+            _lockbox = new object();
         }
 
         /// <summary>
@@ -56,10 +58,14 @@ namespace McSherry.Zener.Core
              */
 
             List<dynamic> validParams = new List<dynamic>();
+            List<Route> validHandlers;
 
-            var validHandlers = _routes
-                .Where(r => r.TryMatch(path, method, validParams.Add))
-                .ToList();
+            lock (_lockbox)
+            {
+                validHandlers = _routes
+                    .Where(r => r.TryMatch(path, method, validParams.Add))
+                    .ToList();
+            }
 
             if (validHandlers.Count == 0)
             {
@@ -85,9 +91,13 @@ namespace McSherry.Zener.Core
             out HttpRequestHandler handler
             )
         {
-            var named = _routes
-                .Where(r => r.Name.Equals(name, StringComparison.Ordinal))
-                .FirstOrDefault();
+            Route named;
+            lock (_lockbox)
+            {
+                named = _routes
+                    .Where(r => r.Name.Equals(name, StringComparison.Ordinal))
+                    .FirstOrDefault();
+            }
 
             bool ret = named == default(Route);
             if (ret)
@@ -172,9 +182,12 @@ namespace McSherry.Zener.Core
         {
             var route = new Route(format, handler, methods) { Name = name };
 
-            _routes.RemoveAll(r => r.Format.Equals(route.Format) || r.Name.Equals(route.Name));
+            lock (_lockbox)
+            {
+                _routes.RemoveAll(r => r.Format.Equals(route.Format) || r.Name.Equals(route.Name));
 
-            _routes.Add(route);
+                _routes.Add(route);
+            }
         }
 
         void ICollection<Route>.Add(Route route)

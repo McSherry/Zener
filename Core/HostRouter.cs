@@ -21,6 +21,7 @@ namespace McSherry.Zener.Core
     {
         private List<VirtualHost> _hosts;
         private IPAddress _defaultIp;
+        private object _lockbox;
 
         /// <summary>
         /// Creates a new HostRouter.
@@ -45,6 +46,7 @@ namespace McSherry.Zener.Core
 
             _hosts = new List<VirtualHost>();
             _defaultIp = defaultBindAddress;
+            _lockbox = new object();
         }
 
         /// <summary>
@@ -98,13 +100,16 @@ namespace McSherry.Zener.Core
 
             List<dynamic> hostParams = new List<dynamic>();
 
-            return _hosts
-                .Where(v => v.TryMatch(host, port, hostParams.Add))
-                .ToList()
-                .Zip(hostParams, (v, p) => new Tuple<VirtualHost, dynamic>(v, p))
-                .OrderBy(t => t.Item1.IsWildcard())
-                .ThenByDescending(t => t.Item2 is Empty)
-                .FirstOrDefault();
+            lock (_lockbox)
+            {
+                return _hosts
+                    .Where(v => v.TryMatch(host, port, hostParams.Add))
+                    .ToList()
+                    .Zip(hostParams, (v, p) => new Tuple<VirtualHost, dynamic>(v, p))
+                    .OrderBy(t => t.Item1.IsWildcard())
+                    .ThenByDescending(t => t.Item2 is Empty)
+                    .FirstOrDefault();
+            }
         }
 
         /// <summary>
@@ -178,18 +183,21 @@ namespace McSherry.Zener.Core
         /// <param name="host">The virtual host to add.</param>
         public void AddHost(VirtualHost host)
         {
-            _hosts.RemoveAll(
-                v => v.Format.Equals(host.Format) && v.Port == host.Port
-                );
-
-            _hosts.Add(host);
-
-            // If there are no handlers, this will be
-            // null, and we won't be able to fire it.
-            if (this.HostAdded != null)
+            lock (_lockbox)
             {
-                // Fire the event.
-                this.HostAdded(this, host);
+                _hosts.RemoveAll(
+                    v => v.Format.Equals(host.Format) && v.Port == host.Port
+                    );
+
+                _hosts.Add(host);
+
+                // If there are no handlers, this will be
+                // null, and we won't be able to fire it.
+                if (this.HostAdded != null)
+                {
+                    // Fire the event.
+                    this.HostAdded(this, host);
+                }
             }
         }
 

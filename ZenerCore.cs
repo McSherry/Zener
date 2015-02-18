@@ -34,6 +34,7 @@ namespace McSherry.Zener
 
         private List<HttpServer> _httpServers;
         private ZenerContext _context;
+        private object _lockbox;
 
         /// <summary>
         /// The current version of Zener.
@@ -45,14 +46,18 @@ namespace McSherry.Zener
 
         private void VirtualHostAddedHandler(object sender, VirtualHost host)
         {
-            // We want to check to see if there are any matching HttpServer
-            // instances already created.
-            var servers = _httpServers
-                .Where(
-                    sv => sv.IpAddress == host.BindAddress &&
-                          sv.Port      == host.Port
-                    )
-                .ToList();
+            List<HttpServer> servers;
+            lock (_lockbox)
+            {
+                // We want to check to see if there are any matching HttpServer
+                // instances already created.
+                servers = _httpServers
+                    .Where(
+                        sv => sv.IpAddress == host.BindAddress &&
+                              sv.Port == host.Port
+                        )
+                    .ToList();
+            }
 
             if (servers.Count == 0)
             {
@@ -160,6 +165,7 @@ namespace McSherry.Zener
             this.Hosts = new HostRouter(context.DefaultIpAddress);
             _httpServers = new List<HttpServer>();
             _context = context;
+            _lockbox = new object();
         }
 
         /// <summary>
