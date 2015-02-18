@@ -33,6 +33,7 @@ namespace McSherry.Zener
         private static readonly Version _ver;
 
         private HttpServer _http;
+        private ZenerContext _context;
 
         /// <summary>
         /// The current version of Zener.
@@ -124,12 +125,35 @@ namespace McSherry.Zener
         public ZenerCore(ZenerContext context)
         {
             this.Routes = new Router();
+            this.Hosts = new HostRouter(context.DefaultIpAddress);
+            _context = context;
             _http = new HttpServer(context.DefaultIpAddress, context.TcpPort);
             _http.MessageEmitted += this.HttpServerMessageHandler;
 
             context.AddApiRoutes(this.Routes);
 
             _http.Start();
+        }
+
+        /// <summary>
+        /// The default wildcard virtual host, if one 
+        /// </summary>
+        public VirtualHost DefaultHost
+        {
+            get
+            {
+                return this.Hosts
+                    .Where(v => v.IsWildcard() && v.Port == _context.TcpPort)
+                    .FirstOrDefault();
+            }
+        }
+        /// <summary>
+        /// The virtual hosts that are associated with this ZenerCore.
+        /// </summary>
+        public HostRouter Hosts
+        {
+            get;
+            private set;
         }
 
         /// <summary>
