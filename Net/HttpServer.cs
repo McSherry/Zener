@@ -193,6 +193,7 @@ namespace McSherry.Zener.Net
 
         private TcpListener _listener;
         private Thread _listenThread;
+        private IPAddress _ip;
         private int _port;
         private volatile bool _acceptConnections = true;
 
@@ -372,6 +373,7 @@ namespace McSherry.Zener.Net
         /// <param name="port">The TCP port to listen on.</param>
         public HttpServer(IPAddress address, ushort port)
         {
+            _ip = address;
             _port = port;
             // Recommendation: Go directly to 127.0.0.1 and avoid the use of
             // 'localhost'. Windows seems to have a rather slow DNS resolver,
@@ -380,6 +382,13 @@ namespace McSherry.Zener.Net
             _listenThread = new Thread(TcpAcceptor);
         }
 
+        /// <summary>
+        /// The IP address thae the server is listening on.
+        /// </summary>
+        public IPAddress IpAddress
+        {
+            get { return _ip; }
+        }
         /// <summary>
         /// The TCP port the server is listening on.
         /// </summary>
