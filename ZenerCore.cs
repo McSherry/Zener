@@ -32,6 +32,22 @@ namespace McSherry.Zener
         private const string INTERNAL_PREFIX = ":";
         private static readonly Version _ver;
 
+        // To support virtual hosting, and having individual error handlers
+        // for individual virtual hosts, we're going to need to have somewhere
+        // to store any type of data.
+        //
+        // For example, if a handler throws an HttpException, we will receive an
+        // InvokeErrorHandler message. The handler for this message will be executed
+        // on the same thread the exception was thrown on. By storing in this
+        // Dictionary the VirtualHost that we retrieved routes from, we can use the
+        // correct router to look up error-handling routes.
+        //
+        // Implementing it as a Dictionary rather than a ThreadStatic VirtualHost
+        // field provides better forwards compatibility, as we can easily expand the
+        // number of values we're storing.
+        [ThreadStatic]
+        private readonly Dictionary<string, object> TLS;
+
         private List<HttpServer> _httpServers;
         private ZenerContext _context;
         private object _lockbox;
