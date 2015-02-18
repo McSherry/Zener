@@ -43,6 +43,39 @@ namespace McSherry.Zener
             get { return _ver; }
         }
 
+        private void VirtualHostAddedHandler(object sender, VirtualHost host)
+        {
+            // We want to check to see if there are any matching HttpServer
+            // instances already created.
+            var servers = _httpServers
+                .Where(
+                    sv => sv.IpAddress == host.BindAddress &&
+                          sv.Port      == host.Port
+                    )
+                .ToList();
+
+            if (servers.Count == 0)
+            {
+                // There are no matching servers at this time, so we
+                // need to add one.
+
+                // Create a new HttpServer listening on the specified
+                // IP address and port.
+                var sv = new HttpServer(host.BindAddress, host.Port);
+                // Add it to our set of servers.
+                servers.Add(sv);
+                // Bind the message handler to this HttpServer's
+                // EmitMessage event.
+                sv.MessageEmitted += this.HttpServerMessageHandler;
+                // Start the server.
+                sv.Start();
+            }
+
+            // Add any API methods to the host's router.
+            _context.AddApiRoutes(host.Router);
+            // Add the host to our host router.
+            this.Hosts.AddHost(host);
+        }
         private void HttpServerMessageHandler(HttpServerMessage msg)
         {
             switch (msg.Type)
