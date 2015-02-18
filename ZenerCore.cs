@@ -32,7 +32,7 @@ namespace McSherry.Zener
         private const string INTERNAL_PREFIX = ":";
         private static readonly Version _ver;
 
-        private HttpServer _http;
+        private List<HttpServer> _httpServers;
         private ZenerContext _context;
 
         /// <summary>
@@ -124,15 +124,9 @@ namespace McSherry.Zener
         /// <param name="context">The context to use when creating the ZenerCore.</param>
         public ZenerCore(ZenerContext context)
         {
-            this.Routes = new Router();
             this.Hosts = new HostRouter(context.DefaultIpAddress);
+            _httpServers = new List<HttpServer>();
             _context = context;
-            _http = new HttpServer(context.DefaultIpAddress, context.TcpPort);
-            _http.MessageEmitted += this.HttpServerMessageHandler;
-
-            context.AddApiRoutes(this.Routes);
-
-            _http.Start();
         }
 
         /// <summary>
@@ -157,28 +151,11 @@ namespace McSherry.Zener
         }
 
         /// <summary>
-        /// The TCP port the server is listening on.
-        /// </summary>
-        public int Port
-        {
-            get { return _http.Port; }
-        }
-        /// <summary>
-        /// The routes that will be used to call handlers and
-        /// serve content to the user agent.
-        /// </summary>
-        public Router Routes
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Stops ZenerCore's underlying HTTP server.
+        /// Stops ZenerCore's underlying HTTP server(s).
         /// </summary>
         public void Stop()
         {
-            _http.Stop();
+            _httpServers.ForEach(sv => sv.Stop());
         }
     }
 }
