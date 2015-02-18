@@ -17,6 +17,7 @@ namespace McSherry.Zener.Core
     /// A class for routing to virtual hosts.
     /// </summary>
     public sealed class HostRouter
+        : ICollection<VirtualHost>
     {
         private List<VirtualHost> _hosts;
         private IPAddress _defaultIp;
@@ -65,6 +66,13 @@ namespace McSherry.Zener.Core
 
                 _defaultIp = value;
             }
+        }
+        /// <summary>
+        /// The number of virtual hosts within the host router.
+        /// </summary>
+        public int Count
+        {
+            get { return _hosts.Count; }
         }
 
         /// <summary>
@@ -189,5 +197,39 @@ namespace McSherry.Zener.Core
         /// Fired when a virtual host is added to the host router.
         /// </summary>
         public event EventHandler<VirtualHost> HostAdded;
+
+        void ICollection<VirtualHost>.Add(VirtualHost vhost)
+        {
+            this.AddHost(vhost);
+        }
+        void ICollection<VirtualHost>.CopyTo(VirtualHost[] vhosts, int arrayIndex)
+        {
+            _hosts.CopyTo(vhosts, arrayIndex);
+        }
+        bool ICollection<VirtualHost>.Contains(VirtualHost vhost)
+        {
+            return _hosts.Contains(vhost);
+        }
+        void ICollection<VirtualHost>.Clear()
+        {
+            throw new NotSupportedException();
+        }
+        bool ICollection<VirtualHost>.Remove(VirtualHost vhost)
+        {
+            throw new NotSupportedException();
+        }
+        bool ICollection<VirtualHost>.IsReadOnly
+        {
+            get { return false; }
+        }
+
+        IEnumerator<VirtualHost> IEnumerable<VirtualHost>.GetEnumerator()
+        {
+            return _hosts.GetEnumerator();
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return _hosts.GetEnumerator();
+        }
     }
 }
