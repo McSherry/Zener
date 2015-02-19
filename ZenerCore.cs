@@ -249,24 +249,57 @@ namespace McSherry.Zener
                     var exc = (HttpException)msg.Arguments[0];
                     var res = (HttpResponse)msg.Arguments[1];
 
-                    var route = this.Routes
-                        .Find(
-                            String.Format(
-                                "{0}{1}",
-                                INTERNAL_PREFIX, exc.StatusCode.GetCode()
-                        ))
-                        .Where(rt => rt.Item1.Format.StartsWith(INTERNAL_PREFIX))
-                        .DefaultIfEmpty(null)
-                        .First();
+                    // Before we use the default error handler, we want
+                    // to try to find a handler defined by the user. To
+                    // do this, we need to check our thread-local storage
+                    // to see if a VirtualHost has been put in it.
+                    VirtualHost host;
+                    object objHost;
+                    if (!TLS.Value.TryGetValue(TLS_VHOST, out objHost))
+                    {
+                        host = null;
+                    }
+                    else host = objHost as VirtualHost;
 
                     RouteHandler handler;
-                    if (route == null)
+                    // If we got a result, we can try looking up an error
+                    // handler.
+                    if (host != null)
                     {
-                        handler = HttpServer.DefaultErrorHandler;
+                        var route = host.Router
+                            // Error handling routes are prefixed with the
+                            // internal prefix (by default, a colon) and use
+                            // the status code of the error (for example, a
+                            // 404 Not Found handler would use the format ":404").
+                            .Find(String.Format(
+                                "{0}{1}",
+                                INTERNAL_PREFIX, exc.StatusCode.GetCode()
+                                ))
+                            // The call to Find will also match any formats that
+                            // are comprised solely of a variable (for example,
+                            // the format "/[file]"), so we need to make sure
+                            // the format starts with the internal prefix.
+                            .Where(rt => rt.Item1.Format.StartsWith(INTERNAL_PREFIX))
+                            .DefaultIfEmpty(null)
+                            .First();
+
+                        if (route == null)
+                        {
+                            // There's no match, so we need to use the default
+                            // one.
+                            handler = HttpServer.DefaultErrorHandler;
+                        }
+                        else
+                        {
+                            // There is a match, so we use its handler.
+                            handler = route.Item1.Handler;
+                        }
                     }
                     else
                     {
-                        handler = route.Item1.Handler;
+                        // We can't get a user-defined handler, so we
+                        // need to use the default one.
+                        handler = HttpServer.DefaultErrorHandler;
                     }
 
                     var rPr = new ExpandoObject() as IDictionary<string, object>;
