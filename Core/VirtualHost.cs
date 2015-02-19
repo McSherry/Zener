@@ -36,8 +36,7 @@ namespace McSherry.Zener.Core
         ///     Router are null.
         /// </exception>
         /// <exception cref="System.ArgumentException">
-        ///     Thrown when the specified port is outwith the allowable
-        ///     range.
+        /// Thrown when the specified port is outside the allowable range.
         /// </exception>
         public VirtualHost(
             string format, 

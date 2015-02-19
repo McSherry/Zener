@@ -171,6 +171,9 @@ namespace McSherry.Zener.Core
         /// <param name="format">The hostname of the virtual host.</param>
         /// <param name="port">The port to bind the virtual host to.</param>
         /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
+        /// </exception>
         public VirtualHost AddHost(string format, ushort port)
         {
             var vhost = new VirtualHost(
@@ -183,6 +186,35 @@ namespace McSherry.Zener.Core
             return this.AddHost(vhost);
         }
         /// <summary>
+        /// Adds a virtual host to the set of hosts.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <param name="bindAddress">The IP address to bind the virtual host to.</param>
+        /// <param name="port">The port to bind the virtual host to.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the specified IPAddress is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
+        /// </exception>
+        public VirtualHost AddHost(string format, IPAddress bindAddress, ushort port)
+        {
+            if (bindAddress == null)
+            {
+                throw new ArgumentNullException(
+                    "The specified address to bind to must not be null."
+                    );
+            }
+
+            return this.AddHost(
+                format:         format,
+                bindAddress:    bindAddress,
+                port:           port,
+                routes:         new Router()
+                );
+        }
+        /// <summary>
         /// Adds a virtual host to the set of hosts,
         /// using the default IP address, the specified
         /// port, and the provided set of routes.
@@ -193,6 +225,9 @@ namespace McSherry.Zener.Core
         /// <returns>The VirtualHost that was added to the HostRouter.</returns>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the Router passed to the method is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
         /// </exception>
         public VirtualHost AddHost(string format, ushort port, Router routes)
         {
@@ -214,8 +249,11 @@ namespace McSherry.Zener.Core
         /// <param name="routes">The set of routes associated with the virtual host.</param>
         /// <returns>The VirtualHost that was added to the HostRouter.</returns>
         /// <exception cref="System.ArgumentNullException">
-        ///     Thrown when the IPAddress or Router passed to
-        ///     the method is null.
+        /// Thrown when the IPAddress or Router passed to
+        /// the method is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
         /// </exception>
         public VirtualHost AddHost(
             string format,
