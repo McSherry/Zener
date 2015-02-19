@@ -135,39 +135,11 @@ namespace McSherry.Zener
                     // 'Host' header.
                     if (hostHdr == default(HttpHeader))
                     {
-                        // HTTP/1.1 clients are required to provide a 'Host' header.
-                        // We'll check the version to see whether the client is HTTP/1.1.
-                        // If it is, we follow the standard and return a Bad Request
-                        // response.
-                        if (req.HttpVersion.Equals(
-                            HTTP_VERSION_1_1, StringComparison.OrdinalIgnoreCase
-                            ))
-                        {
-                            throw new HttpRequestException(
-                                request:    req,
-                                message:    "The client reported HTTP/1.1 but did not" +
-                                            "provide a \"Host\" header."
-                                );
-                        }
-
-                        // If the client hasn't sent us a 'Host' header, we'll try
-                        // to respond using the default virtual host. To do this, we
-                        // need to check that a default virtual host exists.
-                        if (this.DefaultHost == null)
-                        {
-                            // If we're here, there is no default virtual host, so
-                            // we'll use an error handler to respond to the client.
-                            throw new HttpException(
-                                status:     HttpStatus.InternalServerError,
-                                request:    req,
-                                message:    "The client did not send a \"Host\" header, " +
-                                            "and the server does not have an appropriate" +
-                                            " error handler."
-                                );
-                        }
-
-                        host = this.DefaultHost;
-                        hostParams = new Empty();
+                        throw new HttpRequestException(
+                            request:    req,
+                            message:    "The client did not provide a \"Host\" " +
+                                        "header with its request."
+                            );
                     }
                     else
                     {
