@@ -168,7 +168,7 @@ namespace McSherry.Zener.Archives
                                 .FirstOrDefault();
 
                         if (name == default(string))
-                            throw new HttpException(HttpStatus.NotFound, request);
+                            throw new HttpException(HttpStatus.NotFound);
 
                         var data = archive.GetFile(name) as byte[]
                             ?? archive.GetFile(name).ToArray();

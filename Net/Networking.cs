@@ -351,7 +351,6 @@ namespace McSherry.Zener.Net
                 catch (ArgumentException aex)
                 {
                     throw new HttpRequestException(
-                        response.Request,
                         "The client's Authorization header contains an invalid Base64 string.",
                         aex
                         );
@@ -359,7 +358,6 @@ namespace McSherry.Zener.Net
                 catch (InvalidOperationException ioex)
                 {
                     throw new HttpRequestException(
-                        response.Request,
                         "The client's Authorization header contains an invalid Base64 string.",
                         ioex
                         );

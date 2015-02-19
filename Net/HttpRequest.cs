@@ -28,8 +28,8 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Creates a new HttpRequestException.
         /// </summary>
-        public HttpRequestException(HttpRequest request)
-            : base(HttpStatus.BadRequest, request)
+        public HttpRequestException()
+            : base(HttpStatus.BadRequest)
         {
 
         }
@@ -37,8 +37,8 @@ namespace McSherry.Zener.Net
         /// Creates a new HttpRequestException.
         /// </summary>
         /// <param name="message">The message to send with the exception.</param>
-        public HttpRequestException(HttpRequest request, string message)
-            : base(HttpStatus.BadRequest, request, message)
+        public HttpRequestException(string message)
+            : base(HttpStatus.BadRequest, message)
         {
 
         }
@@ -47,8 +47,8 @@ namespace McSherry.Zener.Net
         /// </summary>
         /// <param name="message">The message to send with the exception.</param>
         /// <param name="innerException">The exception that is the cause of this exception.</param>
-        public HttpRequestException(HttpRequest request, string message, Exception innerException)
-            : base(HttpStatus.BadRequest, request, message, innerException)
+        public HttpRequestException(string message, Exception innerException)
+            : base(HttpStatus.BadRequest, message, innerException)
         {
 
         }
@@ -256,7 +256,6 @@ namespace McSherry.Zener.Net
                     if (bdry == null)
                     {
                         throw new HttpRequestException(
-                            this,
                             "No boundary provided for multipart data."
                             );
                     }
@@ -384,7 +383,6 @@ namespace McSherry.Zener.Net
                 if (!partHeaders.Contains(HDR_CDISPOSITION))
                 {
                     throw new HttpRequestException(
-                        request,
                         "Multipart data is malformed; no Content-Disposition."
                         );
                 }
@@ -397,7 +395,6 @@ namespace McSherry.Zener.Net
                     .First();
                 if (name == null)
                     throw new HttpRequestException(
-                        request,
                         "Multipart form data is malformed; no name."
                         );
 
@@ -408,7 +405,6 @@ namespace McSherry.Zener.Net
                 if (boundaryBytes.Length + 2 > remLeng)
                 {
                     throw new HttpRequestException(
-                        request,
                         "Multi-part form data is malformed."
                         );
                 }
@@ -603,7 +599,6 @@ namespace McSherry.Zener.Net
             catch (ArgumentException aex)
             {
                 throw new HttpRequestException(
-                    request,
                     "Could not parse HTTP headers.", aex
                     );
             }
@@ -632,7 +627,6 @@ namespace McSherry.Zener.Net
                     if (!Int32.TryParse(cLen.Value, out cLenOctets))
                     {
                         throw new HttpRequestException(
-                            request,
                             "Invalid Content-Length header (non-integral value)."
                             );
                     }
@@ -641,7 +635,6 @@ namespace McSherry.Zener.Net
                     if (cLenOctets < 0)
                     {
                         throw new HttpRequestException(
-                            request,
                             "Invalid Content-Length header (negative value)."
                             );
                     }
@@ -652,7 +645,6 @@ namespace McSherry.Zener.Net
                     {
                         throw new HttpException(
                             HttpStatus.RequestEntityTooLarge,
-                            request,
                             "The request body was too large."
                             );
                     }

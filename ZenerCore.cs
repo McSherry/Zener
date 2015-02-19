@@ -134,7 +134,6 @@ namespace McSherry.Zener
                     if (hostHdr == default(HttpHeader))
                     {
                         throw new HttpRequestException(
-                            request:    req,
                             message:    "The client did not provide a \"Host\" " +
                                         "header with its request."
                             );
@@ -151,7 +150,6 @@ namespace McSherry.Zener
                     catch (ArgumentException aex)
                     {
                         throw new HttpRequestException(
-                            request:        req,
                             innerException: aex,
                             message:        "The client send a malformed " +
                                             "\"Host\" header."
@@ -167,7 +165,6 @@ namespace McSherry.Zener
                         // If we don't recognise the host, we have to respond
                         // with Bad Request.
                         throw new HttpRequestException(
-                            request:    req,
                             message:    "The host the client requested does not " +
                                         "exist on this server."
                             );
@@ -193,8 +190,7 @@ namespace McSherry.Zener
                     if (rt.Count == 0)
                     {
                         throw new HttpException(
-                            status:     HttpStatus.NotFound,
-                            request:    req
+                            status:     HttpStatus.NotFound
                             );
                     }
 
@@ -211,8 +207,7 @@ namespace McSherry.Zener
                     if (rt.Count == 0)
                     {
                         throw new HttpException(
-                            status:     HttpStatus.MethodNotAllowed,
-                            request:    req
+                            status:     HttpStatus.MethodNotAllowed
                             );
                     }
 
