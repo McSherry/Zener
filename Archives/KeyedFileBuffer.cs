@@ -20,9 +20,9 @@ namespace McSherry.Zener.Archives
 
         private IEnumerable<KeyValuePair<TKey, IEnumerable<byte>>> _getEnumerator()
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 foreach (var key in this.Keys)
                     yield return new KeyValuePair<TKey, IEnumerable<byte>>(
@@ -36,7 +36,7 @@ namespace McSherry.Zener.Archives
         /// comparison rules and the default starting capacity.
         /// </summary>
         public KeyedFileBuffer()
-            : this(EqualityComparer<TKey>.Default, DEFAULT_CAPACITY)
+            : this(EqualityComparer<TKey>.Default, DefaultCapacity)
         {
 
         }
@@ -53,7 +53,7 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public KeyedFileBuffer(
             IEqualityComparer<TKey> comparer,
-            int capacity = DEFAULT_CAPACITY
+            int capacity = DefaultCapacity
             )
             : base(capacity)
         {
@@ -71,7 +71,7 @@ namespace McSherry.Zener.Archives
         /// <summary>
         /// Retrieves a set of bytes based on a key.
         /// </summary>
-        /// <param name="name">The key associated with the set of bytes to retrieve.</param>
+        /// <param name="key">The key associated with the set of bytes to retrieve.</param>
         /// <returns>The set of bytes associated with the specified key.</returns>
         /// <exception cref="System.Collections.Generic.KeyNotFoundException">
         ///     Thrown when there is no set of bytes associated with the
@@ -123,9 +123,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public void ChangeKey(TKey current, TKey @new)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkCanModify();
+                CheckCanModify();
 
                 if (!this.ContainsKey(current))
                 {
@@ -153,9 +153,9 @@ namespace McSherry.Zener.Archives
         /// <returns>True if the provided keys are equal.</returns>
         public bool CompareKeys(TKey a, TKey b)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 return _comparer.Equals(a, b);
             }
@@ -199,9 +199,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public void Add(TKey key, IEnumerable<byte> data)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkCanModify();
+                CheckCanModify();
 
                 if (this.ContainsKey(key))
                 {
@@ -236,9 +236,9 @@ namespace McSherry.Zener.Archives
         /// <returns>True if the data was retrieved successfully.</returns>
         public bool TryGetValue(TKey key, out IEnumerable<byte> item)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 var index = Enumerable
                     .Range(0, _keys.Count)
@@ -278,9 +278,9 @@ namespace McSherry.Zener.Archives
             int arrayIndex
             )
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 if (this.Count + arrayIndex > array.Length)
                 {
@@ -306,7 +306,7 @@ namespace McSherry.Zener.Archives
         /// <returns>True if the pair is present within the buffer.</returns>
         public bool Contains(KeyValuePair<TKey, IEnumerable<byte>> pair)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
                 return this.ContainsKey(pair.Key) && base.Contains(pair.Value);
             }
@@ -325,9 +325,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public bool ContainsKey(TKey key)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 return _keys.Contains(key, _comparer);
             }
@@ -336,7 +336,7 @@ namespace McSherry.Zener.Archives
         /// Removes a key-data pair from the buffer. Always throws
         /// a NotSupportedException.
         /// </summary>
-        /// <param name="pair">The key of the key-data pair to remove.</param>
+        /// <param name="key">The key of the key-data pair to remove.</param>
         /// <exception cref="System.NotSupportedException">
         ///     Always thrown. The buffer does not support
         ///     removing individual items.
@@ -385,7 +385,7 @@ namespace McSherry.Zener.Archives
         {
             get 
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 return _keys.AsReadOnly(); 
             }
@@ -399,7 +399,7 @@ namespace McSherry.Zener.Archives
         {
             get
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 var values = new List<IEnumerable<byte>>();
                 foreach (var val in this)

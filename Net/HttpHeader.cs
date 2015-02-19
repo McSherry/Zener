@@ -18,7 +18,17 @@ namespace McSherry.Zener.Net
     /// </summary>
     public class HttpHeader
     {
-        protected const string Whitespace = " \t\v\r\xFF";
+        /// <summary>
+        /// The characters that can be considered whte-space in an
+        /// HTTP header.
+        /// </summary>
+        protected const string WhitespaceString = " \t\v\r\xFF";
+        /// <summary>
+        /// The characters that can be considered white-space
+        /// in an HTTP header.
+        /// </summary>
+        protected static readonly HashSet<char> WhitespaceHashSet
+            = new HashSet<char>(WhitespaceString);
 
         /// <summary>
         /// Creates a new basic HTTP header.
@@ -34,8 +44,8 @@ namespace McSherry.Zener.Net
         /// </exception>
         public HttpHeader(string fieldName, string fieldValue)
         {
-            fieldName = fieldName.Trim(Whitespace.ToCharArray());
-            fieldValue = fieldValue.Trim(Whitespace.ToCharArray());
+            fieldName = fieldName.Trim(WhitespaceString.ToCharArray());
+            fieldValue = fieldValue.Trim(WhitespaceString.ToCharArray());
 
             if (String.IsNullOrWhiteSpace(fieldName))
             {
@@ -73,6 +83,12 @@ namespace McSherry.Zener.Net
         /// </summary>
         public virtual string Value { get; protected set; }
 
+        /// <summary>
+        /// Converts the HttpHeader to its string representation.
+        /// </summary>
+        /// <returns>
+        /// A string representation of the HttpHeader.
+        /// </returns>
         public override string ToString()
         {
             return new StringBuilder()
@@ -96,10 +112,11 @@ namespace McSherry.Zener.Net
         public static HttpHeader Parse(string headerLine)
         {
             headerLine = headerLine.Trim(
-                Whitespace
+                    String.Concat(
+                        WhitespaceString, 
+                        '\n'
+                        )
                     .ToCharArray()
-                    .Concat(new[] { '\n' })
-                    .ToArray()
                 );
 
             StringBuilder fieldBuilder = new StringBuilder();
@@ -168,7 +185,7 @@ namespace McSherry.Zener.Net
             var linesToMerge = Enumerable
                 .Range(0, lines.Count)
                 .Zip(lines, (i, l) => new { i, l })
-                .Where(ao => Whitespace.Contains(ao.l[0]))
+                .Where(ao => WhitespaceHashSet.Contains(ao.l[0]))
                 .ToList();
 
             foreach (var ml in linesToMerge)
@@ -194,7 +211,7 @@ namespace McSherry.Zener.Net
                     // The bit we're merging needs to go after. Before we can
                     // merge it, we need to trim from the start and end any
                     // whitespace.
-                    ml.l.Trim(Whitespace.ToCharArray())
+                    ml.l.Trim(WhitespaceString.ToCharArray())
                     );
 
                 // We've merged the lines, so now we need to remove the line

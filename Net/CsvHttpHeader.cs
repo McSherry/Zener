@@ -55,7 +55,7 @@ namespace McSherry.Zener.Net
         public CsvHttpHeader(string fieldName, string fieldValue)
             : base(fieldName, fieldValue)
         {
-            base.Value = base.Value.Trim(Whitespace.ToCharArray());
+            base.Value = base.Value.Trim(WhitespaceString.ToCharArray());
             this.Items = Networking.ParseDelimitedSemiQuotedStrings(base.Value);
         }
 

@@ -15,8 +15,11 @@ namespace McSherry.Zener.Archives
     public class FileBuffer
         : ICollection<IEnumerable<byte>>, IDisposable
     {
-        // The default capacity of the List<Filemark>.
-        protected const int DEFAULT_CAPACITY = 8;
+        /// <summary>
+        /// The default capacity of the internal list of
+        /// FileMarks.
+        /// </summary>
+        protected const int DefaultCapacity = 8;
         // The size of the buffer used when reading/writing
         // from the FileStream representing the file being
         // used as a backing buffer.
@@ -35,37 +38,63 @@ namespace McSherry.Zener.Archives
         // media, this should be perfectly fine in all but the most
         // performance-sensitive of applications.
         private Stream _file;
-        // Used to lock when writing to/reading from the
-        // filestream.
-        protected object _lockbox;
+        /// <summary>
+        /// The object to use when locking in FileBuffer and its
+        /// subclasses.
+        /// </summary>
+        protected object LockObject;
         // ICollection requires IsReadOnly to be implemented, so we
         // might as well add functionality for making it read-only.
         private bool _readonly,
             // Whether the file buffer has been disposed.
             _disposed;
 
-        protected void _checkReadOnly()
+        /// <summary>
+        /// Checks whether the FileBuffer is read-only, and throws
+        /// an exception if it is.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the FileBuffer is read-only.
+        /// </exception>
+        protected void CheckIsReadOnly()
         {
             if (_readonly)
             {
                 throw new InvalidOperationException(
-                    "A read-only collection cannot be modified."
+                    "A read-only FileBuffer cannot be modified."
                     );
             }
         }
-        protected void _checkDisposed()
+        /// <summary>
+        /// Checks whether the FileBuffer is disposed, and throws
+        /// an exception if it is.
+        /// </summary>
+        /// <exception cref="System.ObjectDisposedException">
+        /// Thrown when the FileBuffer has been disposed.
+        /// </exception>
+        protected void CheckIsDisposed()
         {
             if (_disposed)
             {
                 throw new ObjectDisposedException(
-                    "The buffer has been disposed."
+                    "The FileBuffer has been disposed."
                     );
             }
         }
-        protected void _checkCanModify()
+        /// <summary>
+        /// Checks bother whether the FileBuffer has been disposed
+        /// and whether it is read-only.
+        /// </summary>
+        /// <exception cref="System.ObjectDisposedException">
+        /// Thrown when the FileBuffer has been disposed.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the FileBuffer is read-only.
+        /// </exception>
+        protected void CheckCanModify()
         {
-            _checkDisposed();
-            _checkReadOnly();
+            CheckIsDisposed();
+            CheckIsReadOnly();
         }
         private IEnumerable<IEnumerable<byte>> _getEnumerator()
         {
@@ -91,7 +120,7 @@ namespace McSherry.Zener.Archives
         /// <exception cref="System.IO.IOException">
         ///     Thrown when an error occurs whilst creating a temporary file.
         /// </exception>
-        public FileBuffer(int capacity = DEFAULT_CAPACITY)
+        public FileBuffer(int capacity = DefaultCapacity)
         {
             _marks = new List<Filemark>(capacity);
 
@@ -139,7 +168,7 @@ namespace McSherry.Zener.Archives
                     );
             }
 
-            _lockbox = new object();
+            LockObject = new object();
             _readonly = false;
             _disposed = false;
         }
@@ -165,7 +194,7 @@ namespace McSherry.Zener.Archives
                 }
 
                 byte[] data;
-                lock (_lockbox)
+                lock (LockObject)
                 {
                     var mark = _marks.ElementAt(index);
                     data = new byte[mark.Length];
@@ -194,9 +223,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public virtual void Add(IEnumerable<byte> bytes)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkCanModify();
+                CheckCanModify();
 
                 // Calls to ToArray/ToList/etc are fairly slow,
                 // so checking if the provided enumerable is a
@@ -240,9 +269,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public void CopyTo(IEnumerable<byte>[] array, int arrayIndex)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 // Check to make sure that the array we've been passed
                 // is long enough to contain all sets of bytes stored
@@ -271,9 +300,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public bool Contains(IEnumerable<byte> bytes)
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 bool hasMatch = false;
                 // Doing this in serial would likely be fairly slow, as
@@ -321,9 +350,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public virtual void Clear()
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkCanModify();
+                CheckCanModify();
 
                 _marks.Clear();
                 _file.SetLength(0);
@@ -343,9 +372,9 @@ namespace McSherry.Zener.Archives
         /// </exception>
         public IEnumerator<IEnumerable<byte>> GetEnumerator()
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
-                _checkDisposed();
+                CheckIsDisposed();
 
                 return _getEnumerator().GetEnumerator();
             }
@@ -356,7 +385,7 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public virtual void Dispose()
         {
-            lock (_lockbox)
+            lock (LockObject)
             {
                 if (!_disposed)
                 {
@@ -392,7 +421,7 @@ namespace McSherry.Zener.Archives
         {
             get 
             {
-                lock (_lockbox)
+                lock (LockObject)
                 {
                     return _disposed;
                 }

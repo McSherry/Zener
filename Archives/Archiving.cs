@@ -285,6 +285,10 @@ namespace McSherry.Zener.Archives
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
         /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">
+        /// Whether the names of the files in the archive should be
+        /// considered case-sensitive.
+        /// </param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
         ///     variable to be used as the file name.
@@ -309,6 +313,10 @@ namespace McSherry.Zener.Archives
         /// <param name="format">The format string for the handler.</param>
         /// <param name="method">The method for this route to be constrained to.</param>
         /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">
+        /// Whether the names of the files in the archive should be
+        /// considered case-sensitive.
+        /// </param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
         ///     variable to be used as the file name.
@@ -334,6 +342,10 @@ namespace McSherry.Zener.Archives
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
         /// <param name="methods">The methods for this route to be constrained to.</param>
+        /// <param name="caseSensitive">
+        /// Whether the names of the files in the archive should be
+        /// considered case-sensitive.
+        /// </param>
         /// <param name="stream">The stream containing the archive.</param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
@@ -373,6 +385,10 @@ namespace McSherry.Zener.Archives
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
         /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">
+        /// Whether the names of the files in the archive should be
+        /// considered case-sensitive.
+        /// </param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
         ///     variable to be used as the file name.
@@ -400,6 +416,10 @@ namespace McSherry.Zener.Archives
         /// <param name="router">The router to add the handler to.</param>
         /// <param name="format">The format string for the handler.</param>
         /// <param name="method">The method for this route to be constrained to.</param>
+        /// <param name="caseSensitive">
+        /// Whether the names of the files in the archive should be
+        /// considered case-sensitive.
+        /// </param>
         /// <param name="stream">The stream containing the archive.</param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
@@ -431,6 +451,10 @@ namespace McSherry.Zener.Archives
         /// <param name="format">The format string for the handler.</param>
         /// <param name="methods">The methods for this route to be constrained to.</param>
         /// <param name="stream">The stream containing the archive.</param>
+        /// <param name="caseSensitive">
+        /// Whether the names of the files in the archive should be
+        /// considered case-sensitive.
+        /// </param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when <paramref name="format"/> does not contain a
         ///     variable to be used as the file name.

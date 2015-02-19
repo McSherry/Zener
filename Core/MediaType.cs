@@ -492,10 +492,37 @@ namespace McSherry.Zener.Core
             return type;
         }
         
+        /// <summary>
+        /// Converts a string to a MediaType by passing the string
+        /// to MediaType.Create.
+        /// </summary>
+        /// <param name="mediaType">
+        /// The string containing the media type to convert to.
+        /// </param>
+        /// <returns>
+        /// A MediaType equivalent to the provided string.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided media type string is null., empty,
+        /// or white-space.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided media type string is invalid.
+        /// </exception>
         public static implicit operator MediaType(string mediaType)
         {
             return MediaType.Create(mediaType);
         }
+        /// <summary>
+        /// Converts a MediaType to a string by calling the MediaType's
+        /// overload of the method ToString.
+        /// </summary>
+        /// <param name="type">
+        /// The MediaType to convert to a string.
+        /// </param>
+        /// <returns>
+        /// A string representing the provided MediaType.
+        /// </returns>
         public static implicit operator string(MediaType type)
         {
             return type.ToString();

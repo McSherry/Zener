@@ -60,16 +60,16 @@ namespace McSherry.Zener.Archives
             : base(stream)
         {
             byte[] idBuffer = new byte[USTAR_ID.Length];
-            for (int i = 0; i < base._headers.Count; i++)
+            for (int i = 0; i < base.FileHeaders.Count; i++)
             {
-                string originalName = base._files.Keys[i];
+                string originalName = base.FileMarks.Keys[i];
                 // If this header is from a Ustar archive, it will have
                 // the ASCII string "ustar" starting at position 257 within
                 // the header block.
                 //
                 // If this identifier is present, we'll continue. If not, we
                 // won't make any modifications.
-                Buffer.BlockCopy(_headers[i], USTAR_ID_POS, idBuffer, 0, idBuffer.Length);
+                Buffer.BlockCopy(FileHeaders[i], USTAR_ID_POS, idBuffer, 0, idBuffer.Length);
                 if (idBuffer.SequenceEqual(USTAR_ID))
                 {
                     StringBuilder nameBuilder = new StringBuilder();
@@ -85,9 +85,9 @@ namespace McSherry.Zener.Archives
                     // (the maximum length of the filename prefix field).
                     for (int j = 0; j < USTAR_FILEPREFIX_MAX; j++)
                     {
-                        if (_headers[i][USTAR_FILEPREFIX_POS + j] == TarArchive.ASCII_NUL) break;
+                        if (FileHeaders[i][USTAR_FILEPREFIX_POS + j] == TarArchive.AsciiNul) break;
 
-                        nameBuilder.Append(_headers[i][USTAR_FILEPREFIX_POS + j]);
+                        nameBuilder.Append(FileHeaders[i][USTAR_FILEPREFIX_POS + j]);
                     }
 
                     // This prefix then needs to be prepended to the filename
@@ -97,14 +97,14 @@ namespace McSherry.Zener.Archives
 
                     // If the new key is equal to the old key, we don't need
                     // to make any modifications.
-                    if (base._files.CompareKeys(newName, originalName))
+                    if (base.FileMarks.CompareKeys(newName, originalName))
                     {
                         continue;
                     }
 
                     // We then need to replace our currently-stored filename
                     // with the new one.
-                    base._files.ChangeKey(originalName, nameBuilder.ToString());
+                    base.FileMarks.ChangeKey(originalName, nameBuilder.ToString());
                 }
             }
         }

@@ -34,44 +34,97 @@ namespace McSherry.Zener.Archives
          * to inherit from this class.
          */
 
-        protected const int
-            RADIX_OCTAL         = 8,
-            TAR_BLOCK_SIZE      = 512,
-            TAR_FILENAME_LENGTH = 100,
-            TAR_FILESIZE_OFFSET = 124,
-            TAR_FILESIZE_LENGTH = 11,   // The real length is 12, but the last is NUL
-            TAR_FILETYPE_OFFSET = 156
-            ;
-        protected const byte
-            ASCII_NUL           = 0x00,
-            FILE_TYPE_NORMAL_A  = ASCII_NUL,
-            FILE_TYPE_NORMAL_B  = 0x30,
-            FILE_TYPE_LINK_HARD = 0x31,
-            FILE_TYPE_LINK_SOFT = 0x32
-            ;
+        /// <summary>
+        /// The number representing base 8/octal.
+        /// </summary>
+        protected const int RadixOctal          = 8;
+        /// <summary>
+        /// The size of a TAR block, in bytes.
+        /// </summary>
+        protected const int TarBlockSize        = 512;
+        /// <summary>
+        /// The length of the filename field in a TAR archive.
+        /// </summary>
+        protected const int TarFilenameLength   = 100;
+        /// <summary>
+        /// The offset, in bytes, of the file size field in
+        /// a TAR archive.
+        /// </summary>
+        protected const int TarFileSizeOffset   = 124;
+        /// <summary>
+        /// The length, in bytes, of the TAR file size field.
+        /// </summary>
+        protected const int TarFileSizeLength   = 11;
+        /// <summary>
+        /// The offset, in bytes, of the TAR file type field.
+        /// </summary>
+        protected const int TarFileTypeOffset   = 156;
 
-        protected KeyedFileBuffer<string> _files;
-        protected List<byte[]> _headers;
-        protected List<Filemark> _marks;
-        protected object _dataLock;
+        /// <summary>
+        /// The ASCII NUL byte.
+        /// </summary>
+        protected const byte AsciiNul           = 0x00;
+        /// <summary>
+        /// The first value of the TAR file type field that
+        /// indicates a normal file.
+        /// </summary>
+        protected const byte FileTypeNormalA    = AsciiNul;
+        /// <summary>
+        /// The second value of the TAR file type field that
+        /// indicates a normal file.
+        /// </summary>
+        protected const byte FileTypeNormalB    = 0x30;
+        /// <summary>
+        /// The value of the TAR file type field that
+        /// indicates a hard link.
+        /// </summary>
+        protected const byte FileTypeHardLink   = 0x31;
+        /// <summary>
+        /// The value of the TAR file type field that
+        /// indicates a soft link.
+        /// </summary>
+        protected const byte FileTypeSoftLink   = 0x32;
 
+        /// <summary>
+        /// A keyed file buffer containing file marks
+        /// keyed by file names.
+        /// </summary>
+        protected KeyedFileBuffer<string> FileMarks;
+        /// <summary>
+        /// A list of byte arrays containing the headers
+        /// for each file in the archive.
+        /// </summary>
+        protected List<byte[]> FileHeaders;
+        /// <summary>
+        /// The object to lock on in TarArchive and its
+        /// subclasses.
+        /// </summary>
+        protected object LockObject;
+
+        /// <summary>
+        /// Parses from a stream a TAR archive, and sets
+        /// the properties of this class appropriately.
+        /// </summary>
+        /// <param name="source">
+        /// The stream containing the TAR archive's contents.
+        /// </param>
         protected void ParseTarFile(Stream source)
         {
             // A file header is, minimally, 512 bytes. If we
             // don't have 512 bytes, we can't have a valid file
             // header.
-            if (source.Length < TAR_BLOCK_SIZE)
+            if (source.Length < TarBlockSize)
                 throw new InvalidDataException(
                     "The provided stream does not contain enough data."
                     );
             // File lengths should be padded to a multiple of the
             // block length. If it isn't, we won't accept it.
-            if (source.Length % TAR_BLOCK_SIZE != 0)
+            if (source.Length % TarBlockSize != 0)
                 throw new ArgumentOutOfRangeException(
                     "The provided stream's length is invalid."
                     );
 
-            byte[] buffer = new byte[TAR_BLOCK_SIZE];
+            byte[] buffer = new byte[TarBlockSize];
             StringBuilder builder = new StringBuilder();
             bool lastWasEmpty = false;
             long dumpLength = 0;
@@ -79,12 +132,12 @@ namespace McSherry.Zener.Archives
             do
             {
                 builder.Clear();
-                int readStatus = source.Read(buffer, 0, TAR_BLOCK_SIZE);
+                int readStatus = source.Read(buffer, 0, TarBlockSize);
 
                 // Two blocks of NUL in a row means we've reached the
                 // end of the meaningful data in the file. If we encounter
                 // this, we should be able to safely stop.
-                if (Array.TrueForAll(buffer, ASCII_NUL.Equals))
+                if (Array.TrueForAll(buffer, AsciiNul.Equals))
                 {
                     if (lastWasEmpty) break;
                     else
@@ -101,14 +154,14 @@ namespace McSherry.Zener.Archives
 
                 // The offset within the stream of the buffer's
                 // first byte.
-                long fbOffset = source.Position - TAR_BLOCK_SIZE;
+                long fbOffset = source.Position - TarBlockSize;
 
                 // Parse the name from the headers. The name is,
                 // at most, 100 ASCII characters in length. It will
                 // be terminated by an ASCII_NUL.
-                for (int i = 0; i < TAR_FILENAME_LENGTH; i++)
+                for (int i = 0; i < TarFilenameLength; i++)
                 {
-                    if (buffer[i] == ASCII_NUL) break;
+                    if (buffer[i] == AsciiNul) break;
                     
                     builder.Append((char)buffer[i]);
                 }
@@ -116,9 +169,9 @@ namespace McSherry.Zener.Archives
                 try
                 {
                     string octStr = Encoding.ASCII.GetString(
-                        buffer, TAR_FILESIZE_OFFSET, TAR_FILESIZE_LENGTH
+                        buffer, TarFileSizeOffset, TarFileSizeLength
                         ).Trim();
-                    dumpLength = Convert.ToInt64(octStr, RADIX_OCTAL);
+                    dumpLength = Convert.ToInt64(octStr, RadixOctal);
                 }
                 catch (FormatException fex)
                 {
@@ -146,7 +199,7 @@ namespace McSherry.Zener.Archives
                 //   513            =>   1024
                 //
                 long entryBytes = dumpLength > 0
-                    ? dumpLength + (TAR_BLOCK_SIZE - (dumpLength % TAR_BLOCK_SIZE))
+                    ? dumpLength + (TarBlockSize - (dumpLength % TarBlockSize))
                     : 0;
 
                 if (entryBytes > ByteArrayMaxLength)
@@ -157,10 +210,10 @@ namespace McSherry.Zener.Archives
                 }
 
                 // Check whether the entry is a normal file.
-                byte type = buffer[TAR_FILETYPE_OFFSET];
+                byte type = buffer[TarFileTypeOffset];
                 if (
-                    type != FILE_TYPE_NORMAL_A &&
-                    type != FILE_TYPE_NORMAL_B
+                    type != FileTypeNormalA &&
+                    type != FileTypeNormalB
                     )
                 {
                     // The entry isn't a normal file, so skip
@@ -174,7 +227,7 @@ namespace McSherry.Zener.Archives
                 //
                 // The first thing we need to do is add the tar header
                 // block to our list of headers.
-                _headers.Add((byte[])buffer.Clone());
+                FileHeaders.Add((byte[])buffer.Clone());
                 // Next, we will need to read all of the
                 // tar blocks from the stream. It's quite possible that
                 // the data we'll be storing won't be the full length of
@@ -187,7 +240,7 @@ namespace McSherry.Zener.Archives
                 Array.Resize(ref data, (int)dumpLength);
                 // Then all we need to do is add this data, with
                 // our file-name, to our buffer.
-                _files.Add(builder.ToString(), data);
+                FileMarks.Add(builder.ToString(), data);
 
                 // If we've made it this far, we're going to be adding
                 // the file to our table of contents.
@@ -266,13 +319,15 @@ namespace McSherry.Zener.Archives
                 );
 
             stream.Position = 0;
-            _dataLock = new object();
-            _headers = new List<byte[]>();
-            _files = new KeyedFileBuffer<string>();
+            LockObject = new object();
+            FileHeaders = new List<byte[]>();
+            FileMarks = new KeyedFileBuffer<string>();
 
             this.ParseTarFile(stream);
         }
-
+        /// <summary>
+        /// Calls the Dispose method of TarArchive.
+        /// </summary>
         ~TarArchive()
         {
             this.Dispose();
@@ -284,7 +339,7 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public override int Count
         {
-            get { return _files.Keys.Count; }
+            get { return FileMarks.Keys.Count; }
         }
         /// <summary>
         /// The names of all files within the archive.
@@ -292,7 +347,7 @@ namespace McSherry.Zener.Archives
         /// </summary>
         public override IEnumerable<string> Files
         {
-            get { return _files.Keys; }
+            get { return FileMarks.Keys; }
         }
 
         /// <summary>
@@ -303,14 +358,14 @@ namespace McSherry.Zener.Archives
         /// <returns>True if a file with the given name exists within the archive.</returns>
         public override bool GetFile(string name, out IEnumerable<byte> contents)
         {
-            return _files.TryGetValue(name, out contents);
+            return FileMarks.TryGetValue(name, out contents);
         }
         /// <summary>
         /// Releases the resources used by this class.
         /// </summary>
         public override void Dispose()
         {
-            _files.Dispose();
+            FileMarks.Dispose();
         }
     }
 }

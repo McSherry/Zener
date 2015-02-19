@@ -40,6 +40,9 @@ namespace McSherry.Zener.Core
         /// ordered by the best match.
         /// </summary>
         /// <param name="path">The path to find matches for.</param>
+        /// <param name="method">
+        /// An HTTP request method to attempt to match with, if any.
+        /// </param>
         /// <returns>A list containing all matches.</returns>
         public IList<Tuple<Route, dynamic>> Find(string path, string method = null)
         {

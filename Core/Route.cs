@@ -167,6 +167,9 @@ namespace McSherry.Zener.Core
         /// Determines whether the route matches a path.
         /// </summary>
         /// <param name="path">The path to test.</param>
+        /// <param name="method">
+        /// An HTTP request method to attempt to match with, if any.
+        /// </param>
         /// <param name="param">If the path matches, where any parameters are stored.</param>
         /// <returns>True if the route matches the path.</returns>
         public bool TryMatch(string path, string method, out dynamic param)
@@ -186,6 +189,9 @@ namespace McSherry.Zener.Core
         /// any parameters in the path to a callback method.
         /// </summary>
         /// <param name="path">The path to test.</param>
+        /// <param name="method">
+        /// An HTTP request method to attempt to match with, if any.
+        /// </param>
         /// <param name="callback">The callback to pass parameters to.</param>
         /// <returns>True if the route matches the path.</returns>
         public bool TryMatch(string path, string method, Action<dynamic> callback)
