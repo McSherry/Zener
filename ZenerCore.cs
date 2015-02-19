@@ -222,7 +222,15 @@ namespace McSherry.Zener
                     // If both have parameters, we can merge.
                     if (hostParamsDict != null && rtParamsDict != null)
                     {
-                        hostParams = (ExpandoObject)hostParamsDict.Concat(rtParamsDict);
+                        var xdict = new ExpandoObject() as IDictionary<string, object>;
+
+                        foreach (var kvp in hostParamsDict)
+                            xdict[kvp.Key] = kvp.Value;
+
+                        foreach (var kvp in rtParamsDict)
+                            xdict[kvp.Key] = kvp.Value;
+
+                        hostParams = (ExpandoObject)xdict;
                     }
                     // If we get here, one of the sets of parameters is empty. We'll
                     // be using the hostParams variable to store our final dictionary,
