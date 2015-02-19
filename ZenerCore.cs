@@ -101,7 +101,7 @@ namespace McSherry.Zener
                     // IP address and port.
                     var sv = new HttpServer(host.BindAddress, host.Port);
                     // Add it to our set of servers.
-                    servers.Add(sv);
+                    _httpServers.Add(sv);
                     // Bind the message handler to this HttpServer's
                     // EmitMessage event.
                     sv.MessageEmitted += this.HttpServerMessageHandler;
@@ -112,8 +112,6 @@ namespace McSherry.Zener
 
             // Add any API methods to the host's router.
             _context.AddApiRoutes(host.Router);
-            // Add the host to our host router.
-            this.Hosts.AddHost(host);
         }
         private void HttpServerMessageHandler(HttpServerMessage msg)
         {
@@ -180,7 +178,7 @@ namespace McSherry.Zener
                     host = vh.Item1;
                     hostParams = vh.Item2;
                     // Add the virtual host to our thread-local storage.
-                    TLS.Value.Add(TLS_VHOST, host);
+                    TLS.Value[TLS_VHOST] = host;
 
                     /* We now need to find, in the virtual host, the
                      * correct route.
