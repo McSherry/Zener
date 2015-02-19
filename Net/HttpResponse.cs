@@ -593,7 +593,6 @@ namespace McSherry.Zener.Net
         /// Creates a new HttpResponse.
         /// </summary>
         /// <param name="responseStream">The stream to write the response to.</param>
-        /// <param name="closeCallback">The method to call when the response is closed.</param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when the provided stream does not support the
         ///     required operations.
@@ -747,7 +746,7 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Writes the provided value to the response.
         /// </summary>
-        /// <param name="value">The value to write.</param>
+        /// <param name="obj">The value to write.</param>
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the method is called after the headers or
         ///     sent, or when it is called after the connection has been
@@ -807,7 +806,7 @@ namespace McSherry.Zener.Net
         /// Writes the provided value to the response, followed
         /// by a new-line.
         /// </summary>
-        /// <param name="value">The value to write.</param>
+        /// <param name="obj">The value to write.</param>
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the method is called after the headers or
         ///     sent, or when it is called after the connection has been

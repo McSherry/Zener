@@ -64,16 +64,38 @@ namespace McSherry.Zener.Net
         /// </summary>
         public static class Methods
         {
-            public const string
-                OPTIONS     = "OPTIONS",
-                GET         = "GET",
-                HEAD        = "HEAD",
-                POST        = "POST",
-                PUT         = "PUT",
-                DELETE      = "DELETE",
-                TRACE       = "TRACE",
-                CONNECT     = "CONNECT"
-                ;
+            /// <summary>
+            /// The OPTIONS HTTP request method.
+            /// </summary>
+            public const string OPTIONS     = "OPTIONS";
+            /// <summary>
+            /// The GET HTTP request method.
+            /// </summary>
+            public const string GET         = "GET";
+            /// <summary>
+            /// The HEAD HTTP request method.
+            /// </summary>
+            public const string HEAD        = "HEAD";
+            /// <summary>
+            /// The POST HTTP request method.
+            /// </summary>
+            public const string POST        = "POST";
+            /// <summary>
+            /// The PUT HTTP request method.
+            /// </summary>
+            public const string PUT         = "PUT";
+            /// <summary>
+            /// The DELETE HTTP request method.
+            /// </summary>
+            public const string DELETE      = "DELETE";
+            /// <summary>
+            /// The TRACE HTTP request method.
+            /// </summary>
+            public const string TRACE       = "TRACE";
+            /// <summary>
+            /// The CONNECT HTTP request method.
+            /// </summary>
+            public const string CONNECT     = "CONNECT";
         }
 
         private const string MT_FORMURLENCODED = "application/x-www-form-urlencoded";

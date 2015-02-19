@@ -364,7 +364,7 @@ namespace McSherry.Zener.Net
         ///     Thrown when the address/port combination specified is
         ///     already in use, and so cannot be bound to.
         /// </exception>
-        /// <exception cref="System.Net.SocketException">
+        /// <exception cref="System.Net.Sockets.SocketException">
         ///     Thrown when an error occurs with the HttpServer's
         ///     internal TcpListener.
         /// </exception>
