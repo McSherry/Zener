@@ -28,8 +28,21 @@ namespace McSherry.Zener.Net
         /// A Tuple containing the domain name and port parsed from the
         /// HTTP 'Host' header.
         /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided string header value is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided header value is malformed.
+        /// </exception>
         public static Tuple<string, ushort> ParseHostHeader(string hdrValue)
         {
+            if (String.IsNullOrWhiteSpace(hdrValue))
+            {
+                throw new ArgumentNullException(
+                    "The provided value must not be null, empty, or whitespace."
+                    );
+            }
+
             var parts = hdrValue
                 .ToLower()
                 .Trim(' ', '.', '/')
