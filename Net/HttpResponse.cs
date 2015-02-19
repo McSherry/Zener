@@ -406,8 +406,7 @@ namespace McSherry.Zener.Net
                                 _obstr.Position = 0;
                                 using (_obstr)
                                 using (var gs = new GZipStream(
-                                    stream:     ms,
-                                    mode:       CompressionMode.Compress,
+                                    ms, CompressionMode.Compress,
                                     leaveOpen:  true
                                     ))
                                 {
