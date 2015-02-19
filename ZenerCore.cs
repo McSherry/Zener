@@ -141,46 +141,108 @@ namespace McSherry.Zener
                                         "header with its request."
                             );
                     }
-                    else
-                    {
-                        // The client has sent a 'Host' header, so we now need to parse
-                        // that header. The host should be a valid URI, so we can use
-                        // the built-in Uri class to validate it.
-                        Uri hostUri;
-                        string uriString;
-                        // Some 'Host' headers may not start with a URI scheme. We don't
-                        // actually care about the scheme, but the Uri class needs one to
-                        // work properly. We check to see whether the URI string starts
-                        // 'http:'.
-                        if (!hostHdr.Value.StartsWith(URI_HTTP))
-                        {
-                            // We prefix the Uri with 'http://'. As long as the URI is
-                            // okay (for example, it's 'www.example.org'), this will
-                            // work just fine.
-                            uriString = String.Format("http://{0}", hostHdr.Value);
-                        }
-                        else
-                        {
-                            // The 'Host' header appears to have a URI scheme. Carry on.
-                            uriString = hostHdr.Value;
-                        }
 
-                        try
-                        {
-                            // The Uri class will validate the 'Host' header for us.
-                            hostUri = new Uri(uriString);
-                        }
-                        catch (UriFormatException ufex)
-                        {
-                            throw new HttpRequestException(
-                                request:        req,
-                                message:        "The client sent a malformed \"Host\" header.",
-                                innerException: ufex
-                                );
-                        }
+                    // If there is a 'Host' header, we need to make sure that it is
+                    // valid. If the header isn't valid, we need to return a Bad
+                    // Request response.
+                    Tuple<string, ushort> hostHdrInfo;
+                    try
+                    {
+                        hostHdrInfo = Rfc2616.ParseHostHeader(hostHdr.Value);
+                    }
+                    catch (ArgumentException aex)
+                    {
+                        throw new HttpRequestException(
+                            request:        req,
+                            innerException: aex,
+                            message:        "The client send a malformed " +
+                                            "\"Host\" header."
+                            );
                     }
 
-                    throw new NotImplementedException();
+                    // We need to check whether there's a match within our
+                    // host router.
+                    var vh = this.Hosts.Find(hostHdrInfo.Item1, hostHdrInfo.Item2);
+                    // If there's no match, the value will be the default.
+                    if (vh == default(Tuple<VirtualHost, dynamic>))
+                    {
+                        // If we don't recognise the host, we have to respond
+                        // with Bad Request.
+                        throw new HttpRequestException(
+                            request:    req,
+                            message:    "The host the client requested does not " +
+                                        "exist on this server."
+                            );
+                    }
+
+                    // Set the fields we'll use to as easier-to-remember
+                    // names.
+                    host = vh.Item1;
+                    hostParams = vh.Item2;
+                    // Add the virtual host to our thread-local storage.
+                    TLS.Value.Add(TLS_VHOST, host);
+
+                    /* We now need to find, in the virtual host, the
+                     * correct route.
+                     */
+
+                    // As with before, we want to be able to provide two
+                    // error messages: 405 for when the method isn't acceptable,
+                    // and 404 for when there are absolutely no routes.
+                    var rt = host.Router.Find(req.Path);
+
+                    // There are absolutely no results, so we return 404.
+                    if (rt.Count == 0)
+                    {
+                        throw new HttpException(
+                            status:     HttpStatus.NotFound,
+                            request:    req
+                            );
+                    }
+
+                    // Okay, so we've got at least one possible match. We now
+                    // need to determine whether the match accepts the current
+                    // request method.
+                    rt = rt
+                        .Where(t => t.Item1.MethodIsAcceptable(req.Method))
+                        .ToList();
+
+                    // None of the matches accept the current request method, so
+                    // we need to report to the client that the method is not
+                    // acceptable.
+                    if (rt.Count == 0)
+                    {
+                        throw new HttpException(
+                            status:     HttpStatus.MethodNotAllowed,
+                            request:    req
+                            );
+                    }
+
+                    // There's a match!
+                    var match = rt.First();
+                    // Both the virtual host and the route can have parameters.
+                    // For simplicity, we're going to merge the two ExpandoObjects.
+                    // Before we can do this, we need to make sure that both actually
+                    // have parameters.
+                    var hostParamsDict = hostParams as IDictionary<string, object>;
+                    var rtParamsDict = match.Item2 as IDictionary<string, object>;
+                    // If both have parameters, we can merge.
+                    if (hostParamsDict != null && rtParamsDict != null)
+                    {
+                        hostParams = (ExpandoObject)hostParamsDict.Concat(rtParamsDict);
+                    }
+                    // If we get here, one of the sets of parameters is empty. We'll
+                    // be using the hostParams variable to store our final dictionary,
+                    // so it makes sense to check the route parameters variable.
+                    else if (rtParamsDict != null)
+                    {
+                        // hostParams is empty, route parameters is not.
+                        // Set hostParams to route parameters.
+                        hostParams = match.Item2;
+                    }
+
+                    // Call the handler with all the parameters.
+                    match.Item1.Handler(req, res, hostParams);
                 } break;
                 case MessageType.InvokeErrorHandler:
                 {
