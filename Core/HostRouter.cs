@@ -21,6 +21,7 @@ namespace McSherry.Zener.Core
     {
         private List<VirtualHost> _hosts;
         private IPAddress _defaultIp;
+        private ushort _defaultPort;
         private object _lockbox;
 
         /// <summary>
@@ -31,11 +32,21 @@ namespace McSherry.Zener.Core
         ///     host. This will be used if an IP address
         ///     to bind to is not specified.
         /// </param>
+        /// <param name="defaultBindPort">
+        /// The TCP port to bind VirtualHosts to by default.
+        /// </param>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided default IP
         ///     address is null.
         /// </exception>
-        public HostRouter(IPAddress defaultBindAddress)
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided default bind port is
+        /// zero.
+        /// </exception>
+        public HostRouter(
+            IPAddress defaultBindAddress,
+            ushort defaultBindPort = 80
+            )
         {
             if (defaultBindAddress == null)
             {
@@ -44,8 +55,16 @@ namespace McSherry.Zener.Core
                     );
             }
 
+            if (defaultBindPort == 0)
+            {
+                throw new ArgumentException(
+                    "The default TCP port cannot be zero."
+                    );
+            }
+
             _hosts = new List<VirtualHost>();
             _defaultIp = defaultBindAddress;
+            _defaultPort = defaultBindPort;
             _lockbox = new object();
         }
 
@@ -67,6 +86,26 @@ namespace McSherry.Zener.Core
                 }
 
                 _defaultIp = value;
+            }
+        }
+        /// <summary>
+        /// The TCP port that virtual hosts will be bound to by
+        /// default. This is used when no port is specified whilst
+        /// adding virtual hosts to the router.
+        /// </summary>
+        public ushort DefaultBindPort
+        {
+            get { return _defaultPort; }
+            set
+            {
+                if (value == 0)
+                {
+                    throw new ArgumentException(
+                        "The port to bind to cannot be port zero."
+                        );
+                }
+
+                _defaultPort = value;
             }
         }
         /// <summary>
@@ -113,11 +152,25 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Adds a virtual host to the set of hosts, using the
+        /// default IP address and the default TCP port.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        public VirtualHost AddHost(string format)
+        {
+            return this.AddHost(
+                format: format,
+                port:   this.DefaultBindPort
+                );
+        }
+        /// <summary>
         /// Adds a virtual host to the set of hosts, using
-        /// the default IP address and accepting any port.
+        /// the default IP address and the specified port.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
         /// <param name="port">The port to bind the virtual host to.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
         public VirtualHost AddHost(string format, ushort port)
         {
             var vhost = new VirtualHost(
@@ -131,12 +184,13 @@ namespace McSherry.Zener.Core
         }
         /// <summary>
         /// Adds a virtual host to the set of hosts,
-        /// using the default bind address as the address
-        /// to bind to.
+        /// using the default IP address, the specified
+        /// port, and the provided set of routes.
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
         /// <param name="port">The port to bind the virtual host to.</param>
         /// <param name="routes">The set of routes associated with the virtual host.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the Router passed to the method is null.
         /// </exception>
@@ -158,6 +212,7 @@ namespace McSherry.Zener.Core
         /// <param name="bindAddress">The IP address to bind the virtual host to.</param>
         /// <param name="port">The port to bind the virtual host to.</param>
         /// <param name="routes">The set of routes associated with the virtual host.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the IPAddress or Router passed to
         ///     the method is null.
@@ -181,8 +236,19 @@ namespace McSherry.Zener.Core
         /// Adds a virtual host to the set of hosts.
         /// </summary>
         /// <param name="host">The virtual host to add.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the VirtualHost provided to the method is null.
+        /// </exception>
         public VirtualHost AddHost(VirtualHost host)
         {
+            if (host == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided VirtualHost cannot be null."
+                    );
+            }
+
             lock (_lockbox)
             {
                 _hosts.RemoveAll(

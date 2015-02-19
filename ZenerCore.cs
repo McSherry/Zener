@@ -317,7 +317,9 @@ namespace McSherry.Zener
             // Prevent modifications to the ZenerContext.
             context.Lock();
 
-            this.Hosts = new HostRouter(context.DefaultIpAddress);
+            this.Hosts = new HostRouter(
+                context.DefaultIpAddress, context.DefaultTcpPort
+                );
             this.Hosts.HostAdded += this.VirtualHostAddedHandler;
             _httpServers = new List<HttpServer>();
             _context = context;
@@ -327,20 +329,20 @@ namespace McSherry.Zener
             {
                 this.Hosts.AddHost(
                     format:         "*", // the wildcard format string
-                    port:           context.TcpPort
+                    port:           context.DefaultTcpPort
                     );
             }
         }
 
         /// <summary>
-        /// The default wildcard virtual host, if one 
+        /// The default wildcard virtual host, if one has been created.
         /// </summary>
         public VirtualHost DefaultHost
         {
             get
             {
                 return this.Hosts
-                    .Where(v => v.IsWildcard() && v.Port == _context.TcpPort)
+                    .Where(v => v.IsWildcard() && v.Port == _context.DefaultTcpPort)
                     .FirstOrDefault();
             }
         }

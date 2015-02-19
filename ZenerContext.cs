@@ -373,7 +373,7 @@ namespace McSherry.Zener
             )
         {
             this.DefaultIpAddress = defaultAddress;
-            this.TcpPort = defaultPort;
+            this.DefaultTcpPort = defaultPort;
 
             this.IncludeDefaultHost = addDefaultHost;
 
@@ -407,7 +407,7 @@ namespace McSherry.Zener
         /// The TCP port to use by default when adding virtual
         /// hosts to the ZenerCore.
         /// </summary>
-        public ushort TcpPort
+        public ushort DefaultTcpPort
         {
             get { return _defTcpPort; }
             set
