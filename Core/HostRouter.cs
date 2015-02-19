@@ -118,7 +118,7 @@ namespace McSherry.Zener.Core
         /// </summary>
         /// <param name="format">The hostname of the virtual host.</param>
         /// <param name="port">The port to bind the virtual host to.</param>
-        public void AddHost(string format, ushort port)
+        public VirtualHost AddHost(string format, ushort port)
         {
             var vhost = new VirtualHost(
                 format:         format,
@@ -127,7 +127,7 @@ namespace McSherry.Zener.Core
                 routes:         new Router()
                 );
 
-            this.AddHost(vhost);
+            return this.AddHost(vhost);
         }
         /// <summary>
         /// Adds a virtual host to the set of hosts,
@@ -140,7 +140,7 @@ namespace McSherry.Zener.Core
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the Router passed to the method is null.
         /// </exception>
-        public void AddHost(string format, ushort port, Router routes)
+        public VirtualHost AddHost(string format, ushort port, Router routes)
         {
             var vhost = new VirtualHost(
                 format:         format,
@@ -149,7 +149,7 @@ namespace McSherry.Zener.Core
                 routes:         routes
                 );
 
-            this.AddHost(vhost);
+            return this.AddHost(vhost);
         }
         /// <summary>
         /// Adds a virtual host to the set of hosts.
@@ -162,7 +162,7 @@ namespace McSherry.Zener.Core
         ///     Thrown when the IPAddress or Router passed to
         ///     the method is null.
         /// </exception>
-        public void AddHost(
+        public VirtualHost AddHost(
             string format,
             IPAddress bindAddress, ushort port,
             Router routes
@@ -175,13 +175,13 @@ namespace McSherry.Zener.Core
                 routes:         routes
                 );
 
-            this.AddHost(vhost);
+            return this.AddHost(vhost);
         }
         /// <summary>
         /// Adds a virtual host to the set of hosts.
         /// </summary>
         /// <param name="host">The virtual host to add.</param>
-        public void AddHost(VirtualHost host)
+        public VirtualHost AddHost(VirtualHost host)
         {
             lock (_lockbox)
             {
@@ -199,6 +199,8 @@ namespace McSherry.Zener.Core
                     this.HostAdded(this, host);
                 }
             }
+
+            return host;
         }
 
         /// <summary>
