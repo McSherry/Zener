@@ -314,10 +314,22 @@ namespace McSherry.Zener
         /// <param name="context">The context to use when creating the ZenerCore.</param>
         public ZenerCore(ZenerContext context)
         {
+            // Prevent modifications to the ZenerContext.
+            context.Lock();
+
             this.Hosts = new HostRouter(context.DefaultIpAddress);
+            this.Hosts.HostAdded += this.VirtualHostAddedHandler;
             _httpServers = new List<HttpServer>();
             _context = context;
             _lockbox = new object();
+
+            if (context.IncludeDefaultHost)
+            {
+                this.Hosts.AddHost(
+                    format:         "*", // the wildcard format string
+                    port:           context.TcpPort
+                    );
+            }
         }
 
         /// <summary>
