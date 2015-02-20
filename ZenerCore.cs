@@ -122,6 +122,21 @@ namespace McSherry.Zener
                     HttpRequest req = (HttpRequest)msg.Arguments[0];
                     HttpResponse res = (HttpResponse)msg.Arguments[1];
 
+                    /* Due to HTTP pipelining, multiple requests can be handled by
+                     * a single thread. As a result, if the TLS_VHOST key is not
+                     * cleared and a pipelined request fails, the virtual host for
+                     * the previously-processed request will be used to look up
+                     * error handlers. This behaviour is incorrect.
+                     * 
+                     * Avoiding this is a fairly simple fix, we just need to remove
+                     * the TLS_VHOST key. The call to 'Remove' won't throw an exception
+                     * if the key doesn't exist, so we don't need to check for it.
+                     * 
+                     * This correction is anticipatory, as the described issue is
+                     * difficult to replicate.
+                     */
+                    TLS.Value.Remove(TLS_VHOST);
+
                     /* To properly use virtual hosting, we need to make sure that
                      * the client is sending HTTP 'Host' headers. These headers are
                      * what we'll use to determine the virtual host to add.
