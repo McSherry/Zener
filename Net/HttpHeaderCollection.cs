@@ -22,7 +22,6 @@ namespace McSherry.Zener.Net
         : ICollection<HttpHeader>
     {
         private List<HttpHeader> _headerList;
-        private bool _readOnly;
 
         /// <summary>
         /// Checks whether the collection is read-only, and throws an
@@ -41,7 +40,7 @@ namespace McSherry.Zener.Net
         public HttpHeaderCollection()
         {
             _headerList = new List<HttpHeader>();
-            _readOnly = false;
+            this.IsReadOnly = false;
         }
         /// <summary>
         /// Creates a collection of HTTP headers from the provided enumerable.
@@ -70,7 +69,7 @@ namespace McSherry.Zener.Net
         public HttpHeaderCollection(ICollection<HttpHeader> collection, bool readOnly)
         {
             _headerList = new List<HttpHeader>(collection);
-            _readOnly = readOnly;
+            this.IsReadOnly = readOnly;
         }
 
         /// <summary>
