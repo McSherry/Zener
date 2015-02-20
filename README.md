@@ -1,8 +1,7 @@
 |  Build  |  Status  |
 |---------|----------|
 |  Linux  | [![Linux Build Status](https://travis-ci.org/McSherry/Zener.svg?branch=master)](https://travis-ci.org/McSherry/Zener)
-| Windows | [![Windows Build status](https://ci.appveyor.com/api/projects/status/ywnl2go7njqeeik0?svg=true)](https://ci.appveyor.com/project/McSherry/zener)
-  |
+| Windows | [![Windows Build status](https://ci.appveyor.com/api/projects/status/ywnl2go7njqeeik0?svg=true)](https://ci.appveyor.com/project/McSherry/zener) |
 
 ## What is Zener?
 
