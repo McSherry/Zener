@@ -238,6 +238,13 @@ namespace McSherry.Zener.Archives
         }
 
         /// <summary>
+        /// The Adler32 checksum contained within the archive.
+        /// </summary>
+        public IEnumerable<byte> Adler32Checksum
+        {
+            get { return _checksum.Clone() as IEnumerable<byte>; }
+        }
+        /// <summary>
         /// The data contained within the Zlib archive.
         /// </summary>
         public override IEnumerable<byte> Data

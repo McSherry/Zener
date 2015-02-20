@@ -76,19 +76,12 @@ namespace McSherry.Zener.Core
          * matches, because the unbounded variable is infixed.
          */
 
-        private static readonly IEnumerable<string> _defaultMethods;
-
         private readonly Lazy<IEnumerable<string>> _paramNames;
         private readonly string _formatOriginal;
 
         static Route()
         {
             Route.MethodComparer = StringComparer.OrdinalIgnoreCase;
-            _defaultMethods = new[] 
-            {
-                "GET", "POST", "HEAD", "PUT", "DELETE",
-                "OPTIONS", "CONNECT", "TRACE"
-            };
         }
 
         /// <summary>
