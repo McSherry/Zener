@@ -147,7 +147,6 @@ namespace McSherry.Zener.Core
                 pathBuilder = new StringBuilder(),
                 paramNameBuilder = new StringBuilder(),
                 paramValBuilder = new StringBuilder();
-            string paramName = String.Empty;
             bool inParam = false, loop = true;
             bool paramIsUnbounded = false;
 
