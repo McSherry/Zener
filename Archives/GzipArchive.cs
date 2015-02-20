@@ -204,7 +204,7 @@ namespace McSherry.Zener.Archives
         // Any archive flags.
         private GzipFlags _flags;
         // Extra archive flags
-        private GzipExtra _xfl;
+        //private GzipExtra _xfl;
 
         /// <summary>
         /// Creates a new GzipArchive.
@@ -264,7 +264,7 @@ namespace McSherry.Zener.Archives
                     );
 
             _flags = (GzipFlags)headerBuf[FLG_OFFSET];
-            _xfl = (GzipExtra)headerBuf[XFL_OFFSET];
+            //_xfl = (GzipExtra)headerBuf[XFL_OFFSET];
 
             // Our current offset from the Gzip headers.
             long offset = 0;

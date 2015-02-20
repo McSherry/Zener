@@ -110,9 +110,6 @@ namespace McSherry.Zener.Archives
             MaximumCompression      = 0xC0
         }
 
-        // The name of the file stored within
-        // the archive.
-        private string _name;
         // The uncompressed data stored within
         // the archive.
         private byte[] _data;
@@ -124,7 +121,7 @@ namespace McSherry.Zener.Archives
         private ZlibCompressionMethod _compMethod;
         // The compression method information from the archive's
         // headers.
-        private ZlibCompressionInfo _compInfo;
+        //private ZlibCompressionInfo _compInfo;
         // The flags from the archive's headers.
         private ZlibFlags _flags;
 
@@ -169,7 +166,7 @@ namespace McSherry.Zener.Archives
             byte cmf = hdrBuf[CMF_OFFSET],
                 flg = hdrBuf[FLG_OFFSET];
             _compMethod = (ZlibCompressionMethod)(cmf & (byte)ZlibCompressionMethod.BitMask);
-            _compInfo = (ZlibCompressionInfo)(cmf & (byte)ZlibCompressionInfo.BitMask);
+            //_compInfo = (ZlibCompressionInfo)(cmf & (byte)ZlibCompressionInfo.BitMask);
             _flags = (ZlibFlags)flg;
 
             // RFC 1950 only specifies DEFLATE as a compression method. As this
@@ -220,12 +217,12 @@ namespace McSherry.Zener.Archives
             Array.Resize(ref cData, cData.Length - trlBuf.Length);
 
             _checksum = trlBuf;
-            _name = _checksum
-                .Aggregate(
-                    new StringBuilder(),
-                    (sb, b) => sb.Append(b.ToString("x"))
-                    )
-                .ToString();
+            //_name = _checksum
+            //    .Aggregate(
+            //        new StringBuilder(),
+            //        (sb, b) => sb.Append(b.ToString("x"))
+            //        )
+            //    .ToString();
 
             using (var oms = new MemoryStream())
             {
