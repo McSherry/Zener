@@ -99,6 +99,7 @@
     <Compile Include="ZenerContext.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".travis.yml" />
     <None Include="ClassDiagram1.cd" />
     <None Include="LICENCE" />
   </ItemGroup>
