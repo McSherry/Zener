@@ -254,6 +254,7 @@ namespace McSherry.Zener.Net
             HDRF_SERVER         = "Zener/{0}",
             HDRF_CONTENTTYPE    = "text/html",
             HDRF_ENCODING_GZIP  = "gzip",
+            HDRF_ENCODING_ANY   = "*",
 
             HTTP_VERSION        = "1.1",
             HTTP_NEWLINE        = "\r\n"
@@ -370,36 +371,48 @@ namespace McSherry.Zener.Net
                 if (!_closed) return;
                 else
                 {
-                    // If we've got a request object available to us,
-                    // we can check whether the client supports compression.
-                    //
-                    // We also need to check whether the programmer has enabled
-                    // compression. If compression is not enabled, we must not
-                    // compress the output. Compression is enabled by default.
-
                     // Compression has been enabled, we can compress the
                     // output. If not, we can't. The EnableCompression
                     // method has already confirmed that the client supports
                     // the same compression we do, so we don't need to check.
-                    if (_enableCompression)
+                    if (this.IsCompressed)
                     {
-                        // Add a header to indicate that we've applied
-                        // gzip encoding to the data.
+                        // Add a header indicating that we've used gzip encoding.
                         this.Headers.Add(
-                            fieldName:  HDR_CONTENTENCODING,
-                            fieldValue: HDRF_ENCODING_GZIP
+                            fieldName: HDR_CONTENTENCODING,
+                            fieldValue: HDRF_ENCODING_GZIP,
+                            overwrite: true
                             );
 
+                        // The stream that will eventually contain
+                        // our compressed output.
                         var ms = new MemoryStream();
+                        // Seek to the start of the output buffer,
+                        // since it's what we'll be compressing.
                         _obstr.Position = 0;
+
+                        // We're going to be replacing the output buffer
+                        // with a different stream, so we want to make sure
+                        // that it is closed/disposed.
                         using (_obstr)
+                        // We'll be writing the compressed output to the
+                        // new memory stream, so we pass that to the GZipStream.
                         using (var gs = new GZipStream(
                             ms, CompressionMode.Compress,
-                            leaveOpen:  true
+                            leaveOpen: true
                             ))
                         {
+                            // Copy the contents of the output buffer to
+                            // the GZipStream. This causes the stream to
+                            // compress them then write them to our new
+                            // MemoryStream.
                             _obstr.CopyTo(gs);
                         }
+
+                        // Our previous output buffer has been closed and
+                        // disposed, so we're now free to replace its value
+                        // with that of the MemoryStream containing the
+                        // compressed contents.
                         _obstr = ms;
                     }
 
@@ -832,7 +845,64 @@ namespace McSherry.Zener.Net
         /// </remarks>
         public bool EnableCompression(HttpRequest request)
         {
-            throw new NotImplementedException();
+            // Get the 'Accept-Encoding' header. This will let us
+            // know whether the client supports gzip encoding.
+            var accEnc = request.Headers[HDR_ACCEPTENCODING].FirstOrDefault();
+
+            bool canCompress = false;
+            // If this evaluates to true, we've retrieved
+            // a header with the name 'Accept-Encoding'.
+            if (accEnc != default(HttpHeader))
+            {
+                // The 'Accept-Encoding' header will be a a set
+                // of comma-separated values, so it makes sense
+                // to parse them using our CsvHttpHeader class.
+                CsvHttpHeader csv;
+                try
+                {
+                    csv = new CsvHttpHeader(accEnc);
+                }
+                catch (ArgumentException)
+                {
+                    // The 'Accept-Encoding' header is invalid,
+                    // so we need to skip to the method's return,
+                    // where we will return false.
+                    //
+                    // In this situation, a 'goto' is probably the
+                    // cleanest way to go about skipping any code
+                    // we now can't execute.
+                    goto returnLabel;
+                }
+
+                // There are various ways that a client could indicate
+                // support for compression.
+                //
+                // Upon completion of #38, this must be revised to factor
+                // in q-values.
+                if (
+                    // An empty 'Accept-Encoding' header (i.e. it has no items).
+                    csv.Items.Count == 0 ||
+                    // A wildcard value (an asterisk, *) indicating that any
+                    // encoding is acceptable.
+                    csv.Items.Any(s => s.StartsWith(HDRF_ENCODING_ANY)) ||
+                    // The presence of the 'gzip' value (this, specifically,
+                    // needs revision once q-values are supported).
+                    csv.Items.Any(s => s.StartsWith(HDRF_ENCODING_GZIP))
+                    )
+                {
+                    // If we're here, gzip encoding is acceptable.
+                    canCompress = true;
+                }
+            }
+
+            // If we weren't able to retrieve an 'Accept-Encoding'
+            // header, the canCompress variable will never be set
+            // to anything other than false.
+            //
+            // We're also setting IsCompressed appropriately. Assignment
+            // expressions return the assigned value, so we can put it
+            // all on one line.
+            returnLabel: return (this.IsCompressed = canCompress);
         }
         /// <summary>
         /// Disables HTTP compression if it is enabled.
@@ -842,7 +912,15 @@ namespace McSherry.Zener.Net
         /// </returns>
         public bool DisableCompression()
         {
-            throw new NotImplementedException();
+            // If compression is already disabled, we
+            // don't need to do anything.
+            if (!this.IsCompressed) return false;
+
+            // If it isn't disabled, disable it and
+            // return true to indicate that we have
+            // disabled it.
+            this.IsCompressed = false;
+            return true;
         }
 
         /// <summary>
