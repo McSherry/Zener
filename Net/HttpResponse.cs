@@ -698,6 +698,7 @@ namespace McSherry.Zener.Net
         public bool IsCompressed
         {
             get { return _enableCompression; }
+            private set { _enableCompression = value; }
         }
         /// <summary>
         /// Whether the response has been closed.
