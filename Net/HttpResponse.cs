@@ -830,7 +830,8 @@ namespace McSherry.Zener.Net
 
         /// <summary>
         /// Enables HTTP compression if the client reports
-        /// support for it.
+        /// support for it. To make use of HTTP compression,
+        /// output buffering must also be enabled.
         /// </summary>
         /// <param name="request">
         /// The client's request. This should contain headers

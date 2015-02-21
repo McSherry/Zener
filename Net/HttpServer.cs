@@ -195,7 +195,9 @@ namespace McSherry.Zener.Net
                 req = HttpRequest.Create(ns);
 
                 // If the client supports it, enable
-                // HTTP compression.
+                // HTTP compression. The developer will
+                // also need to enable output buffering
+                // to make use of HTTP compression.
                 res.EnableCompression(req);
 
                 // If creation succeeds, emit a message
