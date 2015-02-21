@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Networking = McSherry.Zener.Net.Networking;
+
 namespace McSherry.Zener.Core
 {
     /// <summary>
@@ -411,70 +413,31 @@ namespace McSherry.Zener.Core
                             );
                     }
                 }
+                // If we're in the parameter state, we no longer need to loop.
                 else if (state == PState.Parameter)
                 {
-                    // Move past any leading whitespace.
-                    while (Char.IsWhiteSpace(mediaType[i])) i++;
-                    // Set new current character.
-                    c = mediaType[i];
-
-                    int paramStart = i;
-                    // Read up to the first equals sign, which signifies
-                    // the end of the parameter's key.
-                    while (
-                        i < mediaType.Length &&
-                        mediaType[i] != EqualsSign
-                        ) i++;
-
-                    // There is no equals sign in the parameter. We'll still
-                    // consider this valid, but we need to handle it differently.
-                    if (i >= mediaType.Length)
-                    {
-                        // Add the extracted value with the string as the key
-                        // and with an empty value.
-                        type.Parameters.Add(
-                            mediaType.Substring(paramStart),
-                            null
-                            );
-                    }
-                    // There IS an equals sign in the parameter. This means we need
-                    // to treat is as a key-value parameter.
-                    else
-                    {
-                        // Extract the key from the media type string.
-                        string key = mediaType
-                            .Substring(
-                                paramStart, i - paramStart
-                                )
-                            .ToLower();
-                        // Skip past the equals sign.
-                        i++;
-                        // Set the new start as the index.
-                        paramStart = i;
-                        // Read up until a semicolon, which separates
-                        // parameters.
-                        while (
-                            i < mediaType.Length &&
-                            mediaType[i] != ParameterSeparator
-                            ) i++;
-
-                        string val = mediaType.Substring(
-                            paramStart, i - paramStart);
-                        type.Parameters.Add(
-                            key,
-                            val
-                            );
-
-                        if (i < mediaType.Length)
-                        {
-                            // Skip past the semicolon.
-                            i++;
-                        }
-                    }
+                    sectionStart = i;
+                    break;
                 }
             }
 
-            if (state == PState.SuperType)
+            if (state == PState.Parameter)
+            {
+                try
+                {
+                    type.Parameters = Networking.ParseUnquotedKeyValues(
+                            mediaType.Substring(sectionStart)
+                            );
+                }
+                catch (ArgumentException aex)
+                {
+                    throw new ArgumentException(
+                        "The provided string contains invalid or malformed parameters.",
+                        aex
+                        );
+                }
+            }
+            else if (state == PState.SuperType)
             {
                 throw new ArgumentException(
                     "The provided string does not contain a subtype."

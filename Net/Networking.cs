@@ -242,9 +242,11 @@ namespace McSherry.Zener.Net
         /// </param>
         /// <param name="validKeyCharacters">
         /// The characters that are considered valid within a key.
+        /// Set this to null to allow any characters.
         /// </param>
         /// <param name="validValueCharacters">
         /// The characters that are considered valid within a value.
+        /// Set this to null to allow any characters.
         /// </param>
         /// <returns>
         /// A dictionary containing all parsed key-value pairs.
@@ -253,6 +255,12 @@ namespace McSherry.Zener.Net
         /// Any key-value pairs without a value will have their
         /// values set to null.
         /// </remarks>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided source string is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided source string is invalid.
+        /// </exception>
         public static IDictionary<string, string> ParseUnquotedKeyValues(
             string source,
             char kvDelimiter = ';', char keySeparator = '=',
@@ -260,7 +268,22 @@ namespace McSherry.Zener.Net
             HashSet<char> validValueCharacters = null
             )
         {
+            if (source == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided source string must not be null."
+                    );
+            }
+
+            // If the string is only white-space, we can't parse
+            // anything in it.
+            if (String.IsNullOrWhiteSpace(source))
+            {
+                return new Dictionary<string, string>(0);
+            }
+
             source = source.Trim();
+
             var ret = new Dictionary<string, string>();
             bool inKey = true,
                 hasKeyValidSet = validKeyCharacters != null,
