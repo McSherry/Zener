@@ -95,7 +95,8 @@ namespace McSherry.Zener.Core
         private const string
             // Valid characters for the super/subtypes in a media type. All
             // comparisons we do will be in lowercase, so we don't need capitals.
-            SuperSubTypeCharactersS = "abcedfghijklmnopqrstuvwxyz0123456789-."
+            SuperSubTypeCharactersS = "abcedfghijklmnopqrstuvwxyz0123456789-.",
+            WildcardString          = "*"
             ;
         private const char
             SubTypeSeparator        = '/',
@@ -103,7 +104,8 @@ namespace McSherry.Zener.Core
             SuffixSeparator         = '+',
             PrefixSeparator         = '.',
             Dash                    = '-',
-            EqualsSign              = '='
+            EqualsSign              = '=',
+            WildcardChar            = '*'
             ;
 
         /// <summary>
@@ -197,6 +199,31 @@ namespace McSherry.Zener.Core
                         type.SuperType = storage.ToString().ToLower();
                         // Clear the storage.
                         storage.Clear();
+                    }
+                    // If the character is a wildcard character, there
+                    // are some special rules we need to apply.
+                    else if (c == WildcardChar)
+                    {
+                        if (
+                            // The wildcard must be the only character in
+                            // a media type's super-type. So we need to
+                            // make sure that there are no characters
+                            // already in the storage.
+                            storage.Length > 0 ||
+                            // And we need to make sure that the next
+                            // character is the super-to-subtype separator.
+                            mediaType[i + 1] != SubTypeSeparator
+                            )
+                        {
+                            throw new ArgumentException(
+                                "The media type super-type contains a wildcard " +
+                                "in an invalid location."
+                                );
+                        }
+
+                        // If we're here, the presence of a wildcard is fine,
+                        // so we can add it to storage.
+                        storage.Append(c);
                     }
                     // Otherwise, we need to check that the character is
                     // valid.
@@ -293,6 +320,38 @@ namespace McSherry.Zener.Core
                         // switch to the subtype state.
                         state = PState.SubType;
                     }
+                    // If the character is a wildcard character, there
+                    // are some special rules we need to apply.
+                    else if (c == WildcardChar)
+                    {
+                        if (
+                            // The wildcard must be the only character in
+                            // a media type's subtype. So we need to
+                            // make sure that there are no characters
+                            // already in the storage.
+                            storage.Length > 0 ||
+                            // This also needs to be the end of the prefix/subtype,
+                            // either because it's the end of the string; and
+                            i + 1 < mediaType.Length &&
+                            (
+                            // That the next character is the separator that
+                            // indicates the start of a suffix; or
+                                mediaType[i + 1] != SuffixSeparator ||
+                            // That the next character is a parameter separator
+                            // character.
+                                mediaType[i + 1] != ParameterSeparator
+                            ))
+                        {
+                            throw new ArgumentException(
+                                "The media type prefix/subtype contains a wildcard " +
+                                "in an invalid location."
+                                );
+                        }
+
+                        // If we're here, the presence of a wildcard is fine,
+                        // so we can add it to storage.
+                        storage.Append(c);
+                    }
                     // If we find one of these characters, we probably aren't
                     // in a prefix, and we may instead be in a subtype.
                     else if (c == SuffixSeparator || c == ParameterSeparator)
@@ -355,6 +414,38 @@ namespace McSherry.Zener.Core
                         {
                             state = PState.Parameter;
                         }
+                    }
+                    // If the character is a wildcard character, there
+                    // are some special rules we need to apply.
+                    else if (c == WildcardChar)
+                    {
+                        if (
+                            // The wildcard must be the only character in
+                            // a media type's subtype. So we need to
+                            // make sure that there are no characters
+                            // already in the storage.
+                            storage.Length > 0 ||
+                            // This also needs to be the end of the subtype,
+                            // either because it's the end of the string; and
+                            i + 1 < mediaType.Length &&
+                            (
+                            // That the next character is the separator that
+                            // indicates the start of a suffix; or
+                                mediaType[i + 1] != SuffixSeparator ||
+                            // That the next character is a parameter separator
+                            // character.
+                                mediaType[i + 1] != ParameterSeparator
+                            ))
+                        {
+                            throw new ArgumentException(
+                                "The media type subtype contains a wildcard " +
+                                "in an invalid location."
+                                );
+                        }
+
+                        // If we're here, the presence of a wildcard is fine,
+                        // so we can add it to storage.
+                        storage.Append(c);
                     }
                     // The character is valid.
                     else if (SuperSubTypeCharacters.Contains(c))
@@ -525,6 +616,13 @@ namespace McSherry.Zener.Core
         public static MediaType JSON
         {
             get { return "application/json"; }
+        }
+        /// <summary>
+        /// A wildcard media type that will match any media type.
+        /// </summary>
+        public static MediaType Wildcard
+        {
+            get { return "*/*"; }
         }
 
         private MediaType() { }
@@ -714,12 +812,22 @@ namespace McSherry.Zener.Core
                     .Equals(type.Suffix, StringComparison.OrdinalIgnoreCase);
             }
 
+            bool superEqual = 
+                // Check to see whether either super-type is a wildcard.
+                this.SuperType == WildcardString ||
+                type.SuperType == WildcardString ||
+                // Just in case it isn't, case-insensitive comparison.
+                type.SuperType.Equals(this.SuperType, StringComparison.OrdinalIgnoreCase);
+            // Same as we did with the super-type.
+            bool subEqual =
+                this.SubType == WildcardString ||
+                type.SubType == WildcardString ||
+                type.SubType.Equals(this.SubType, StringComparison.OrdinalIgnoreCase);
+
             return
-                paramEqual &&
-                suffixEqual &&
+                paramEqual && suffixEqual &&
                 this.RegistrationTree == type.RegistrationTree &&
-                this.SuperType.Equals(type.SuperType, StringComparison.OrdinalIgnoreCase) &&
-                this.SubType.Equals(type.SubType, StringComparison.OrdinalIgnoreCase);
+                superEqual && subEqual;
         }
 
         /// <summary>
