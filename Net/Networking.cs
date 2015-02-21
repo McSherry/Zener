@@ -226,6 +226,173 @@ namespace McSherry.Zener.Net
 
             return parts;
         }
+        /// <summary>
+        /// Parses a set of key-value pairs where quoted strings are
+        /// not taken in to account.
+        /// </summary>
+        /// <param name="source">
+        /// The source string containing the key-value pairs.
+        /// </param>
+        /// <param name="kvDelimiter">
+        /// The character that separates each key-value pair.
+        /// </param>
+        /// <param name="keySeparator">
+        /// The character that separates the key from the value
+        /// in a key-value pair.
+        /// </param>
+        /// <param name="validKeyCharacters">
+        /// The characters that are considered valid within a key.
+        /// </param>
+        /// <param name="validValueCharacters">
+        /// The characters that are considered valid within a value.
+        /// </param>
+        /// <returns>
+        /// A dictionary containing all parsed key-value pairs.
+        /// </returns>
+        /// <remarks>
+        /// Any key-value pairs without a value will have their
+        /// values set to null.
+        /// </remarks>
+        public static IDictionary<string, string> ParseUnquotedKeyValues(
+            string source,
+            char kvDelimiter = ';', char keySeparator = '=',
+            HashSet<char> validKeyCharacters = null,
+            HashSet<char> validValueCharacters = null
+            )
+        {
+            source = source.Trim();
+            var ret = new Dictionary<string, string>();
+            bool inKey = true,
+                hasKeyValidSet = validKeyCharacters == null,
+                hasValueValidSet = validValueCharacters == null;
+            string tempKey = String.Empty;
+            StringBuilder storage = new StringBuilder();
+            for (int i = 0; i < source.Length; i++)
+            {
+                // Check to see whether we're in a key.
+                if (inKey)
+                {
+                    // If we hit a key separator, we need
+                    // to switch to parsing a value.
+                    if (source[i] == keySeparator)
+                    {
+                        // If we hit a separator and the key is zero-length,
+                        // throw an exception.
+                        if (storage.Length == 0)
+                        {
+                            throw new ArgumentException(
+                                "The string contains a pair with an empty key."
+                                );
+                        }
+
+                        // Set the variable to indicate we're no
+                        // longer in a key.
+                        inKey = false;
+                        // Stick the key value in a variable for later.
+                        tempKey = storage.ToString();
+                        // Clear the string builder.
+                        storage.Clear();
+                    }
+                    // We will accept keys with no values. This
+                    // means we need to check for delimiters.
+                    else if (source[i] == kvDelimiter)
+                    {
+                        // We add the key, but set the value
+                        // to null.
+                        ret[storage.ToString()] = null;
+                        // Clear the storage.
+                        storage.Clear();
+                    }
+                    // If the character is white-space, ignore it.
+                    else if (Char.IsWhiteSpace(source[i])) continue;
+                    // If there is no set of valid characters, we don't
+                    // need to do any checks.
+                    else if (!hasKeyValidSet)
+                    {
+                        storage.Append(source[i]);
+                    }
+                    // If there is a specific set of characters that can be
+                    // allowed within a key, check to make sure that this
+                    // character is allowable.
+                    else if (validKeyCharacters.Contains(source[i]))
+                    {
+                        // The character is allowable, so we add it to storage.
+                        storage.Append(source[i]);
+                    }
+                    // If the character isn't allowable, throw an
+                    // exception.
+                    else
+                    {
+                        throw new ArgumentException(
+                            "A key contains an invalid character."
+                            );
+                    }
+                }
+                // If we're here, we're parsing a value.
+                else
+                {
+                    // If we hit a delimiter, it means we're at
+                    // the end of our key-value pair.
+                    if (source[i] == kvDelimiter)
+                    {
+                        // Add the pair to the dictionary.
+                        ret[tempKey] = storage.ToString();
+                        // Clear the string builder.
+                        storage.Clear();
+                        // Set our state back to being in a key.
+                        inKey = true;
+                    }
+                    // If we hit white-space, ignore it.
+                    else if (Char.IsWhiteSpace(source[i])) continue;
+                    // If there isn't a set of characters to consider
+                    // valid, add the character to storage without
+                    // performing any checks.
+                    else if (!hasValueValidSet)
+                    {
+                        storage.Append(source[i]);
+                    }
+                    // If there is a set of valid characters, make
+                    // sure the current character is valid.
+                    else if (validValueCharacters.Contains(source[i]))
+                    {
+                        // If it is valid, add it.
+                        storage.Append(source[i]);
+                    }
+                    // If the character isn't within the set of valid
+                    // characters, throw an exception.
+                    else
+                    {
+                        throw new ArgumentException(
+                            "A value contains an invalid character."
+                            );
+                    }
+                }
+            }
+
+            // If there are still characters in storage, we
+            // may need to perform further actions.
+            if (storage.Length > 0)
+            {
+                // If we're in a key, there's no value so
+                // we add the key with a null value.
+                if (inKey) ret[storage.ToString()] = null;
+                // If we're not, add both the key and value
+                // to the dictionary.
+                else ret[tempKey] = storage.ToString();
+            }
+            // If we're not in a key and there are no characters
+            // in the string builder, it means that a key has no
+            // associated value.
+            else if (!inKey)
+            {
+                // We'll have a key stored in this variable, so
+                // we add it to the dict with a null value.
+                ret[tempKey] = null;
+            }
+
+            // Return the dictionary.
+            return ret;
+        }
 
         /// <summary>
         /// Gets the message associated with the status code.
