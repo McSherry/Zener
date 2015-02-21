@@ -16,7 +16,7 @@ namespace McSherry.Zener.Net
     /// Represents an HTTP header where the value is a list of
     /// comma-separated values.
     /// </summary>
-    public sealed class CsvHttpHeader
+    public class CsvHttpHeader
         : HttpHeader
     {
         private const char 
@@ -56,7 +56,11 @@ namespace McSherry.Zener.Net
             : base(fieldName, fieldValue)
         {
             base.Value = base.Value.Trim(WhitespaceString.ToCharArray());
-            this.Items = Networking.ParseDelimitedSemiQuotedStrings(base.Value);
+            this.Items = Networking.ParseDelimitedSemiQuotedStrings(
+                source:             base.Value,
+                quote:              '\r' // We don't want quotes, and this character
+                                         // will never appear in a value.
+                );
         }
 
         /// <summary>
