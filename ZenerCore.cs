@@ -111,7 +111,7 @@ namespace McSherry.Zener
             }
 
             // Add any API methods to the host's router.
-            _context.AddApiRoutes(host.Router);
+            _context.AddApiRoutes(host.Routes);
         }
         private void HttpServerMessageHandler(HttpServerMessage msg)
         {
@@ -199,7 +199,7 @@ namespace McSherry.Zener
                     // As with before, we want to be able to provide two
                     // error messages: 405 for when the method isn't acceptable,
                     // and 404 for when there are absolutely no routes.
-                    var rt = host.Router.Find(req.Path);
+                    var rt = host.Routes.Find(req.Path);
 
                     // There are absolutely no results, so we return 404.
                     if (rt.Count == 0)
@@ -282,7 +282,7 @@ namespace McSherry.Zener
                     // handler.
                     if (host != null)
                     {
-                        var route = host.Router
+                        var route = host.Routes
                             // Error handling routes are prefixed with the
                             // internal prefix (by default, a colon) and use
                             // the status code of the error (for example, a

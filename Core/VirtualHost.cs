@@ -75,7 +75,7 @@ namespace McSherry.Zener.Core
             this.Format = format.Trim(' ', DELIMITER);
             this.BindAddress = bindAddress;
             this.Port = port;
-            this.Router = routes;
+            this.Routes = routes;
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace McSherry.Zener.Core
         /// <summary>
         /// The set of routes associated with this virtual host.
         /// </summary>
-        public Router Router
+        public Router Routes
         {
             get;
             private set;
