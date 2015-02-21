@@ -887,7 +887,7 @@ namespace McSherry.Zener.Net
                     csv.Items.Any(s => s.StartsWith(HDRF_ENCODING_ANY)) ||
                     // The presence of the 'gzip' value (this, specifically,
                     // needs revision once q-values are supported).
-                    csv.Items.Any(s => s.StartsWith(HDRF_ENCODING_GZIP))
+                    csv.Items.Contains(HDRF_ENCODING_GZIP)
                     )
                 {
                     // If we're here, gzip encoding is acceptable.
