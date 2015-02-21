@@ -53,10 +53,10 @@ namespace McSherry.Zener.Net
                 ("A field name must be provided.", "fieldName");
             }
 
-            if (String.IsNullOrWhiteSpace(fieldValue))
+            if (fieldValue == null)
             {
-                throw new ArgumentException
-                ("A value must be provided.", "value");
+                throw new ArgumentNullException
+                ("The provided value must not be null.", "value");
             }
             if (fieldName.Any(c => c == ':' || c == '\n' || c == '\r'))
             {

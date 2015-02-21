@@ -130,11 +130,18 @@ namespace McSherry.Zener.Net
             bool recogniseCEscapes = true
             )
         {
-            if (String.IsNullOrWhiteSpace(source))
+            if (source == null)
             {
                 throw new ArgumentException(
-                    "The provided string is null, empty, or white-space."
+                    "The provided source string must not be null."
                     );
+            }
+
+            // If the source string is empty, there's no point in
+            // checking it.
+            if (String.IsNullOrWhiteSpace(source))
+            {
+                return new List<string>(0);
             }
 
             // Whether we're currently in a quoted section.
