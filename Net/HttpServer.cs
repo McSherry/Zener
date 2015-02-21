@@ -194,10 +194,13 @@ namespace McSherry.Zener.Net
                 // Attempt to create a request object.
                 req = HttpRequest.Create(ns);
 
+                // If the client supports it, enable
+                // HTTP compression.
+                res.EnableCompression(req);
+
                 // If creation succeeds, emit a message
                 // with the request and response objects
                 // as its arguments.
-                res.Request = req;
                 this.EmitMessage(
                     MessageType.RequestReceived,
                     new object[] { req, res }.ToList(),

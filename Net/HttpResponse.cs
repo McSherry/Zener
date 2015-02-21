@@ -376,45 +376,31 @@ namespace McSherry.Zener.Net
                     // We also need to check whether the programmer has enabled
                     // compression. If compression is not enabled, we must not
                     // compress the output. Compression is enabled by default.
-                    if (this.Request != null && this.EnableCompression)
+
+                    // Compression has been enabled, we can compress the
+                    // output. If not, we can't. The EnableCompression
+                    // method has already confirmed that the client supports
+                    // the same compression we do, so we don't need to check.
+                    if (_enableCompression)
                     {
-                        var hdr = this.Request.Headers[HDR_ACCEPTENCODING]
-                            .DefaultIfEmpty(null)
-                            .First();
+                        // Add a header to indicate that we've applied
+                        // gzip encoding to the data.
+                        this.Headers.Add(
+                            fieldName:  HDR_CONTENTENCODING,
+                            fieldValue: HDRF_ENCODING_GZIP
+                            );
 
-                        // If the header is present, we can check whether it
-                        // includes "gzip" in its supported compression.
-                        if (hdr != null)
+                        var ms = new MemoryStream();
+                        _obstr.Position = 0;
+                        using (_obstr)
+                        using (var gs = new GZipStream(
+                            ms, CompressionMode.Compress,
+                            leaveOpen:  true
+                            ))
                         {
-                            var enc = new CsvHttpHeader(hdr).Items;
-                            // If the client supports gzip compression, we'll
-                            // pass it through a GZipStream to compress it.
-                            if (
-                                enc.Contains(
-                                    HDRF_ENCODING_GZIP,
-                                    StringComparer.OrdinalIgnoreCase
-                                ))
-                            {
-                                // Add a header to indicate that we've applied
-                                // gzip encoding to the data.
-                                this.Headers.Add(
-                                    fieldName:  HDR_CONTENTENCODING,
-                                    fieldValue: HDRF_ENCODING_GZIP
-                                    );
-
-                                var ms = new MemoryStream();
-                                _obstr.Position = 0;
-                                using (_obstr)
-                                using (var gs = new GZipStream(
-                                    ms, CompressionMode.Compress,
-                                    leaveOpen:  true
-                                    ))
-                                {
-                                    _obstr.CopyTo(gs);
-                                }
-                                _obstr = ms;
-                            }
+                            _obstr.CopyTo(gs);
                         }
+                        _obstr = ms;
                     }
 
                     // If we've reached this point, we were using
@@ -580,15 +566,6 @@ namespace McSherry.Zener.Net
         }
 
         /// <summary>
-        /// The HttpRequest this response will be responding to.
-        /// </summary>
-        internal HttpRequest Request
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
         /// Creates a new HttpResponse.
         /// </summary>
         /// <param name="responseStream">The stream to write the response to.</param>
@@ -618,7 +595,6 @@ namespace McSherry.Zener.Net
 
             this.StatusCode = HttpStatus.OK;
             this.BufferOutput = false;
-            this.EnableCompression = true;
             this.Encoding = Encoding.UTF8;
             _rstr = responseStream;
             _headers = new HttpHeaderCollection();
@@ -697,25 +673,6 @@ namespace McSherry.Zener.Net
             }
         }
         /// <summary>
-        /// Whether to enable HTTP compression, if available. Compression
-        /// is only available if the client supports it and if output
-        /// buffering is enabled.
-        /// </summary>
-        public bool EnableCompression
-        {
-            get
-            {
-                return _enableCompression;
-            }
-            set
-            {
-                CheckClosed();
-                CheckHeadersSent();
-
-                _enableCompression = value;
-            }
-        }
-        /// <summary>
         /// The encoding used when writing strings to the response. Defaults
         /// to UTF-8.
         /// </summary>
@@ -733,6 +690,14 @@ namespace McSherry.Zener.Net
 
                 _encoding = value;
             }
+        }
+        /// <summary>
+        /// Whether HTTP compression is currently enabled
+        /// for this response.
+        /// </summary>
+        public bool IsCompressed
+        {
+            get { return _enableCompression; }
         }
         /// <summary>
         /// Whether the response has been closed.
@@ -847,6 +812,36 @@ namespace McSherry.Zener.Net
             formatBuilder.Append(HTTP_NEWLINE);
 
             this.Write(value: formatBuilder.ToString());
+        }
+
+        /// <summary>
+        /// Enables HTTP compression if the client reports
+        /// support for it.
+        /// </summary>
+        /// <param name="request">
+        /// The client's request. This should contain headers
+        /// indicating compression support.
+        /// </param>
+        /// <returns>
+        /// True if compression was enabled.
+        /// </returns>
+        /// <remarks>
+        /// Zener only supports "gzip" compression. If the client
+        /// does not support this, compression will not be enabled.
+        /// </remarks>
+        public bool EnableCompression(HttpRequest request)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Disables HTTP compression if it is enabled.
+        /// </summary>
+        /// <returns>
+        /// True if compression was disabled.
+        /// </returns>
+        public bool DisableCompression()
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>

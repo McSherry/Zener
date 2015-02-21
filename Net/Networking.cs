@@ -252,6 +252,9 @@ namespace McSherry.Zener.Net
         /// If authentication fails, responds to the client requesting
         /// credentials and closes the response.
         /// </summary>
+        /// <param name="request">
+        ///     The request containing authentication details.
+        /// </param>
         /// <param name="response">
         ///     The HttpResponse to authenticate.
         /// </param>
@@ -279,7 +282,7 @@ namespace McSherry.Zener.Net
         ///     Authorization header.
         /// </exception>
         public static bool BasicAuthenticate(
-            this HttpResponse response,
+            this HttpRequest request, HttpResponse response,
             string username, string password,
             string realm = null
             )
@@ -289,7 +292,7 @@ namespace McSherry.Zener.Net
 
             response.BufferOutput = true;
 
-            var hdr = response.Request.Headers[HDR_CLAUTH].DefaultIfEmpty(null).First();
+            var hdr = request.Headers[HDR_CLAUTH].DefaultIfEmpty(null).First();
             // If hdr is null, it means that the client hasn't sent an
             // Authorization header. This means we now need to respond with
             // a 401 and request authorization.
@@ -297,7 +300,7 @@ namespace McSherry.Zener.Net
             {
                 if (String.IsNullOrEmpty(realm))
                 {
-                    realm = response.Request.Path;
+                    realm = request.Path;
                 }
 
                 // Remove any characters that cannot be present within
@@ -330,11 +333,11 @@ namespace McSherry.Zener.Net
                     // This results in the above branch being executed
                     // and the sending of a WWW-Authenticate header to
                     // the client.
-                    response.Request.Headers.IsReadOnly = false;
-                    response.Request.Headers.Remove(hdr.Field);
-                    response.Request.Headers.IsReadOnly = true;
+                    request.Headers.IsReadOnly = false;
+                    request.Headers.Remove(hdr.Field);
+                    request.Headers.IsReadOnly = true;
 
-                    response.BasicAuthenticate(username, password, realm);
+                    request.BasicAuthenticate(response, username, password, realm);
                 }
 
                 // The remainder of the Authorization header should be the
@@ -372,11 +375,11 @@ namespace McSherry.Zener.Net
                     // This results in the above branch being executed
                     // and the sending of a WWW-Authenticate header to
                     // the client.
-                    response.Request.Headers.IsReadOnly = false;
-                    response.Request.Headers.Remove(hdr.Field);
-                    response.Request.Headers.IsReadOnly = true;
+                    request.Headers.IsReadOnly = false;
+                    request.Headers.Remove(hdr.Field);
+                    request.Headers.IsReadOnly = true;
 
-                    response.BasicAuthenticate(username, password, realm);
+                    request.BasicAuthenticate(response, username, password, realm);
                 }
             }
 
