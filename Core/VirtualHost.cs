@@ -24,6 +24,21 @@ namespace McSherry.Zener.Core
             ASTERISK    = '*'
             ;
 
+        static VirtualHost()
+        {
+            VirtualHost.NameComparer = StringComparer.OrdinalIgnoreCase;
+        }
+
+        /// <summary>
+        /// The IEqualityComparer to be used when
+        /// comparing the names of virtual hosts.
+        /// </summary>
+        public static StringComparer NameComparer
+        {
+            get;
+            private set;
+        }
+
         /// <summary>
         /// Creates a new VirtualHost.
         /// </summary>
@@ -84,6 +99,14 @@ namespace McSherry.Zener.Core
         /// </summary>
         public const string AnyHostname = "*";
 
+        /// <summary>
+        /// The name given to the virtual host.
+        /// </summary>
+        public string Name
+        {
+            get;
+            private set;
+        }
         /// <summary>
         /// The format of the virtual host's hostname.
         /// </summary>
