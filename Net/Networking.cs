@@ -263,8 +263,8 @@ namespace McSherry.Zener.Net
             source = source.Trim();
             var ret = new Dictionary<string, string>();
             bool inKey = true,
-                hasKeyValidSet = validKeyCharacters == null,
-                hasValueValidSet = validValueCharacters == null;
+                hasKeyValidSet = validKeyCharacters != null,
+                hasValueValidSet = validValueCharacters != null;
             string tempKey = String.Empty;
             StringBuilder storage = new StringBuilder();
             for (int i = 0; i < source.Length; i++)
