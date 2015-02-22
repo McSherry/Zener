@@ -379,7 +379,7 @@ namespace McSherry.Zener.Core
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return this.GetEnumerator();
+            return ((IEnumerable<KeyValuePair<TKey, TValue>>)this).GetEnumerator();
         }
     }
 }
