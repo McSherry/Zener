@@ -70,7 +70,7 @@ namespace McSherry.Zener.Net
         public ICollection<string> Items
         {
             get;
-            private set;
+            protected set;
         }
     }
 }
