@@ -875,12 +875,17 @@ namespace McSherry.Zener.Net
             if (accEnc != default(HttpHeader))
             {
                 // The 'Accept-Encoding' header will be a a set
-                // of comma-separated values, so it makes sense
-                // to parse them using our CsvHttpHeader class.
-                CsvHttpHeader csv;
+                // of comma-separated values which may or may not
+                // have a set of associated q-values, so it makes
+                // sense to parse them using the OrderedCsvHttpHeader
+                // class.
+                OrderedCsvHttpHeader ocsv;
                 try
                 {
-                    csv = new CsvHttpHeader(accEnc);
+                    ocsv = new OrderedCsvHttpHeader(
+                        header:             accEnc,
+                        removeUnacceptable: true
+                        );
                 }
                 catch (ArgumentException)
                 {
@@ -896,18 +901,14 @@ namespace McSherry.Zener.Net
 
                 // There are various ways that a client could indicate
                 // support for compression.
-                //
-                // Upon completion of #38, this must be revised to factor
-                // in q-values.
                 if (
                     // An empty 'Accept-Encoding' header (i.e. it has no items).
-                    csv.Items.Count == 0 ||
+                    ocsv.Items.Count == 0 ||
                     // A wildcard value (an asterisk, *) indicating that any
                     // encoding is acceptable.
-                    csv.Items.Any(s => s.StartsWith(HDRF_ENCODING_ANY)) ||
-                    // The presence of the 'gzip' value (this, specifically,
-                    // needs revision once q-values are supported).
-                    csv.Items.Contains(HDRF_ENCODING_GZIP)
+                    ocsv.Items.Any(s => s == HDRF_ENCODING_ANY) ||
+                    // The presence of the 'gzip' value.
+                    ocsv.Items.Contains(HDRF_ENCODING_GZIP)
                     )
                 {
                     // If we're here, gzip encoding is acceptable.
