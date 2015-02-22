@@ -9,6 +9,6 @@ If your software uses an HTML renderer to present its GUI, and you're using fram
 
 Zener is an embeddable HTTP server with supporting logic. It handles loading resources and provides a set of APIs that allows your front-end code (such as JavaScript or Dart) to communicate with your back-end logic. Zener can simplify development and means you can use the same client&harr;server mindset you would when writing web applications.
 
-Zener is written in C# 5.0, and is compatible with the .NET Framework, version 4.0.
+Zener is written in C# 5.0, and has been tested against .NET 4.0 and Mono 3.12.0.
 
 
