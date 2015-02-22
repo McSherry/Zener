@@ -69,6 +69,39 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Retrieves a VirtualHost based on its name.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the VirtualHost to retrieve.
+        /// </param>
+        /// <returns>
+        /// The first VirtualHost in the router with the
+        /// specified name.
+        /// </returns>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">
+        /// Thrown when the HostRouter does not contain a VirtualHost with
+        /// the specified name.
+        /// </exception>
+        public VirtualHost this[string name]
+        {
+            get
+            {
+                var vhost = this._hosts
+                    .Where(h => VirtualHost.NameComparer.Equals(name, h.Name))
+                    .FirstOrDefault();
+
+                if (vhost == default(VirtualHost))
+                {
+                    throw new KeyNotFoundException(
+                        "No virtual host with the specified name exists."
+                        );
+                }
+
+                return vhost;
+            }
+        }
+
+        /// <summary>
         /// The IP address that virtual hosts will be bound to by
         /// default. This is used when no IP address is specified
         /// whilst adding virtual hosts to the router.
@@ -289,10 +322,6 @@ namespace McSherry.Zener.Core
 
             lock (_lockbox)
             {
-                _hosts.RemoveAll(
-                    v => v.Format.Equals(host.Format) && v.Port == host.Port
-                    );
-
                 _hosts.Add(host);
 
                 // If there are no handlers, this will be
