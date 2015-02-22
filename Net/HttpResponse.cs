@@ -581,7 +581,9 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Creates a new HttpResponse.
         /// </summary>
-        /// <param name="responseStream">The stream to write the response to.</param>
+        /// <param name="responseStream">
+        /// The stream to write the contents of the response to.
+        /// </param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when the provided stream does not support the
         ///     required operations.
@@ -589,7 +591,7 @@ namespace McSherry.Zener.Net
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided stream is null.
         /// </exception>
-        internal HttpResponse(Stream responseStream)
+        public HttpResponse(Stream responseStream)
         {
             if (responseStream == null)
             {
@@ -603,7 +605,7 @@ namespace McSherry.Zener.Net
                 !responseStream.CanWrite)
             {
                 throw new ArgumentException
-                ("Provided stream must support reading, seeking, and writing.");
+                ("Provided stream must support reading and writing.");
             }
 
             this.StatusCode = HttpStatus.OK;
