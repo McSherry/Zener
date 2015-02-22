@@ -32,9 +32,17 @@ namespace McSherry.Zener.Core
     public sealed class IndexedDictionary<TKey, TValue>
         : IDictionary<TKey, TValue>, IList<KeyValuePair<TKey, TValue>>
     {
+        // We'll be using this to provide quick ContainsKey
+        // calls.
+        private HashSet<TKey> _keyHashes;
+        // And we'll be using the List<T>s for everything
+        // else.
         private List<TKey> _keys;
         private List<TValue> _values;
+        // We'll be properly supporting making the collection
+        // read-only.
         private bool _readonly;
+        // Thread-safety is also a concern.
         private object _lockbox;
 
         /// <summary>
@@ -58,11 +66,35 @@ namespace McSherry.Zener.Core
         /// Creates a new empty IndexedDictionary.
         /// </summary>
         public IndexedDictionary()
+            : this(EqualityComparer<TKey>.Default)
         {
+
+        }
+        /// <summary>
+        /// Creates a new empty IndexedDictionary.
+        /// </summary>
+        /// <param name="comparer">
+        /// The comparer used to determine key equality.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided equality comparer is null.
+        /// </exception>
+        public IndexedDictionary(IEqualityComparer<TKey> comparer)
+        {
+            if (comparer == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided key comparer must not be null."
+                    );
+            }
+
+            _keyHashes = new HashSet<TKey>(comparer);
             _keys = new List<TKey>();
             _values = new List<TValue>();
             _lockbox = new object();
             _readonly = false;
+
+            this.KeyComparer = comparer;
         }
 
         /// <summary>
@@ -141,6 +173,14 @@ namespace McSherry.Zener.Core
         public ICollection<TValue> Values
         {
             get { throw new NotImplementedException(); }
+        }
+        /// <summary>
+        /// The comparer used to compare keys.
+        /// </summary>
+        public IEqualityComparer<TKey> KeyComparer
+        {
+            get;
+            private set;
         }
 
         /// <summary>
