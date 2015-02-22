@@ -604,6 +604,23 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// Creates a read-only copy of this IndexedDictionary.
+        /// </summary>
+        /// <returns>
+        /// The read-only copy of this IndexedDictionary.
+        /// </returns>
+        public IndexedDictionary<TKey, TValue> AsReadOnly()
+        {
+            var ixDict = new IndexedDictionary<TKey, TValue>(this.KeyComparer);
+
+            lock (_lockbox) foreach (var kvp in this) ixDict.Add(kvp);
+
+            ixDict.IsReadOnly = true;
+
+            return ixDict;
+        }
+
+        /// <summary>
         /// Gets an enumerator that iterates through this IndexedDictionary's
         /// items.
         /// </summary>
