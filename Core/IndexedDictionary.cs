@@ -49,7 +49,7 @@ namespace McSherry.Zener.Core
         /// Checks whether the dictionary is read-only, and throws
         /// an exception if it is.
         /// </summary>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         private void CheckIsReadOnly()
@@ -57,7 +57,7 @@ namespace McSherry.Zener.Core
             if (this.IsReadOnly)
             {
                 throw new InvalidOperationException(
-                    "A read-only dictionary cannot be modified."
+                    "The dictionary is read-only."
                     );
             }
         }
@@ -111,7 +111,7 @@ namespace McSherry.Zener.Core
         /// Thrown when the specified key is not present within
         /// the dictionary.
         /// </exception>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only and an attempt
         /// is made to set a value.
         /// </exception>
@@ -163,9 +163,9 @@ namespace McSherry.Zener.Core
         /// Thrown when the specified index is outside the valid range
         /// for the number of items currently in the dictionary.
         /// </exception>
-        /// <exception cref="System.InvalidOperationException">
-        /// Thrown when the dictionary is read-only and an attempt
-        /// is made to set a value.
+        /// <exception cref="System.NotSupportedException">
+        /// Thrown when the dictionary is read-only and an attempt is
+        /// made to set a value.
         /// </exception>
         public KeyValuePair<TKey, TValue> this[int index]
         {
@@ -248,7 +248,7 @@ namespace McSherry.Zener.Core
         /// </summary>
         /// <param name="key">The key of the item to add.</param>
         /// <param name="value">The value of the item to add.</param>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         /// <exception cref="System.ArgumentException">
@@ -280,7 +280,7 @@ namespace McSherry.Zener.Core
         /// The key-value pair containing the key and value to add
         /// to the dictionary.
         /// </param>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         public void Add(KeyValuePair<TKey, TValue> pair)
@@ -298,7 +298,7 @@ namespace McSherry.Zener.Core
         /// Thrown when the specified index is outside the valid range
         /// for the number of items currently in the dictionary.
         /// </exception>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         /// <exception cref="System.ArgumentException">
@@ -340,7 +340,7 @@ namespace McSherry.Zener.Core
         /// Thrown when the specified index is outside the valid range
         /// for the number of items currently in the dictionary.
         /// </exception>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         public void Insert(int index, KeyValuePair<TKey, TValue> pair)
@@ -510,7 +510,7 @@ namespace McSherry.Zener.Core
         /// <summary>
         /// Removes all items from the dictionary.
         /// </summary>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         public void Clear()
@@ -534,7 +534,7 @@ namespace McSherry.Zener.Core
         /// <returns>
         /// True if the item was removed from the dictionary.
         /// </returns>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         public bool Remove(TKey key)
@@ -565,7 +565,7 @@ namespace McSherry.Zener.Core
         /// <returns>
         /// True if the specified item was removed.
         /// </returns>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         public bool Remove(KeyValuePair<TKey, TValue> pair)
@@ -580,7 +580,7 @@ namespace McSherry.Zener.Core
         /// Thrown when the specified index is outside the valid range
         /// for the number of items currently in the dictionary.
         /// </exception>
-        /// <exception cref="System.InvalidOperationException">
+        /// <exception cref="System.NotSupportedException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
         public void RemoveAt(int index)
