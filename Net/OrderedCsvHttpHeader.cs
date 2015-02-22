@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using McSherry.Zener.Core;
+
 namespace McSherry.Zener.Net
 {
     /// <summary>
@@ -43,10 +45,40 @@ namespace McSherry.Zener.Net
             ;
 
         /// <summary>
+        /// Converts an indexed dictionary to a string that would be accepted
+        /// by the Networking.ParseUnquotedKeyValues method called in
+        /// OrderedCsvHttpHeader's constructor.
+        /// </summary>
+        /// <param name="dict">The dictionary to convert.</param>
+        /// <returns>A key-value string representation of the dictionary.</returns>
+        private string GetIxDictString(IndexedDictionary<string, string> dict)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var kvp in dict)
+            {
+                if (kvp.Value == null)
+                {
+                    sb.AppendFormat("{0}; ", kvp.Key);
+                }
+                else
+                {
+                    sb.AppendFormat("{0}={1}; ", kvp.Key, kvp.Value);
+                }
+            }
+
+            return sb.ToString().Trim(' ', ';');
+        }
+
+        /// <summary>
         /// Creates a new OrderedCsvHttpHeader from an HttpHeader class.
         /// </summary>
         /// <param name="header">
         /// The HttpHeader class to create this OrderedCsvHttpHeader from.
+        /// </param>
+        /// <param name="removeUnacceptable">
+        /// Whether to remove any comma-separated values which have a q-value
+        /// indicating that they are not acceptable.
         /// </param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when:
@@ -55,8 +87,11 @@ namespace McSherry.Zener.Net
         ///         3. The field name contains a carriage return or line feed character.
         ///         4. The value contains a carriage return or line feed character.
         /// </exception>
-        public OrderedCsvHttpHeader(HttpHeader header)
-            : this(header.Field, header.Value)
+        public OrderedCsvHttpHeader(
+            HttpHeader header,
+            bool removeUnacceptable = false
+            )
+            : this(header.Field, header.Value, removeUnacceptable)
         {
 
         }
@@ -69,26 +104,34 @@ namespace McSherry.Zener.Net
         /// <param name="fieldValue">
         /// The value of the header.
         /// </param>
+        /// <param name="removeUnacceptable">
+        /// Whether to remove any comma-separated values which have a q-value
+        /// indicating that they are not acceptable.
+        /// </param>
         /// <exception cref="System.ArgumentException">
-        ///     Thrown when:
-        ///         1. The provided field name is null, zero-length, or whitespace.
-        ///         2. The provided value is null, zero-length, or whitespace.
-        ///         3. The field name contains a carriage return or line feed character.
-        ///         4. The value contains a carriage return or line feed character.
-        ///         5. One or more of the comma-separated items cannot be parsed as a
-        ///            set of key-value pairs.
-        ///         6. One or more of the q-values is invalid.
+        /// Thrown when:
+        ///     1. The provided field name is null, zero-length, or whitespace.
+        ///     2. The provided value is null, zero-length, or whitespace.
+        ///     3. The field name contains a carriage return or line feed character.
+        ///     4. The value contains a carriage return or line feed character.
+        ///     5. One or more of the comma-separated items cannot be parsed as a
+        ///        set of key-value pairs.
+        ///     6. One or more of the q-values is invalid.
         /// </exception>
-        public OrderedCsvHttpHeader(string fieldName, string fieldValue)
+        public OrderedCsvHttpHeader(
+            string fieldName, string fieldValue,
+            bool removeUnacceptable = false
+            )
             : base(fieldName, fieldValue)
         {
+            IndexedDictionary<string, string>[] ixDicts = 
+                new IndexedDictionary<string,string>[base.Items.Count];
             decimal[] weightings = new decimal[base.Items.Count];
             for (int i = 0; i < base.Items.Count; i++)
             {
-                IDictionary<string, string> kvp;
                 try
                 {
-                    kvp = Networking
+                    ixDicts[i] = Networking
                         .ParseUnquotedKeyValues(base.Items.ElementAt(i));
                 }
                 catch (ArgumentException aex)
@@ -99,6 +142,8 @@ namespace McSherry.Zener.Net
                         aex
                         );
                 }
+
+                var kvp = ixDicts[i];
 
                 // Attempt to retrieve the item's weighting.
                 string wStr;
@@ -147,20 +192,54 @@ namespace McSherry.Zener.Net
                 }
             }
 
-            base.Items = base.Items
-                // Associate the weightings with the appropriate
-                // comma-separated values.
-                .Zip(weightings, (i, w) => new { i, w })
-                // Order them, ensuring that the largest weighting
-                // is placed first.
-                .OrderByDescending(o => o.w)
-                // Retrieve the now-ordered items. We'll leave the
-                // item strings unmodified (this means that the
-                // q-values are still present).
-                .Select(o => o.i)
-                // base.Items is an ICollection, so we need to
-                // set it as something that implements that interface.
-                .ToList();
+            // Remove any q-values from the indexed dictionaries.
+            foreach (var ix in ixDicts) ix.Remove("q");
+
+            // Just having two separate code paths is probably going to
+            // be faster and more readable than having some weird combinatorial
+            // logic in LINQ calls.
+            if (removeUnacceptable)
+            {
+                base.Items = ixDicts
+                    // Associate the weightings with the appropriate
+                    // comma-separated values.
+                    .Zip(weightings, (d, w) => new { d, w })
+                    // Remove any items which have the minimum weighting.
+                    .Where(o => o.w != MinimumWeighting)
+                    // Order them, ensuring that the largest weighting
+                    // is placed first.
+                    .OrderByDescending(o => o.w)
+                    // We then convert the IndexedDictionary instances
+                    // to a string. We previously removed any q-values,
+                    // so this should now just be the comma-separated
+                    // value.
+                    .Select(o => this.GetIxDictString(o.d))
+                    // base.Items needs to be an ICollection, so we
+                    // use the appropriate method. We also make it
+                    // read-only.
+                    .ToList()
+                    .AsReadOnly();
+            }
+            else
+            {
+                base.Items = ixDicts
+                    // Associate the weightings with the appropriate
+                    // comma-separated values.
+                    .Zip(weightings, (d, w) => new { d, w })
+                    // Order them, ensuring that the largest weighting
+                    // is placed first.
+                    .OrderByDescending(o => o.w)
+                    // We then convert the IndexedDictionary instances
+                    // to a string. We previously removed any q-values,
+                    // so this should now just be the comma-separated
+                    // value.
+                    .Select(o => this.GetIxDictString(o.d))
+                    // base.Items needs to be an ICollection, so we
+                    // use the appropriate method. We also make it
+                    // read-only.
+                    .ToList()
+                    .AsReadOnly();
+            }
         }
     }
 }
