@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using McSherry.Zener.Core;
+
 namespace McSherry.Zener.Net
 {
     /// <summary>
@@ -261,7 +263,7 @@ namespace McSherry.Zener.Net
         /// <exception cref="System.ArgumentException">
         /// Thrown when the provided source string is invalid.
         /// </exception>
-        public static IDictionary<string, string> ParseUnquotedKeyValues(
+        public static IndexedDictionary<string, string> ParseUnquotedKeyValues(
             string source,
             char kvDelimiter = ';', char keySeparator = '=',
             HashSet<char> validKeyCharacters = null,
@@ -279,12 +281,12 @@ namespace McSherry.Zener.Net
             // anything in it.
             if (String.IsNullOrWhiteSpace(source))
             {
-                return new Dictionary<string, string>(0);
+                return new IndexedDictionary<string, string>().AsReadOnly();
             }
 
             source = source.Trim();
 
-            var ret = new Dictionary<string, string>();
+            var ret = new IndexedDictionary<string, string>();
             bool inKey = true,
                 hasKeyValidSet = validKeyCharacters != null,
                 hasValueValidSet = validValueCharacters != null;
