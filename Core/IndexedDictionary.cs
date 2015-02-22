@@ -1,0 +1,385 @@
+﻿/*
+ *      Copyright (c) 2014-2015, Liam McSherry
+ *      All Rights reserved.
+ *      
+ *      Released under BSD 3-Clause licence. See terms in
+ *      /LICENCE, or online: http://opensource.org/licenses/BSD-3-Clause
+ */
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace McSherry.Zener.Core
+{
+    /// <summary>
+    /// Provides an ordered dictionary that can be accessed using
+    /// an index or a key.
+    /// </summary>
+    /// <typeparam name="TKey">
+    /// The type to use for the keys.
+    /// </typeparam>
+    /// <typeparam name="TValue">
+    /// The type to use for the values.
+    /// </typeparam>
+    /// <remarks>
+    /// .NET 4.0 doesn't provide a generic OrderedDictionary, so we
+    /// need to provide our own implementation. To prevent any conflicts
+    /// with future generic OrderedDictionary classes, we've named this
+    /// one IndexedDictionary.
+    /// </remarks>
+    public sealed class IndexedDictionary<TKey, TValue>
+        : IDictionary<TKey, TValue>, IList<KeyValuePair<TKey, TValue>>
+    {
+        private List<TKey> _keys;
+        private List<TValue> _values;
+        private bool _readonly;
+        private object _lockbox;
+
+        /// <summary>
+        /// Checks whether the dictionary is read-only, and throws
+        /// an exception if it is.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        private void CheckIsReadOnly()
+        {
+            if (this.IsReadOnly)
+            {
+                throw new InvalidOperationException(
+                    "A read-only dictionary cannot be modified."
+                    );
+            }
+        }
+
+        /// <summary>
+        /// Creates a new empty IndexedDictionary.
+        /// </summary>
+        public IndexedDictionary()
+        {
+            _keys = new List<TKey>();
+            _values = new List<TValue>();
+            _lockbox = new object();
+            _readonly = false;
+        }
+
+        /// <summary>
+        /// Retrieves the value in the dictionary associated with
+        /// the specified key.
+        /// </summary>
+        /// <param name="key">
+        /// The key to retrieve the associated value of.
+        /// </param>
+        /// <returns>
+        /// The value associated with the specified key.
+        /// </returns>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">
+        /// Thrown when the specified key is not present within
+        /// the dictionary.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only and an attempt
+        /// is made to set a value.
+        /// </exception>
+        public TValue this[TKey key]
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
+        /// <summary>
+        /// Retrieves the key and value in the dictionary at
+        /// the specified index.
+        /// </summary>
+        /// <param name="index">
+        /// The index of the value to retrieve.
+        /// </param>
+        /// <returns>
+        /// A key-value pair containing the key and value at
+        /// the specified index within the dictionary.
+        /// </returns>
+        /// <exception cref="System.IndexOutOfRangeException">
+        /// Thrown when the specified index is outside the valid range
+        /// for the number of items currently in the dictionary.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only and an attempt
+        /// is made to set a value.
+        /// </exception>
+        public KeyValuePair<TKey, TValue> this[int index]
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
+
+        /// <summary>
+        /// Whether the dictionary is read-only.
+        /// </summary>
+        public bool IsReadOnly
+        {
+            get { return _readonly; }
+            private set { _readonly = value; }
+        }
+        /// <summary>
+        /// The number of items currently in the dictionary.
+        /// </summary>
+        public int Count
+        {
+            get { return _keys.Count; }
+        }
+        /// <summary>
+        /// The keys this dictionary contains.
+        /// </summary>
+        public ICollection<TKey> Keys
+        {
+            get { throw new NotImplementedException(); }
+        }
+        /// <summary>
+        /// The values this dictionary contains.
+        /// </summary>
+        public ICollection<TValue> Values
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        /// <summary>
+        /// Adds a new key and value to the dictionary.
+        /// </summary>
+        /// <param name="key">The key of the item to add.</param>
+        /// <param name="value">The value of the item to add.</param>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public void Add(TKey key, TValue value)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Adds a new key and value to the dictionary.
+        /// </summary>
+        /// <param name="pair">
+        /// The key-value pair containing the key and value to add
+        /// to the dictionary.
+        /// </param>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public void Add(KeyValuePair<TKey, TValue> pair)
+        {
+            this.Add(pair.Key, pair.Value);
+        }
+        /// <summary>
+        /// Inserts a key-value pair at the specified index within
+        /// the dictionary.
+        /// </summary>
+        /// <param name="index">The index to insert at.</param>
+        /// <param name="key">The key to insert.</param>
+        /// <param name="value">The value to associate with the key.</param>
+        /// <exception cref="System.IndexOutOfRangeException">
+        /// Thrown when the specified index is outside the valid range
+        /// for the number of items currently in the dictionary.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public void Insert(int index, TKey key, TValue value)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Inserts a key-value pair at the specified index within
+        /// the dictionary.
+        /// </summary>
+        /// <param name="index">The index to insert at.</param>
+        /// <param name="pair">The key-value pair to insert.</param>
+        /// <exception cref="System.IndexOutOfRangeException">
+        /// Thrown when the specified index is outside the valid range
+        /// for the number of items currently in the dictionary.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public void Insert(int index, KeyValuePair<TKey, TValue> pair)
+        {
+            this.Insert(index, pair.Key, pair.Value);
+        }
+
+        /// <summary>
+        /// Copies the contents of the dictionary to the specified
+        /// array of key-value pairs.
+        /// </summary>
+        /// <param name="pairs">
+        /// The key-value pair array to copy the contents of the
+        /// dictionary to.
+        /// </param>
+        /// <param name="arrayIndex">
+        /// The index within the array at which to start inserting.
+        /// </param>
+        /// <exception cref="System.IndexOutOfRangeException">
+        /// Thrown when the specified index is outside the valid range
+        /// of indices for the specified array to copy in to.
+        /// </exception>
+        public void CopyTo(KeyValuePair<TKey, TValue>[] pairs, int arrayIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Determines whether the dictionary contains an item
+        /// with the specified key.
+        /// </summary>
+        /// <param name="key">The key to check for.</param>
+        /// <returns>
+        /// True if the specified key exists within the dictionary.
+        /// </returns>
+        public bool ContainsKey(TKey key)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Determines whether the dictionary contains an item with
+        /// the specified key and value.
+        /// </summary>
+        /// <param name="pair">
+        /// The key and value to check for.
+        /// </param>
+        /// <returns>
+        /// True if the dictionary contains a key with the
+        /// specified value.
+        /// </returns>
+        public bool Contains(KeyValuePair<TKey, TValue> pair)
+        {
+            return this.ContainsKey(pair.Key) && this[pair.Key].Equals(pair.Value);
+        }
+        /// <summary>
+        /// Determines the index of the specified key-value pair.
+        /// </summary>
+        /// <param name="pair">The pair to determine the index of.</param>
+        /// <returns>The index of the specified key-value pair.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// Thrown when the key-value pair does not exist within the
+        /// dictionary.
+        /// </exception>
+        public int IndexOf(KeyValuePair<TKey, TValue> pair)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Determines the index of the specified key.
+        /// </summary>
+        /// <param name="key">The key to dteermine the index of.</param>
+        /// <returns>The index of the specified key.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// Thrown when the key does not exist within the dictionary.
+        /// </exception>
+        public int IndexOf(TKey key)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Attempts to retrieve the value associated with the
+        /// specified key.
+        /// </summary>
+        /// <param name="key">
+        /// The key to attempt to retrieve the associated value of.
+        /// </param>
+        /// <param name="value">
+        /// The variable to place the retrieved value in.
+        /// </param>
+        /// <returns>
+        /// True if the value was successfully retrieved.
+        /// </returns>
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            bool contains;
+            if ((contains = this.ContainsKey(key)))
+            {
+                value = this[key];
+            }
+            else
+            {
+                value = default(TValue);
+            }
+
+            return contains;
+        }
+
+        /// <summary>
+        /// Removes all items from the dictionary.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public void Clear()
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Removes the item with the specified key from the
+        /// dictionary.
+        /// </summary>
+        /// <param name="key">
+        /// The key of the item to remove.
+        /// </param>
+        /// <returns>
+        /// True if the item was removed from the dictionary.
+        /// </returns>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public bool Remove(TKey key)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Removes the specified item from the dictionary.
+        /// </summary>
+        /// <param name="pair">
+        /// The item to remove.
+        /// </param>
+        /// <returns>
+        /// True if the specified item was removed.
+        /// </returns>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public bool Remove(KeyValuePair<TKey, TValue> pair)
+        {
+            return this.Remove(pair.Key);
+        }
+        /// <summary>
+        /// Removes an item from the dictionary based on its index.
+        /// </summary>
+        /// <param name="index">The index of the item to remove.</param>
+        /// <exception cref="System.IndexOutOfRangeException">
+        /// Thrown when the specified index is outside the valid range
+        /// for the number of items currently in the dictionary.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is read-only.
+        /// </exception>
+        public void RemoveAt(int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Gets an enumerator that iterates through this IndexedDictionary's
+        /// items.
+        /// </summary>
+        /// <returns>
+        /// An enumerator for the dictionary.
+        /// </returns>
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
+        }
+    }
+}
