@@ -275,7 +275,10 @@ namespace McSherry.Zener.Core
         /// </returns>
         public bool ContainsKey(TKey key)
         {
-            throw new NotImplementedException();
+            lock (_lockbox)
+            {
+                return _keyHashes.Contains(key);
+            }
         }
         /// <summary>
         /// Determines whether the dictionary contains an item with
@@ -290,7 +293,47 @@ namespace McSherry.Zener.Core
         /// </returns>
         public bool Contains(KeyValuePair<TKey, TValue> pair)
         {
-            return this.ContainsKey(pair.Key) && this[pair.Key].Equals(pair.Value);
+            lock (_lockbox)
+            {
+                return this.ContainsKey(pair.Key) && this[pair.Key].Equals(pair.Value);
+            }
+        }        
+        /// <summary>
+        /// Determines the index of the specified key.
+        /// </summary>
+        /// <param name="key">The key to dteermine the index of.</param>
+        /// <returns>The index of the specified key.</returns>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">
+        /// Thrown when the key does not exist within the dictionary.
+        /// </exception>
+        public int IndexOf(TKey key)
+        {
+            lock (_lockbox)
+            {
+                if (!this.ContainsKey(key))
+                {
+                    throw new ArgumentOutOfRangeException(
+                        "No element with the specified key exists in the dictionary."
+                        );
+                }
+
+                var index = Enumerable
+                    .Range(0, _keys.Count)
+                    .Zip(_keys, (i, k) => new { i, k })
+                    .Where(o => this.KeyComparer.Equals(key, o.k))
+                    .Select(o => o.i)
+                    .DefaultIfEmpty(-1)
+                    .First();
+
+                if (index == -1)
+                {
+                    throw new KeyNotFoundException(
+                        "The specified key does not exist within the dictionary."
+                        );
+                }
+
+                return index;
+            }
         }
         /// <summary>
         /// Determines the index of the specified key-value pair.
@@ -303,19 +346,20 @@ namespace McSherry.Zener.Core
         /// </exception>
         public int IndexOf(KeyValuePair<TKey, TValue> pair)
         {
-            throw new NotImplementedException();
-        }
-        /// <summary>
-        /// Determines the index of the specified key.
-        /// </summary>
-        /// <param name="key">The key to dteermine the index of.</param>
-        /// <returns>The index of the specified key.</returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
-        /// Thrown when the key does not exist within the dictionary.
-        /// </exception>
-        public int IndexOf(TKey key)
-        {
-            throw new NotImplementedException();
+            lock (_lockbox)
+            {
+                int kIndex = this.IndexOf(pair.Key);
+
+                if (this[kIndex].Equals(pair.Value))
+                {
+                    throw new ArgumentOutOfRangeException(
+                        "The specified key-value pair does not exist within the " +
+                        "dictionary."
+                        );
+                }
+
+                return kIndex;
+            }
         }
 
         /// <summary>
