@@ -846,8 +846,25 @@ namespace McSherry.Zener.Net
         /// Zener only supports "gzip" compression. If the client
         /// does not support this, compression will not be enabled.
         /// </remarks>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided HttpRequest is null.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the HttpResponse has been closed, or when the
+        /// HttpResponse's headers have already been sent.
+        /// </exception>
         public bool EnableCompression(HttpRequest request)
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided HttpRequest must not be null."
+                    );
+            }
+
+            this.CheckClosed();
+            this.CheckHeadersSent();
+
             // Get the 'Accept-Encoding' header. This will let us
             // know whether the client supports gzip encoding.
             var accEnc = request.Headers[HDR_ACCEPTENCODING].FirstOrDefault();
@@ -913,8 +930,15 @@ namespace McSherry.Zener.Net
         /// <returns>
         /// True if compression was disabled.
         /// </returns>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the HttpResponse has been closed, or when the
+        /// HttpResponse's headers have already been sent.
+        /// </exception>
         public bool DisableCompression()
         {
+            this.CheckClosed();
+            this.CheckHeadersSent();
+
             // If compression is already disabled, we
             // don't need to do anything.
             if (!this.IsCompressed) return false;
