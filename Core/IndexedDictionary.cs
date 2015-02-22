@@ -117,8 +117,36 @@ namespace McSherry.Zener.Core
         /// </exception>
         public TValue this[TKey key]
         {
-            get { throw new NotImplementedException(); }
-            set { throw new NotImplementedException(); }
+            get 
+            {
+                lock (_lockbox)
+                {
+                    if (!this.ContainsKey(key))
+                    {
+                        throw new KeyNotFoundException(
+                            "The specified key does not exist within the dictionary."
+                            );
+                    }
+
+                    return _values[_keys.IndexOf(key)];
+                }
+            }
+            set 
+            {
+                lock (_lockbox)
+                {
+                    this.CheckIsReadOnly();
+
+                    if (!this.ContainsKey(key))
+                    {
+                        this.Add(key, value);
+                    }
+                    else
+                    {
+                        _values[this.IndexOf(key)] = value;
+                    }
+                }
+            }
         }
         /// <summary>
         /// Retrieves the key and value in the dictionary at
@@ -141,8 +169,40 @@ namespace McSherry.Zener.Core
         /// </exception>
         public KeyValuePair<TKey, TValue> this[int index]
         {
-            get { throw new NotImplementedException(); }
-            set { throw new NotImplementedException(); }
+            get
+            {
+                lock (_lockbox)
+                {
+                    if (index < 0 || index >= _keys.Count)
+                    {
+                        throw new IndexOutOfRangeException(
+                            "The specified index is outside the valid range for this " +
+                            "dictionary."
+                            );
+                    }
+
+                    return new KeyValuePair<TKey, TValue>(
+                        _keys[index], _values[index]
+                        );
+                }
+            }
+            set
+            {
+                lock (_lockbox)
+                {
+                    this.CheckIsReadOnly();
+
+                    if (index < 0 || index >= _keys.Count)
+                    {
+                        throw new IndexOutOfRangeException(
+                            "The specified index is outside the valid range for this " +
+                            "dictionary."
+                            );
+                    }
+
+                    this[value.Key] = value.Value;
+                }
+            }
         }
 
         /// <summary>
@@ -165,14 +225,14 @@ namespace McSherry.Zener.Core
         /// </summary>
         public ICollection<TKey> Keys
         {
-            get { throw new NotImplementedException(); }
+            get { return _keys.AsReadOnly(); }
         }
         /// <summary>
         /// The values this dictionary contains.
         /// </summary>
         public ICollection<TValue> Values
         {
-            get { throw new NotImplementedException(); }
+            get { return _values.AsReadOnly(); }
         }
         /// <summary>
         /// The comparer used to compare keys.
@@ -191,9 +251,27 @@ namespace McSherry.Zener.Core
         /// <exception cref="System.InvalidOperationException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified key is already present within
+        /// the dictionary.
+        /// </exception>
         public void Add(TKey key, TValue value)
         {
-            throw new NotImplementedException();
+            lock (_lockbox)
+            {
+                this.CheckIsReadOnly();
+
+                if (this.ContainsKey(key))
+                {
+                    throw new ArgumentException(
+                        "The specified key already exists within the dictionary."
+                        );
+                }
+
+                _keys.Add(key);
+                _keyHashes.Add(key);
+                _values.Add(value);
+            }
         }
         /// <summary>
         /// Adds a new key and value to the dictionary.
@@ -223,9 +301,34 @@ namespace McSherry.Zener.Core
         /// <exception cref="System.InvalidOperationException">
         /// Thrown when the dictionary is read-only.
         /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified key already exists within the dictionary.
+        /// </exception>
         public void Insert(int index, TKey key, TValue value)
         {
-            throw new NotImplementedException();
+            lock (_lockbox)
+            {
+                this.CheckIsReadOnly();
+
+                if (this.ContainsKey(key))
+                {
+                    throw new ArgumentException(
+                        "The specified key already exists within the dictionary."
+                        );
+                }
+
+                if (index < 0 || index >= _keys.Count)
+                {
+                    throw new IndexOutOfRangeException(
+                        "The specified index is outside the valid range for this " +
+                        "dictionary."
+                        );
+                }
+
+                _keyHashes.Add(key);
+                _keys.Insert(index, key);
+                _values.Insert(index, value);
+            }
         }
         /// <summary>
         /// Inserts a key-value pair at the specified index within
@@ -262,7 +365,18 @@ namespace McSherry.Zener.Core
         /// </exception>
         public void CopyTo(KeyValuePair<TKey, TValue>[] pairs, int arrayIndex)
         {
-            throw new NotImplementedException();
+            if (arrayIndex < 0 || arrayIndex >= _keys.Count)
+            {
+                throw new IndexOutOfRangeException(
+                    "The specified index is outside the valid range for this " +
+                    "dictionary."
+                    );
+            }
+
+            _keys
+                .Zip(_values, (k, v) => new KeyValuePair<TKey, TValue>(k, v))
+                .ToArray()
+                .CopyTo(pairs, arrayIndex);
         }
 
         /// <summary>
@@ -350,7 +464,7 @@ namespace McSherry.Zener.Core
             {
                 int kIndex = this.IndexOf(pair.Key);
 
-                if (this[kIndex].Equals(pair.Value))
+                if (!this[kIndex].Equals(pair.Value))
                 {
                     throw new ArgumentOutOfRangeException(
                         "The specified key-value pair does not exist within the " +
@@ -378,13 +492,16 @@ namespace McSherry.Zener.Core
         public bool TryGetValue(TKey key, out TValue value)
         {
             bool contains;
-            if ((contains = this.ContainsKey(key)))
+            lock (_lockbox)
             {
-                value = this[key];
-            }
-            else
-            {
-                value = default(TValue);
+                if ((contains = this.ContainsKey(key)))
+                {
+                    value = this[key];
+                }
+                else
+                {
+                    value = default(TValue);
+                }
             }
 
             return contains;
@@ -398,7 +515,14 @@ namespace McSherry.Zener.Core
         /// </exception>
         public void Clear()
         {
-            throw new NotImplementedException();
+            lock (_lockbox)
+            {
+                this.CheckIsReadOnly();
+
+                _keyHashes.Clear();
+                _keys.Clear();
+                _values.Clear();
+            }
         }
         /// <summary>
         /// Removes the item with the specified key from the
@@ -415,7 +539,22 @@ namespace McSherry.Zener.Core
         /// </exception>
         public bool Remove(TKey key)
         {
-            throw new NotImplementedException();
+            bool removed;
+            lock (_lockbox)
+            {
+                this.CheckIsReadOnly();
+
+                if ((removed = this.ContainsKey(key)))
+                {
+                    int kIndex = this.IndexOf(key);
+
+                    _keyHashes.Remove(key);
+                    _keys.Remove(key);
+                    _values.RemoveAt(kIndex);
+                }
+            }
+
+            return removed;
         }
         /// <summary>
         /// Removes the specified item from the dictionary.
@@ -446,7 +585,22 @@ namespace McSherry.Zener.Core
         /// </exception>
         public void RemoveAt(int index)
         {
-            throw new NotImplementedException();
+            lock (_lockbox)
+            {
+                this.CheckIsReadOnly();
+
+                if (index < 0 || index >= _keys.Count)
+                {
+                    throw new IndexOutOfRangeException(
+                        "The specified index is outside the valid range for this " +
+                        "dictionary."
+                        );
+                }
+
+                _keyHashes.Remove(_keys[index]);
+                _keys.RemoveAt(index);
+                _values.RemoveAt(index);
+            }
         }
 
         /// <summary>
@@ -456,9 +610,29 @@ namespace McSherry.Zener.Core
         /// <returns>
         /// An enumerator for the dictionary.
         /// </returns>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the dictionary is modified during enumeration.
+        /// </exception>
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
-            throw new NotImplementedException();
+            lock (_lockbox)
+            {
+                int originalCount = this.Count;
+
+                for (int i = 0; i < originalCount; i++)
+                {
+                    if (this.Count != originalCount)
+                    {
+                        throw new InvalidOperationException(
+                            "The dictionary was modified."
+                            );
+                    }
+
+                    yield return new KeyValuePair<TKey, TValue>(
+                        _keys[i], _values[i]
+                        );
+                }
+            }
         }
 
         IEnumerator IEnumerable.GetEnumerator()
