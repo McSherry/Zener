@@ -605,6 +605,9 @@ namespace McSherry.Zener.Net
         /// This method will consider any HttpRequest without an
         /// "Accept" header as accepting any and all media types.
         /// </remarks>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided HttpRequest or MediaType is null.
+        /// </exception>
         /// <exception cref="McSherry.Zener.Net.HttpRequestException">
         /// Thrown when the client's "Accept" header is invalid, or
         /// when one or more of the media types in the "Accept" header
@@ -615,6 +618,20 @@ namespace McSherry.Zener.Net
             MediaType mediaType
             )
         {
+            if (request == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided request must not be null."
+                    );
+            }
+
+            if (mediaType == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided media type must not be null."
+                    );
+            }
+
             bool isAcceptable;
             var accHdr = request.Headers[HDR_ACCEPT].FirstOrDefault();
 
