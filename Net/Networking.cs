@@ -712,7 +712,55 @@ namespace McSherry.Zener.Net
             IEnumerable<MediaType> mediaTypes
             )
         {
-            throw new NotImplementedException();
+            if (request == null)
+            {
+                throw new ArgumentNullException(
+                    "The specified request must not be null."
+                    );
+            }
+
+            if (mediaTypes == null)
+            {
+                throw new ArgumentNullException(
+                    "The specified media types enumerable must not be null."
+                    );
+            }
+
+            ICollection<MediaType> accTypes;
+            var accHdr = request.Headers[HDR_ACCEPT].FirstOrDefault();
+
+            // As with our other IsAcceptable method, no 'Accept' header means
+            // the client will be considered to accept anything.
+            if (accHdr == default(HttpHeader))
+            {
+                // As the client accepts anything, we can just
+                // return the media types that the caller provided.
+                accTypes = new List<MediaType>(mediaTypes).AsReadOnly();
+            }
+            else
+            {
+                OrderedCsvHttpHeader ocsv;
+                try
+                {
+                    // Pass true to remove any unacceptable types
+                    // from the list.
+                    ocsv = new OrderedCsvHttpHeader(accHdr, true);
+                }
+                catch (ArgumentException aex)
+                {
+                    throw new HttpRequestException(
+                        "The client's \"Accept\" header is invalid.",
+                        aex
+                        );
+                }
+
+                accTypes = mediaTypes
+                    .Where(m => ocsv.Items.Any(s => m.IsEquivalent(s)))
+                    .ToList()
+                    .AsReadOnly();
+            }
+
+            return accTypes;
         }
     }
 }
