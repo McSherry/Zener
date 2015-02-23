@@ -769,5 +769,40 @@ namespace McSherry.Zener.Net
 
             return accTypes;
         }
+
+        /// <summary>
+        /// Converts the string to a URL-safe encoding using
+        /// the percent-encoding scheme.
+        /// </summary>
+        /// <param name="plain">
+        /// The string to convert to a percent-encoded form.
+        /// </param>
+        /// <returns>
+        /// The percent-encoded representation of the source
+        /// string.
+        /// </returns>
+        /// <remarks>
+        /// This method assumes that the provided source string
+        /// is a UTF-8 string.
+        /// </remarks>
+        public static string UrlEncode(this string plain)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Converts a percent-encoded (URL-encoded) string in
+        /// to a non-URL-safe string.
+        /// </summary>
+        /// <param name="encoded">
+        /// The string to convert from percent-encoded form.
+        /// </param>
+        /// <returns>
+        /// The decoded representation of the provided percent-encoded
+        /// string.
+        /// </returns>
+        public static string UrlDecode(this string encoded)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
