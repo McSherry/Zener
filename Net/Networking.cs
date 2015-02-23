@@ -127,7 +127,7 @@ namespace McSherry.Zener.Net
         ///     Thrown when the provided string source is null, empty, or
         ///     entirely white-space.
         /// </exception>
-        public static IList<string> ParseDelimitedSemiQuotedStrings(
+        public static List<string> ParseDelimitedSemiQuotedStrings(
             string source,
             char quote = DOUBLEQUOTE, char delimiter = COMMA,
             bool recogniseCEscapes = true

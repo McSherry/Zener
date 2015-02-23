@@ -60,7 +60,7 @@ namespace McSherry.Zener.Net
                 source:             base.Value,
                 quote:              '\r' // We don't want quotes, and this character
                                          // will never appear in a value.
-                );
+                ).AsReadOnly();
         }
 
         /// <summary>
