@@ -121,7 +121,8 @@ namespace McSherry.Zener.Net
                 ));
 
         private static readonly byte
-            PctEncodingStart = (byte)'%'
+            PctEncodingStart    = (byte)'%',
+            XFormsSpace         = (byte)'+'
             ;
         #endregion
 
@@ -814,6 +815,12 @@ namespace McSherry.Zener.Net
         /// <param name="encoded">
         /// The string to convert from percent-encoded form.
         /// </param>
+        /// <param name="xformsSpaces">
+        /// Whether to support spaces used with the
+        /// application/x-www-form-urlencoded format. When this
+        /// is true, any plus (+) characters are decoded to
+        /// spaces.
+        /// </param>
         /// <param name="strict">
         /// Whether the method should throw an exception
         /// when a non-URL-safe character is present within
@@ -825,6 +832,7 @@ namespace McSherry.Zener.Net
         /// </returns>
         public static string UrlDecode(
             this string encoded,
+            bool xformsSpaces = false,
             bool strict = true
             )
         {
@@ -920,6 +928,14 @@ namespace McSherry.Zener.Net
                         sb.Append((char)b);
                     }
                     #endregion
+                }
+                // The media type application/x-www-form-urlencoded specifies that
+                // the '+' character may be used instead of %20 for spaces. If the
+                // caller has enabled support for this in the call, and if the current
+                // byte is a '+' character, we'll append a space to the StringBuilder.
+                else if (xformsSpaces && b == XFormsSpace)
+                {
+                    sb.Append(' ');
                 }
                 // If the character isn't a percent character, we need to
                 // determine whether it's one that we're free to add to the
