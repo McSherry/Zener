@@ -106,6 +106,24 @@ namespace McSherry.Zener.Net
                 { 'f', '\f' }
             };
         #endregion
+        #region URL-encoding constants
+        // Bytes that we won't touch when percent-encoding.
+        private static readonly HashSet<byte> NoUrlEncodeBytes
+            = new HashSet<byte>(
+                Encoding.UTF8.GetBytes(
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
+                ));
+        // Bytes that we'll consider as valid hexadecimal characters.
+        private static readonly HashSet<byte> UrlEncodeHexChars
+            = new HashSet<byte>(
+                Encoding.UTF8.GetBytes(
+                    "0123456789ABCDEFabcdef"
+                ));
+
+        private static readonly byte
+            PctEncodingStart = (byte)'%'
+            ;
+        #endregion
 
         /// <summary>
         /// Parses a set of semi-quoted strings, delimited by the
@@ -796,13 +814,136 @@ namespace McSherry.Zener.Net
         /// <param name="encoded">
         /// The string to convert from percent-encoded form.
         /// </param>
+        /// <param name="strict">
+        /// Whether the method should throw an exception
+        /// when a non-URL-safe character is present within
+        /// the encoded string.
+        /// </param>
         /// <returns>
         /// The decoded representation of the provided percent-encoded
         /// string.
         /// </returns>
-        public static string UrlDecode(this string encoded)
+        public static string UrlDecode(
+            this string encoded,
+            bool strict = true
+            )
         {
-            throw new NotImplementedException();
+            if (encoded == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided source string must not be null."
+                    );
+            }
+
+            // If the string is whitespace/empty, there's nothing
+            // we can decode, so we might as well not try.
+            if (String.IsNullOrWhiteSpace(encoded))
+            {
+                return encoded;
+            }
+
+            // We're treating it as UTF-8. Since .NET uses UTF-16 internally,
+            // we need to work with the string as a set of bytes.
+            var strBytes = Encoding.UTF8.GetBytes(encoded);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < strBytes.Length; i++)
+            {
+                byte b = strBytes[i];
+                // If the byte is the byte that indicates the start of a
+                // percent-encoded byte, we need to decode it.
+                if (b == PctEncodingStart)
+                {
+                    #region Handle Pct-Enc'd bytes (%hh)
+                    // We need to make sure that there enough
+                    // characters to make up a percent-encoded byte.
+                    if (i + 2 < strBytes.Length)
+                    {
+                        byte hNybble = strBytes[i + 1],
+                            lNybble = strBytes[i + 2];
+
+                        // We need to check to make sure that both of
+                        // the bytes following the percent sign are
+                        // valid hex digits.
+                        if (
+                            UrlEncodeHexChars.Contains(hNybble) &&
+                            UrlEncodeHexChars.Contains(lNybble)
+                            )
+                        {
+                            // We need to join together the higher and lower
+                            // nybbles to form a single byte that will be our
+                            // character.
+                            sb.Append(
+                                (char)(
+                                    // Convert the nybble to a character. This gives us the
+                                    // hex digit to convert to a byte. We then shift this byte
+                                    // 4 bits left, as the single hex digit represents the
+                                    // four higher bits of the byte.
+                                    (Convert.ToByte(((char)hNybble).ToString(), 16) << 4) |
+                                    Convert.ToByte(((char)lNybble).ToString())
+                                ));
+                            // Advance past the two characters we've just interpreted
+                            // as a percent-encoded byte.
+                            i += 2;
+                        }
+                        // If strict parsing is enabled and the characters are not
+                        // valid hex digits, we'll throw an exception.
+                        else if (strict)
+                        {
+                            throw new FormatException(
+                                "A percent-encoded byte within the string contains " +
+                                "non-hexadecimal characters."
+                                );
+                        }
+                        // If strict parsing is disabled, we append the percent character
+                        // to the string, treating it as a literal.
+                        else
+                        {
+                            sb.Append((char)b);
+                        }
+                    }
+                    // If we get here, there are too few characters to form a
+                    // percent-encoded byte. There are two things we can do.
+                    //
+                    // 1: If strict parsing is enabled, we can throw an exception
+                    //    to indicate that we've come across an invalid sequence.
+                    else if (strict)
+                    {
+                        throw new FormatException(
+                            "The string contains a percent character in a location " +
+                            "where it cannot prefix two hexadecimal digits."
+                            );
+                    }
+                    // 2: If strict parsing is disabled, append the character to
+                    //    the StringBuilder and treat it as a literal character.
+                    else
+                    {
+                        sb.Append((char)b);
+                    }
+                    #endregion
+                }
+                // If the character isn't a percent character, we need to
+                // determine whether it's one that we're free to add to the
+                // StringBuilder.
+                //
+                // If it is a character we're free to add, or it isn't a
+                // character we're free to add but strict parsing is disabled,
+                // we can add it to the StringBuilder.
+                else if (NoUrlEncodeBytes.Contains(b) || !strict)
+                {
+                    sb.Append((char)b);
+                }
+                // If the character is non-URL-safe and strict parsing is
+                // enabled, throw an exception.
+                else
+                {
+                    throw new FormatException(
+                        "The provided percent-encoded string contains " +
+                        "non-URL-safe characters."
+                        );
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }
