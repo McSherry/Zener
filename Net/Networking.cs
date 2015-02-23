@@ -73,6 +73,7 @@ namespace McSherry.Zener.Net
         private const string
             HDR_CLAUTH          = "Authorization",
             HDR_SVAUTH          = "WWW-Authenticate",
+            HDR_ACCEPT          = "Accept",
 
             HDRF_SVAUTH_BASIC   = "Basic realm=\"{0}\"",
             HDRF_CLAUTH_STBSC   = "Basic ",
@@ -584,6 +585,96 @@ namespace McSherry.Zener.Net
 
             // Authentication of the client succeeded. Return true.
             return true;
+        }
+
+        /// <summary>
+        /// Determines whether the provided MediaType is acceptable
+        /// as a response to the provided HttpRequest.
+        /// </summary>
+        /// <param name="request">
+        /// The request to determine acceptability for.
+        /// </param>
+        /// <param name="mediaType">
+        /// The media type to test against the request.
+        /// </param>
+        /// <returns>
+        /// True if the specified MediaType is acceptable in a
+        /// response to the provided request.
+        /// </returns>
+        /// <remarks>
+        /// This method will consider any HttpRequest without an
+        /// "Accept" header as accepting any and all media types.
+        /// </remarks>
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
+        /// Thrown when the client's "Accept" header is invalid, or
+        /// when one or more of the media types in the "Accept" header
+        /// is invalid.
+        /// </exception>
+        public static bool IsAcceptable(
+            this HttpRequest request,
+            MediaType mediaType
+            )
+        {
+            bool isAcceptable;
+            var accHdr = request.Headers[HDR_ACCEPT].FirstOrDefault();
+
+            // If it's the default value, the client hasn't sent an
+            // 'Accept' header with its request.
+            if (accHdr == default(HttpHeader))
+            {
+                // We'll consider no 'Accept' header as meaning the
+                // client accepts everything.
+                isAcceptable = true;
+            }
+            else
+            {
+                // The client has sent an 'Accept' header, so we need
+                // to parse it. As with 'Accept-Encoding', 'Accept' can
+                // have q-values to indicate preference. For this reason,
+                // we use the OrderedCsvHttpHeader class.
+                OrderedCsvHttpHeader ocsv;
+                try
+                {
+                    // There's no point leaving any unacceptable values
+                    // in the collection of items, so we pass 'true' to
+                    // remove them.
+                    ocsv = new OrderedCsvHttpHeader(accHdr, true);
+                }
+                catch (ArgumentException aex)
+                {
+                    // This method is most likely going to be called from
+                    // a route handler. This means that we can delegate to
+                    // the virtual host's error handler by throwing an
+                    // exception inheriting from HttpException.
+                    throw new HttpRequestException(
+                        "The client's \"Accept\" header is invalid.",
+                        aex
+                        );
+                }
+
+                try
+                {
+                    // If we're here, the client's 'Accept' header parsed
+                    // successfully. We now want to determine whether any
+                    // of the media types it specified can be considered
+                    // equivalent to the one we were passed.
+                    isAcceptable = ocsv.Items.Any(s => mediaType.IsEquivalent(s));
+                }
+                // As the items are strings, they'll be run through MediaType.Create
+                // by the implicit conversion operator on the MediaType class. The
+                // method Create throws an ArgumentException if the string is not a
+                // valid MediaType.
+                catch (ArgumentException aex)
+                {
+                    throw new HttpRequestException(
+                        "One or more of the media types in the client's " +
+                        "\"Accept\" header are invalid or malformed.",
+                        aex
+                        );
+                }
+            }
+
+            return isAcceptable;
         }
     }
 }
