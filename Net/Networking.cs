@@ -830,6 +830,13 @@ namespace McSherry.Zener.Net
         /// The decoded representation of the provided percent-encoded
         /// string.
         /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided source string is null.
+        /// </exception>
+        /// <exception cref="System.FormatException">
+        /// Thrown when the format of the percent-encoded string is
+        /// invalid.
+        /// </exception>
         public static string UrlDecode(
             this string encoded,
             bool xformsSpaces = false,
