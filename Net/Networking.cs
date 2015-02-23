@@ -726,6 +726,13 @@ namespace McSherry.Zener.Net
                     );
             }
 
+            // If the caller hasn't provided any media types to
+            // check, there's no point going through all this.
+            if (mediaTypes.Count() == 0)
+            {
+                return new List<MediaType>(0).AsReadOnly();
+            }
+
             ICollection<MediaType> accTypes;
             var accHdr = request.Headers[HDR_ACCEPT].FirstOrDefault();
 
