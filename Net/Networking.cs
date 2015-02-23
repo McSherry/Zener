@@ -693,5 +693,26 @@ namespace McSherry.Zener.Net
 
             return isAcceptable;
         }
+        /// <summary>
+        /// Determines whether any of the provided MediaTypes are
+        /// acceptable, and returns them in order of preference.
+        /// </summary>
+        /// <param name="request">
+        /// The request to determine acceptability for.
+        /// </param>
+        /// <param name="mediaTypes">
+        /// The media types to test against the request.
+        /// </param>
+        /// <returns>
+        /// A collection containing any acceptable media types from
+        /// those provided, in order of preference.
+        /// </returns>
+        public static ICollection<MediaType> IsAcceptable(
+            this HttpRequest request,
+            IEnumerable<MediaType> mediaTypes
+            )
+        {
+            throw new NotImplementedException();
+        }
     }
 }
