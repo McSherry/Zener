@@ -879,7 +879,7 @@ namespace McSherry.Zener.Net
                                     // 4 bits left, as the single hex digit represents the
                                     // four higher bits of the byte.
                                     (Convert.ToByte(((char)hNybble).ToString(), 16) << 4) |
-                                    Convert.ToByte(((char)lNybble).ToString())
+                                    Convert.ToByte(((char)lNybble).ToString(), 16)
                                 ));
                             // Advance past the two characters we've just interpreted
                             // as a percent-encoded byte.
