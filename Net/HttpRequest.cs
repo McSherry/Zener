@@ -244,7 +244,12 @@ namespace McSherry.Zener.Net
             // to false.
             if (hasQueryString && ++strIndex < requestLine.Length)
             {
-                this.GET = ParseFormUrlEncoded(parts[1].Substring(strIndex));
+                using (var ms = new MemoryStream(
+                    Encoding.ASCII.GetBytes(parts[1].Substring(strIndex))
+                    ))
+                {
+                    this.GET = ParseFormUrlEncoded(this, ms);
+                }
             }
             else
             {
@@ -325,9 +330,15 @@ namespace McSherry.Zener.Net
         /// Parses the provided string, assuming that it is in the
         /// application/x-www-formurlencoded format.
         /// </summary>
-        /// <param name="formatBody">The string to parse.</param>
-        private static dynamic ParseFormUrlEncoded(string formatBody)
+        /// <param name="req">The HTTP request that we are to parse.</param>
+        /// <param name="body">The string to parse.</param>
+        private static dynamic ParseFormUrlEncoded(HttpRequest req, Stream body)
         {
+            string formatBody;
+            // We don't need anything special from the request body, so we can
+            // just read it to the end as a string.
+            using (var sr = new StreamReader(body)) formatBody = sr.ReadToEnd();
+
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
 
             var qBuilder = new StringBuilder();
