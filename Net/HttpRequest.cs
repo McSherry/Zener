@@ -98,6 +98,21 @@ namespace McSherry.Zener.Net
             public const string CONNECT     = "CONNECT";
         }
 
+        /// <summary>
+        /// The handler used to handle the data sent with POST requests.
+        /// </summary>
+        /// <param name="request">
+        /// The request with the POST data in it.
+        /// </param>
+        /// <param name="body">
+        /// The request body containing the data sent in the POST request.
+        /// </param>
+        /// <returns>
+        /// If the POST data is meaningful, an ExpandoObject containing any
+        /// key-value pairs. Otherwise, an Empty.
+        /// </returns>
+        private delegate dynamic PostDataHandler(HttpRequest request, Stream body);
+
         private static readonly MediaType MT_FORMURLENCODED = "application/x-www-form-urlencoded";
         private static readonly MediaType MT_FORMMULTIPART = "multipart/form-data";
         private const string HDR_CDISPOSITION = "Content-Disposition";
@@ -111,17 +126,23 @@ namespace McSherry.Zener.Net
         private const int REQUEST_MAXLENGTH = (1024 * 1024) * 32; // 32 MiB
         private const int REQUEST_TIMEOUT = 1000 * 60; // 60 seconds
 
-        private static Dictionary<string, Encoding> _encodersByName
+        private static readonly Dictionary<string, Encoding> _encodersByName
             = new Dictionary<string, Encoding>()
             {
-                { "ascii", Encoding.ASCII },
-                { "us-ascii", Encoding.ASCII },
-                { "utf-8", Encoding.UTF8 },
-                { "utf8", Encoding.UTF8 },
-                { "iso-8859-1", Encoding.GetEncoding("ISO-8859-1") },
-                { "latin-1", Encoding.GetEncoding("ISO-8859-1") },
-                { "windows-1252", Encoding.GetEncoding(1252) },
-                { "cp-1252", Encoding.GetEncoding(1252) }
+                { "ascii",          Encoding.ASCII                      },
+                { "us-ascii",       Encoding.ASCII                      },
+                { "utf-8",          Encoding.UTF8                       },
+                { "utf8",           Encoding.UTF8                       },
+                { "iso-8859-1",     Encoding.GetEncoding("ISO-8859-1")  },
+                { "latin-1",        Encoding.GetEncoding("ISO-8859-1")  },
+                { "windows-1252",   Encoding.GetEncoding(1252)          },
+                { "cp-1252",        Encoding.GetEncoding(1252)          }
+            };
+        private static readonly Dictionary<MediaType, PostDataHandler> _postHandlers
+            = new Dictionary<MediaType, PostDataHandler>()
+            {
+                { "multipart/form-data",                ParseMultipartFormData  },
+                { "application/x-www-form-urlencoded",  ParseFormUrlEncoded     }
             };
 
         /// <summary>
