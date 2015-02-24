@@ -82,7 +82,7 @@ namespace McSherry.Zener
 
                 string path;
                 if (pr is Empty) path = Environment.CurrentDirectory;
-                else path = Networking.UrlDecode(pr.path);
+                else path = Networking.UrlDecode(pr.file);
 
                 rs.Headers.Add("Content-Type", "application/json");
                 StringBuilder jsonBuilder = new StringBuilder("{");
