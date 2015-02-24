@@ -80,6 +80,20 @@ namespace McSherry.Zener.Core
             {   MediaTypeRegTree.Personal,       "prs"     },
             {   MediaTypeRegTree.Unregistered,   "x"       },
         };
+        /***********************************
+         * DO NOT MOVE THESE STATIC FIELDS *
+         * ------------------------------- *
+         * Static fields are created in    *
+         * the order they are in the file. *
+         *                                 *
+         * Moving this one after the below *
+         * dictionary will result in the   *
+         * throwing of an exception.       *
+         ***********************************
+         */
+        private static readonly HashSet<char>
+            SuperSubTypeCharacters = new HashSet<char>(SuperSubTypeCharactersS);
+        // A map of suffixes to equivalent media types.
         private static readonly Dictionary<string, MediaType>
             MTSfxEquivalencyMap = new Dictionary<string, MediaType>()
         {
@@ -90,8 +104,6 @@ namespace McSherry.Zener.Core
             {   "xml",          "application/xml"           },
             {   "cbor",         "application/cbor"          },
         };
-        private static readonly HashSet<char>
-            SuperSubTypeCharacters = new HashSet<char>(SuperSubTypeCharactersS);
         private const string
             // Valid characters for the super/subtypes in a media type. All
             // comparisons we do will be in lowercase, so we don't need capitals.
