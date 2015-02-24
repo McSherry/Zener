@@ -438,24 +438,30 @@ namespace McSherry.Zener.Net
                 formatBody.Seek(2, SeekOrigin.Current);
 
                 Encoding encoding = null;
-                if (partHeaders.Contains(HDR_CTYPE))
+                var cType = partHeaders[HDR_CTYPE].LastOrDefault();
+                if (cType != default(HttpHeader))
                 {
-                    var cType = partHeaders[HDR_CTYPE].Last();
-                    var cTypeVal = cType.Value.ToLower();
+                    MediaType cTypeVal;
+                    try
+                    {
+                        cTypeVal = cType.Value;
+                    }
+                    catch (ArgumentException aex)
+                    {
+                        throw new HttpRequestException(
+                            "The client sent an invalid \"Content-Type\" header.",
+                            aex
+                            );
+                    }
 
                     // If the media type of the content is in the text/* group,
                     // we'll need to handle it specially (by selecting the correct
                     // encoding).
-                    if (cTypeVal.StartsWith("text/"))
+                    if (cTypeVal.SuperType == "text")
                     {
-                        // If there's a Content-Type header, it may contain
-                        // encoding information. To retrieve it, we'll need
-                        // to treat it as a name-value header.
-                        var nvCtype = new NamedParametersHttpHeader(cType);
-
-                        if (nvCtype.Pairs.ContainsKey(HDR_CTYPE_KCHAR))
+                        if (cTypeVal.Parameters.ContainsKey(HDR_CTYPE_KCHAR))
                         {
-                            var encName = nvCtype.Pairs[HDR_CTYPE_KCHAR].ToLower();
+                            var encName = cTypeVal.Parameters[HDR_CTYPE_KCHAR].ToLower();
 
                             if (_encodersByName.ContainsKey(encName))
                             {
