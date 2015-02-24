@@ -352,20 +352,20 @@ namespace McSherry.Zener.Net
                 {
                     inVal = true;
                     section = FilterInvalidCharacters(
-                        qBuilder.ToString().UrlDecode()
+                        qBuilder.ToString().UrlDecode(xformsSpaces: true)
                         );
                     qBuilder.Clear();
                 }
                 else if (inVal && c == '&')
                 {
-                    dynObj[section] = qBuilder.ToString().UrlDecode();
+                    dynObj[section] = qBuilder.ToString().UrlDecode(xformsSpaces: true);
                     qBuilder.Clear();
                     inVal = false;
                 }
                 else if (!inVal && c == '&')
                 {
                     section = FilterInvalidCharacters(
-                        qBuilder.ToString().UrlDecode()
+                        qBuilder.ToString().UrlDecode(xformsSpaces: true)
                         );
                     dynObj[section] = String.Empty;
                     qBuilder.Clear();
@@ -379,12 +379,12 @@ namespace McSherry.Zener.Net
             if (!inVal)
             {
                 section = FilterInvalidCharacters(
-                    qBuilder.ToString().UrlDecode()
+                    qBuilder.ToString().UrlDecode(xformsSpaces: true)
                     );
 
                 dynObj[section] = String.Empty;
             }
-            else dynObj[section] = qBuilder.ToString().UrlDecode();
+            else dynObj[section] = qBuilder.ToString().UrlDecode(xformsSpaces: true);
             
             return dynObj;
         }
