@@ -80,8 +80,8 @@ namespace McSherry.Zener.Core
             {   MediaTypeRegTree.Personal,       "prs"     },
             {   MediaTypeRegTree.Unregistered,   "x"       },
         };
-        private static readonly Dictionary<string, string>
-            MTSfxEquivalencyMap = new Dictionary<string, string>()
+        private static readonly Dictionary<string, MediaType>
+            MTSfxEquivalencyMap = new Dictionary<string, MediaType>()
         {
             {   "json",         "application/json"          },
             {   "fastinfoset",  "application/fastinfoset"   },
@@ -747,27 +747,24 @@ namespace McSherry.Zener.Core
                     unsuffixed  = type;
                 }
 
-                string
-                    // Will contain the media type Super+SubType pair
-                    // that is equivalent to the suffix.
-                    equiv,
-                    // Will contain the Super+SubType pair that is being
-                    // compared to the suffix's equivalent pair.
-                    actual = String.Format(
-                        "{0}/{1}",
-                        unsuffixed, SuperType, unsuffixed.SubType
-                        );
-                // Attempt to retrieve a media type Super+SubType pair
-                // from the equivalency map.
+                // The MediaType that the suffix is equivalent to.
+                MediaType equiv;
+                // Attempt to retrieve the equivalent media type for
+                // the suffix.
                 if (!MTSfxEquivalencyMap.TryGetValue(suffixed.Suffix, out equiv))
                 {
-                    // We don't know what the suffix means, and so
-                    // we aren't able to determine its equivalent
-                    // Super+SubType pair.
+                    // If we can't retrieve the equivalent media type, it
+                    // isn't a suffix we recognise so we can't determine
+                    // tentative compatibility. Return false.
                     return false;
                 }
 
-                return equiv == actual;
+                // We then determine tentative compatibility via the IsEquivalent
+                // method, which does all the comparison for us. As we called
+                // IsEquivalent on the MediaType we retrieved from our suffix
+                // equivalency map, it won't matter whether the unsuffixed media
+                // type has parameters.
+                return equiv.IsEquivalent(unsuffixed);
             }
         }
         /// <summary>
