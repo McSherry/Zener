@@ -867,7 +867,7 @@ namespace McSherry.Zener.Core
                     RegistrationTree.GetHashCode()  +
                     SuperType.GetHashCode()         +
                     SubType.GetHashCode()           +
-                    Suffix.GetHashCode()            +
+                    (Suffix ?? "").GetHashCode()    +
                     Parameters.GetHashCode()        ;
             }
 
