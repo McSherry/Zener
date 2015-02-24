@@ -120,9 +120,10 @@ namespace McSherry.Zener.Net
                     "0123456789ABCDEFabcdef"
                 ));
 
-        private static readonly byte
+        private const byte
             PctEncodingStart    = (byte)'%',
-            XFormsSpace         = (byte)'+'
+            XFormsSpace         = (byte)'+',
+            SpaceCharacter      = (byte)' '
             ;
         #endregion
 
@@ -815,7 +816,65 @@ namespace McSherry.Zener.Net
             bool xformsSpaces = false
             )
         {
-            throw new NotImplementedException();
+            if (plain == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided plain-text string must not be null."
+                    );
+            }
+
+            // As we do in UrlDecode, we convert the string to a
+            // series of UTF-8 bytes. This is done because .NET strings
+            // are, internally, UTF-16.
+            byte[] strBytes = Encoding.UTF8.GetBytes(plain);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < strBytes.Length; i++)
+            {
+                byte b = strBytes[i];
+                // We first check to see whether the byte is in
+                // the set of bytes that shouldn't be percent-encoded.
+                if (NoUrlEncodeBytes.Contains(b))
+                {
+                    // If we shouldn't encode the byte, we just
+                    // append it without change.
+                    sb.Append((char)b);
+                }
+                // If the byte isn't in the set of bytes that shouldn't
+                // be encoded, it means we need to encode it.
+                //
+                // First, we check to see whether application/x-www-form-urlencoded
+                // space encoding is enabled, and whether the current byte is a space.
+                else if (xformsSpaces && b == SpaceCharacter)
+                {
+                    // If we're using application/x-www-form-urlencoded space encoding
+                    // and the character to encode is a space, append a '+' instead of
+                    // '%20' to the StringBuilder.
+                    sb.Append((char)XFormsSpace);
+                }
+                // If it isn't, we need to percent-encode the byte. Percent encoding
+                // is very simple. You take the value of the byte as two hexadecimal
+                // digits and append them (upper- or lowercase, it doesn't matter),
+                // prefixed by a percent sign (%), to the string.
+                //
+                // For example, the ASCII space character has the decimal value 32. In
+                // hexadecimal, this is 20. To encode an ASCII space, we append %20 to
+                // the string. Leading zeroes are always included (so the hexadecimal
+                // value 5 is always encoded %05, never %5).
+                else
+                {
+                    sb.AppendFormat(
+                        "%{0}{1}",
+                        // The ToString method passed "X" prints out the value
+                        // in hexadecimal. However, it does not return leading
+                        // zeroes. To get around this, we just take the high and
+                        // low nybbles and call ToString on them separately.
+                        ((b & 0xF0) >> 4).ToString("X"),
+                        (b & 0xF).ToString("X")
+                        );
+                }
+            }
+
+            return sb.ToString();
         }
         /// <summary>
         /// Converts a percent-encoded (URL-encoded) string in
