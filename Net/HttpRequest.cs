@@ -259,15 +259,27 @@ namespace McSherry.Zener.Net
             if (this.Headers.Contains(HDR_CTYPE) && _raw.Length > 0)
             {
                 var ctype = new NamedParametersHttpHeader(this.Headers[HDR_CTYPE].Last());
+                MediaType ctypeVal;
+                try
+                {
+                    ctypeVal = ctype.Value;
+                }
+                catch (ArgumentException aex)
+                {
+                    throw new ArgumentException(
+                        "The client sent an invalid \"Content-Type\" header.",
+                        aex
+                        );
+                }
 
-                if (MT_FORMURLENCODED.IsEquivalent(ctype.Value))
+                if (MT_FORMURLENCODED.IsEquivalent(ctypeVal))
                 {
                     using (StreamReader sr = new StreamReader(body, Encoding.ASCII))
                     {
                         _post = ParseFormUrlEncoded(sr.ReadToEnd());
                     }
                 }
-                else if (MT_FORMMULTIPART.IsEquivalent(ctype.Value))
+                else if (MT_FORMMULTIPART.IsEquivalent(ctypeVal))
                 {
                     var bdry = ctype.Pairs
                         .Where(p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase))
