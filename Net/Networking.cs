@@ -111,7 +111,15 @@ namespace McSherry.Zener.Net
         private static readonly HashSet<byte> NoUrlEncodeBytes
             = new HashSet<byte>(
                 Encoding.UTF8.GetBytes(
-                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;="
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+                ));
+        // Characters that are allowed within a percent-encoded
+        // string unencoded. These are reserved characters used within
+        // URI/URLs as delimiters.
+        private static readonly HashSet<byte> UrlEncodeReserved
+            = new HashSet<byte>(
+                Encoding.UTF8.GetBytes(
+                    ":/?#[]@!$&'()*+,;="
                 ));
         // Bytes that we'll consider as valid hexadecimal characters.
         private static readonly HashSet<byte> UrlEncodeHexChars
@@ -1019,7 +1027,11 @@ namespace McSherry.Zener.Net
                 // If it is a character we're free to add, or it isn't a
                 // character we're free to add but strict parsing is disabled,
                 // we can add it to the StringBuilder.
-                else if (NoUrlEncodeBytes.Contains(b) || !strict)
+                else if (
+                    NoUrlEncodeBytes.Contains(b)  || 
+                    UrlEncodeReserved.Contains(b) ||
+                    !strict
+                    )
                 {
                     sb.Append((char)b);
                 }
