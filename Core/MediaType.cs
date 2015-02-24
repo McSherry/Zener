@@ -676,9 +676,8 @@ namespace McSherry.Zener.Core
         }
         /// <summary>
         /// The parameters included with the media type. This
-        /// is typically zero or one name-value pairs.
-        /// 
-        /// This property is null if no parameters are present.
+        /// is typically zero or one name-value pairs, but there
+        /// may be any number of parameters.
         /// </summary>
         public IDictionary<string, string> Parameters
         {
