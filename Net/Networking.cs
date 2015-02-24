@@ -796,6 +796,12 @@ namespace McSherry.Zener.Net
         /// <param name="plain">
         /// The string to convert to a percent-encoded form.
         /// </param>
+        /// <param name="xformsSpaces">
+        /// Whether to use application/x-www-form-urlencoded
+        /// spaces. When this is true, spaces are encoded
+        /// using the character '+' instead of the
+        /// percent-encoded sequence '%20'.
+        /// </param>
         /// <returns>
         /// The percent-encoded representation of the source
         /// string.
@@ -804,7 +810,10 @@ namespace McSherry.Zener.Net
         /// This method assumes that the provided source string
         /// is a UTF-8 string.
         /// </remarks>
-        public static string UrlEncode(this string plain)
+        public static string UrlEncode(
+            this string plain,
+            bool xformsSpaces = false
+            )
         {
             throw new NotImplementedException();
         }
