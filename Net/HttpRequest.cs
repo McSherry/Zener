@@ -15,8 +15,6 @@ using System.Text;
 using System.IO;
 using System.Net;
 
-using WebUtility = System.Web.HttpUtility;
-
 namespace McSherry.Zener.Net
 {
     /// <summary>
@@ -308,20 +306,20 @@ namespace McSherry.Zener.Net
                 {
                     inVal = true;
                     section = FilterInvalidCharacters(
-                        WebUtility.UrlDecode(qBuilder.ToString())
+                        qBuilder.ToString().UrlDecode()
                         );
                     qBuilder.Clear();
                 }
                 else if (inVal && c == '&')
                 {
-                    dynObj[section] = WebUtility.UrlDecode(qBuilder.ToString());
+                    dynObj[section] = qBuilder.ToString().UrlDecode();
                     qBuilder.Clear();
                     inVal = false;
                 }
                 else if (!inVal && c == '&')
                 {
                     section = FilterInvalidCharacters(
-                        WebUtility.UrlDecode(qBuilder.ToString())
+                        qBuilder.ToString().UrlDecode()
                         );
                     dynObj[section] = String.Empty;
                     qBuilder.Clear();
@@ -335,12 +333,12 @@ namespace McSherry.Zener.Net
             if (!inVal)
             {
                 section = FilterInvalidCharacters(
-                    WebUtility.UrlDecode(qBuilder.ToString())
+                    qBuilder.ToString().UrlDecode()
                     );
 
                 dynObj[section] = String.Empty;
             }
-            else dynObj[section] = WebUtility.UrlDecode(qBuilder.ToString());
+            else dynObj[section] = qBuilder.ToString().UrlDecode();
             
             return dynObj;
         }
@@ -525,7 +523,7 @@ namespace McSherry.Zener.Net
                     .ForEach(
                         nvp => dynObj.Add(
                             FilterInvalidCharacters(nvp.Key),
-                            WebUtility.UrlDecode(nvp.Value)
+                            nvp.Value.UrlDecode()
                         ));
 
                 _cookies = dynObj;

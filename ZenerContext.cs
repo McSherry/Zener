@@ -17,7 +17,6 @@ using McSherry.Zener.Net;
 
 using IPAddress = System.Net.IPAddress;
 using Method = System.Func<dynamic, string>;
-using WebUtility = System.Web.HttpUtility;
 using RouteList = System.Collections.Generic
     .Dictionary<string, System.Func<McSherry.Zener.ZenerContext, McSherry.Zener.Core.RouteHandler>>;
 
@@ -78,12 +77,12 @@ namespace McSherry.Zener
                  *      - Check directories exist
                  *      
                  * See API reference for more: 
-                 *      https://github.com/SynapLink/Zener/wiki/Filesystem-API
+                 *      https://github.com/McSherry/Zener/wiki/Filesystem-API
                  */
 
                 string path;
                 if (pr is Empty) path = Environment.CurrentDirectory;
-                else path = WebUtility.UrlDecode(pr.path);
+                else path = Networking.UrlDecode(pr.file);
 
                 rs.Headers.Add("Content-Type", "application/json");
                 StringBuilder jsonBuilder = new StringBuilder("{");
@@ -102,7 +101,7 @@ namespace McSherry.Zener
 
                                 jsonBuilder.AppendFormat(
                                     @"""file"": ""{0}""",
-                                    WebUtility.UrlEncode(Encoding.ASCII.GetString(fileBytes))
+                                    Encoding.ASCII.GetString(fileBytes).UrlEncode()
                                     );
                             }
                             #endregion
@@ -116,13 +115,13 @@ namespace McSherry.Zener
                                 .Select(p => Path.GetFullPath(p))
                                 .Aggregate(
                                     new StringBuilder(),
-                                    (sb, f) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(f)))
+                                    (sb, f) => sb.AppendFormat(@"""{0}"", ", f.UrlEncode()))
                                 .ToString();
                             string dirsArray = subdirs
                                 .Select(p => Path.GetFullPath(p))
                                 .Aggregate(
                                     new StringBuilder(),
-                                    (sb, d) => sb.AppendFormat(@"""{0}"", ", WebUtility.UrlEncode(d)))
+                                    (sb, d) => sb.AppendFormat(@"""{0}"", ", d.UrlEncode()))
                                 .ToString();
 
                             jsonBuilder.AppendFormat(
@@ -249,7 +248,7 @@ namespace McSherry.Zener
                         jsonBuilder.AppendFormat(
                             @"""returned"": {0}, ""return"": ""{1}"", ",
                             (!retIsNull).ToString().ToLower(),
-                            retIsNull ? String.Empty : WebUtility.UrlEncode(ret)
+                            retIsNull ? String.Empty : Networking.UrlEncode(ret)
                             );
                     }
                     else
