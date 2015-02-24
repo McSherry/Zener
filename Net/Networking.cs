@@ -819,6 +819,10 @@ namespace McSherry.Zener.Net
         /// This method assumes that the provided source string
         /// is a UTF-8 string.
         /// </remarks>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided plain-text source string
+        /// is null.
+        /// </exception>
         public static string UrlEncode(
             this string plain,
             bool xformsSpaces = false
@@ -1041,7 +1045,7 @@ namespace McSherry.Zener.Net
                 {
                     throw new FormatException(
                         "The provided percent-encoded string contains " +
-                        "non-URL-safe characters."
+                        "one or more non-URL-safe characters."
                         );
                 }
             }

@@ -77,7 +77,7 @@ namespace McSherry.Zener
                  *      - Check directories exist
                  *      
                  * See API reference for more: 
-                 *      https://github.com/SynapLink/Zener/wiki/Filesystem-API
+                 *      https://github.com/McSherry/Zener/wiki/Filesystem-API
                  */
 
                 string path;
