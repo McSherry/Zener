@@ -15,6 +15,8 @@ using System.Text;
 using System.IO;
 using System.Net;
 
+using MediaType = McSherry.Zener.Core.MediaType;
+
 namespace McSherry.Zener.Net
 {
     /// <summary>
@@ -96,8 +98,8 @@ namespace McSherry.Zener.Net
             public const string CONNECT     = "CONNECT";
         }
 
-        private const string MT_FORMURLENCODED = "application/x-www-form-urlencoded";
-        private const string MT_FORMMULTIPART = "multipart/form-data";
+        private static readonly MediaType MT_FORMURLENCODED = "application/x-www-form-urlencoded";
+        private static readonly MediaType MT_FORMMULTIPART = "multipart/form-data";
         private const string HDR_CDISPOSITION = "Content-Disposition";
         private const string HDR_CLENGTH = "Content-Length";
         private const string HDR_COOKIES = "Cookie";
@@ -258,14 +260,14 @@ namespace McSherry.Zener.Net
             {
                 var ctype = new NamedParametersHttpHeader(this.Headers[HDR_CTYPE].Last());
 
-                if (ctype.Value.Equals(MT_FORMURLENCODED, StringComparison.OrdinalIgnoreCase))
+                if (MT_FORMURLENCODED.IsEquivalent(ctype.Value))
                 {
                     using (StreamReader sr = new StreamReader(body, Encoding.ASCII))
                     {
                         _post = ParseFormUrlEncoded(sr.ReadToEnd());
                     }
                 }
-                else if (ctype.Value.Equals(MT_FORMMULTIPART, StringComparison.OrdinalIgnoreCase))
+                else if (MT_FORMMULTIPART.IsEquivalent(ctype.Value))
                 {
                     var bdry = ctype.Pairs
                         .Where(p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase))
