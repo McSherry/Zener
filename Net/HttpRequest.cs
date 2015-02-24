@@ -378,6 +378,61 @@ namespace McSherry.Zener.Net
             return dynObj;
         }
         /// <summary>
+        /// Determines which POST data handler to use based on the
+        /// "Content-Type" header of an HTTP request.
+        /// </summary>
+        /// <param name="request">The request to determine the handler for.</param>
+        /// <returns>The appropriate handler to use.</returns>
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
+        /// Thrown when the client's "Content-Length" header contains an
+        /// invalid media type.
+        /// </exception>
+        private static PostDataHandler DeterminePostHandler(HttpRequest request)
+        {
+            PostDataHandler handler;
+            // Attempt to retrieve the request's 'Content-Type' header.
+            var ctypeHdr = request.Headers[HDR_CTYPE].LastOrDefault();
+            // If this is true, the request doesn't have a 'Content-Type'
+            // header.
+            if (ctypeHdr == default(HttpHeader))
+            {
+                // There's no 'Content-Type', so we can't determine how
+                // to parse the request body, and so we can't return a
+                // dynamic containing any key-values. Set the handler to
+                // one which returns empty.
+                handler = (r, s) => new Empty();
+            }
+            else
+            {
+                MediaType ctype;
+                try
+                {
+                    ctype = ctypeHdr.Value;
+                }
+                catch (ArgumentException aex)
+                {
+                    throw new HttpRequestException(
+                        "The client sent an invalid \"Content-Length\" header.",
+                        aex
+                        );
+                }
+
+                handler = _postHandlers
+                    // Filter out all the media types that aren't
+                    // equivalent to the one the client sent.
+                    .Where(k => ctype.IsEquivalent(k.Key))
+                    // Select from the matches the handler.
+                    .Select(k => k.Value)
+                    // If there are no matches, make sure there's
+                    // a default one returning empty.
+                    .DefaultIfEmpty((r, s) => new Empty())
+                    // Select the first result in the enumerable.
+                    .First();
+            }
+
+            return handler;
+        }
+        /// <summary>
         /// Parses the HTTP request body, assuming that it is in the
         /// multipart/form-data format.
         /// </summary>
