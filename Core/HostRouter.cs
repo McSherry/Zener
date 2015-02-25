@@ -194,6 +194,21 @@ namespace McSherry.Zener.Core
         {
             return this.AddHost(
                 format: format,
+                name:   null
+                );
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts, using the
+        /// default IP address and the default TCP port.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <param name="name">The name to give to this virtual host.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        public VirtualHost AddHost(string format, string name)
+        {
+            return this.AddHost(
+                format: format,
+                name:   name,
                 port:   this.DefaultBindPort
                 );
         }
@@ -209,14 +224,58 @@ namespace McSherry.Zener.Core
         /// </exception>
         public VirtualHost AddHost(string format, ushort port)
         {
-            var vhost = new VirtualHost(
+            return this.AddHost(
                 format:         format,
-                bindAddress:    this.DefaultBindAddress,
                 port:           port,
                 routes:         new Router()
                 );
-
-            return this.AddHost(vhost);
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts, using
+        /// the default IP address and the specified port.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <param name="name">The name to give to the virtual host.</param>
+        /// <param name="port">The port to bind the virtual host to.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
+        /// </exception>
+        public VirtualHost AddHost(string format, string name, ushort port)
+        {
+            return this.AddHost(
+                format:     format,
+                name:       name,
+                port:       port,
+                routes:     new Router()
+                );
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <param name="name">The name to give to the virtual host.</param>
+        /// <param name="bindAddress">The IP address to bind the virtual host to.</param>
+        /// <param name="port">The port to bind the virtual host to.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the specified IPAddress is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
+        /// </exception>
+        public VirtualHost AddHost(
+            string format, string name,
+            IPAddress bindAddress, ushort port
+            )
+        {
+            return this.AddHost(
+                format:         format,
+                name:           name,
+                bindAddress:    bindAddress,
+                port:           port,
+                routes:         new Router()
+                );
         }
         /// <summary>
         /// Adds a virtual host to the set of hosts.
@@ -264,14 +323,41 @@ namespace McSherry.Zener.Core
         /// </exception>
         public VirtualHost AddHost(string format, ushort port, Router routes)
         {
-            var vhost = new VirtualHost(
+            return this.AddHost(
+                format:     format,
+                name:       null,
+                port:       port,
+                routes:     routes
+                );
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts, using the
+        /// default bind address.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <param name="name">The name to give to this virtual host.</param>
+        /// <param name="port">The port to bind the virtual host to.</param>
+        /// <param name="routes">The set of routes associated with the virtual host.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the IPAddress or Router passed to
+        /// the method is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
+        /// </exception>
+        public VirtualHost AddHost(
+            string format, string name,
+            ushort port, Router routes
+            )
+        {
+            return this.AddHost(
                 format:         format,
+                name:           name,
                 bindAddress:    this.DefaultBindAddress,
                 port:           port,
                 routes:         routes
                 );
-
-            return this.AddHost(vhost);
         }
         /// <summary>
         /// Adds a virtual host to the set of hosts.
@@ -294,8 +380,39 @@ namespace McSherry.Zener.Core
             Router routes
             )
         {
+            return this.AddHost(
+                format:         format,
+                name:           null,
+                bindAddress:    bindAddress,
+                port:           port,
+                routes:         routes
+                );
+        }
+        /// <summary>
+        /// Adds a virtual host to the set of hosts.
+        /// </summary>
+        /// <param name="format">The hostname of the virtual host.</param>
+        /// <param name="name">The name to give to this virtual host.</param>
+        /// <param name="bindAddress">The IP address to bind the virtual host to.</param>
+        /// <param name="port">The port to bind the virtual host to.</param>
+        /// <param name="routes">The set of routes associated with the virtual host.</param>
+        /// <returns>The VirtualHost that was added to the HostRouter.</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the IPAddress or Router passed to
+        /// the method is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the specified port is outside the allowable range.
+        /// </exception>
+        public VirtualHost AddHost(
+            string format, string name,
+            IPAddress bindAddress, ushort port,
+            Router routes
+            )
+        {
             var vhost = new VirtualHost(
                 format:         format,
+                name:           name,
                 bindAddress:    bindAddress,
                 port:           port,
                 routes:         routes
