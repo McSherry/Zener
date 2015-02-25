@@ -113,6 +113,13 @@ namespace McSherry.Zener.Net
         /// </returns>
         private delegate dynamic PostDataHandler(HttpRequest request, Stream body);
 
+        /// <summary>
+        /// The maximum number of empty lines we'll accept before a
+        /// request line. If we receive more empty lines than this,
+        /// we'll terminate the connection.
+        /// </summary>
+        private const int REQUEST_EMPTIES_MAX = 8;
+
         private const string HDR_CDISPOSITION = "Content-Disposition";
         private const string HDR_CLENGTH = "Content-Length";
         private const string HDR_COOKIES = "Cookie";
@@ -640,11 +647,28 @@ namespace McSherry.Zener.Net
             HttpRequest request = new HttpRequest();
 
             string line;
+            int empties = 0;
             // Lines before the request line can be blank.
             // We want to skip these since there's nothing
             // to parse.
-            do { line = stream.ReadAsciiLine(); }
-            while (String.IsNullOrEmpty(line));
+            do 
+            { 
+                line = stream.ReadAsciiLine();
+                empties++;
+            }
+            while (empties < REQUEST_EMPTIES_MAX && String.IsNullOrEmpty(line));
+
+            // If this evaluates to true, it means the client has sent
+            // too many empty lines before its request line.
+            if (empties >= REQUEST_EMPTIES_MAX)
+            {
+                // An InvalidDataException will cause HttpServer to
+                // terminate the connection and won't crash the
+                // program.
+                throw new InvalidDataException(
+                    "The client sent too many empty lines."
+                    );
+            }
 
             // We've now hit the first line with content. In
             // a compliant HTTP request, this is the request
