@@ -74,7 +74,7 @@ namespace McSherry.Zener.Core
                 routes = new List<Route>(_routes);
             }
 
-            validHandlers = _routes
+            validHandlers = routes
                 .Where(r => r.TryMatch(path, method, validParams.Add))
                 .ToList();
 
