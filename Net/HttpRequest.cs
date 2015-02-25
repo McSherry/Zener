@@ -393,7 +393,7 @@ namespace McSherry.Zener.Net
                 handler = _postHandlers
                     // Filter out all the media types that aren't
                     // equivalent to the one the client sent.
-                    .Where(k => ctype.IsEquivalent(k.Key))
+                    .Where(k => k.Key.IsEquivalent(ctype))
                     // Select from the matches the handler.
                     .Select(k => k.Value)
                     // If there are no matches, make sure there's
