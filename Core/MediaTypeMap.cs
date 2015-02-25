@@ -81,10 +81,6 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
-        /// The fallback media type for use when a matching type isn't found.
-        /// </summary>
-        public const string FallbackType = "text/plain";
-        /// <summary>
         /// The default media type handler.
         /// </summary>
         /// <param name="data">The data for the handler to transform.</param>
