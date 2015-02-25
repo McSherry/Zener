@@ -113,8 +113,6 @@ namespace McSherry.Zener.Net
         /// </returns>
         private delegate dynamic PostDataHandler(HttpRequest request, Stream body);
 
-        private static readonly MediaType MT_FORMURLENCODED = "application/x-www-form-urlencoded";
-        private static readonly MediaType MT_FORMMULTIPART = "multipart/form-data";
         private const string HDR_CDISPOSITION = "Content-Disposition";
         private const string HDR_CLENGTH = "Content-Length";
         private const string HDR_COOKIES = "Cookie";
