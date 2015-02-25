@@ -121,6 +121,7 @@ namespace McSherry.Zener.Net
         private const string CDIS_FORMDATA = "form-data";
         private const string HDR_CTYPE = "Content-Type";
         private const string HDR_CTYPE_KCHAR = "charset";
+        private const string HDR_CTYPE_BOUNDARY = "boundary";
         private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
         private const string VAR_NOSTART = "0123456789";
         private const int REQUEST_MAXLENGTH = (1024 * 1024) * 32; // 32 MiB
@@ -282,49 +283,10 @@ namespace McSherry.Zener.Net
                 _raw = new byte[0];
             }
 
-            if (this.Headers.Contains(HDR_CTYPE) && _raw.Length > 0)
-            {
-                var ctype = new NamedParametersHttpHeader(this.Headers[HDR_CTYPE].Last());
-                MediaType ctypeVal;
-                try
-                {
-                    ctypeVal = ctype.Value;
-                }
-                catch (ArgumentException aex)
-                {
-                    throw new ArgumentException(
-                        "The client sent an invalid \"Content-Type\" header.",
-                        aex
-                        );
-                }
-
-                if (MT_FORMURLENCODED.IsEquivalent(ctypeVal))
-                {
-                    using (StreamReader sr = new StreamReader(body, Encoding.ASCII))
-                    {
-                        _post = ParseFormUrlEncoded(sr.ReadToEnd());
-                    }
-                }
-                else if (MT_FORMMULTIPART.IsEquivalent(ctypeVal))
-                {
-                    var bdry = ctype.Pairs
-                        .Where(p => p.Key.Equals("boundary", StringComparison.OrdinalIgnoreCase))
-                        .Select(p => p.Value)
-                        .DefaultIfEmpty(null)
-                        .First();
-
-                    if (bdry == null)
-                    {
-                        throw new HttpRequestException(
-                            "No boundary provided for multipart data."
-                            );
-                    }
-
-                    _post = ParseMultipartFormData(this, body, bdry);
-                }
-                else _post = new Empty();
-            }
-            else _post = new Empty();
+            // Determine how to handle the POST data, then call the
+            // appropriate handler. Set the POST property to the
+            // result.
+            _post = DeterminePostHandler(this)(this, body);
         }
         /// <summary>
         /// Parses the provided string, assuming that it is in the
@@ -457,13 +419,34 @@ namespace McSherry.Zener.Net
         /// </exception>
         private static dynamic ParseMultipartFormData(
             HttpRequest request,
-            Stream formatBody,
-            string boundary
+            Stream formatBody
             )
         {
             if (!formatBody.CanRead || !formatBody.CanSeek)
                 throw new ArgumentException
                 ("The provided stream must support reading and seeking.", "formatBody");
+
+            MediaType mt;
+            try
+            {
+                mt = request.Headers[HDR_CTYPE].Last().Value;
+            }
+            catch (ArgumentException aex)
+            {
+                throw new HttpRequestException(
+                    "The client sent an invalid \"Content-Length\" header.",
+                    aex
+                    );
+            }
+
+            string boundary;
+            if (!mt.Parameters.TryGetValue(HDR_CTYPE_BOUNDARY, out boundary))
+            {
+                throw new HttpRequestException(
+                    "The client did not provide a boundary with its multipart data."
+                    );
+            }
+
 
             var dynObj = new ExpandoObject() as IDictionary<string, object>;
             byte[] boundaryBytes = Encoding.ASCII.GetBytes(boundary);
