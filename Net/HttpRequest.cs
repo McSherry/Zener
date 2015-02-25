@@ -120,7 +120,10 @@ namespace McSherry.Zener.Net
         private const string HDR_CTYPE = "Content-Type";
         private const string HDR_CTYPE_KCHAR = "charset";
         private const string HDR_CTYPE_BOUNDARY = "boundary";
-        private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+        private static readonly HashSet<char> VAR_WHITELIST
+            = new HashSet<char>(
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+                );
         private const string VAR_NOSTART = "0123456789";
         private const int REQUEST_MAXLENGTH = (1024 * 1024) * 32; // 32 MiB
         private const int REQUEST_TIMEOUT = 1000 * 60; // 60 seconds
