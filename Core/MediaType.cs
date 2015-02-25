@@ -806,12 +806,16 @@ namespace McSherry.Zener.Core
                 // If the lengths don't match, there's no point in
                 // comparing values.
                 if (type.Parameters.Count != this.Parameters.Count)
+                {
                     paramEqual = false;
-
-                // paramEqual will be true if all values within both the
-                // dictionaries are equal.
-                paramEqual = this.Parameters
-                    .All(kvp => kvp.Value == type.Parameters[kvp.Key]);
+                }
+                else
+                {
+                    // paramEqual will be true if all values within both the
+                    // dictionaries are equal.
+                    paramEqual = this.Parameters
+                        .All(kvp => kvp.Value == type.Parameters[kvp.Key]);
+                }
             }
             // If there are suffixes, compare them.
             if (this.Suffix != null && type.Suffix != null)
