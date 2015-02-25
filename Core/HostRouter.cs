@@ -171,17 +171,23 @@ namespace McSherry.Zener.Core
              */
 
             List<dynamic> hostParams = new List<dynamic>();
+            List<VirtualHost> hosts;
 
             lock (_lockbox)
             {
-                return _hosts
+                // As we did with Router, we lock before
+                // copying, and will then perform the more
+                // intensive action outside the lock.
+                hosts = new List<VirtualHost>(_hosts);
+            }
+
+            return hosts
                     .Where(v => v.TryMatch(host, port, hostParams.Add))
                     .ToList()
                     .Zip(hostParams, (v, p) => new Tuple<VirtualHost, dynamic>(v, p))
                     .OrderBy(t => t.Item1.IsWildcard())
                     .ThenByDescending(t => t.Item2 is Empty)
                     .FirstOrDefault();
-            }
         }
 
         /// <summary>
