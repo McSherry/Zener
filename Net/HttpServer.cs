@@ -164,6 +164,10 @@ namespace McSherry.Zener.Net
                 try
                 {
                     var tcl = _listener.AcceptTcpClient();
+                    /* TODO: Compare performance of ThreadPool against the
+                     * performance of creating new Thread instances and any
+                     * other relevant methods of multithreading.
+                     */
                     ThreadPool.QueueUserWorkItem(HttpRequestHandler, tcl);
                 }
                 catch (SocketException sex)
