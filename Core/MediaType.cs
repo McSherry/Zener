@@ -80,8 +80,22 @@ namespace McSherry.Zener.Core
             {   MediaTypeRegTree.Personal,       "prs"     },
             {   MediaTypeRegTree.Unregistered,   "x"       },
         };
-        private static readonly Dictionary<string, string>
-            MTSfxEquivalencyMap = new Dictionary<string, string>()
+        /***********************************
+         * DO NOT MOVE THESE STATIC FIELDS *
+         * ------------------------------- *
+         * Static fields are created in    *
+         * the order they are in the file. *
+         *                                 *
+         * Moving this one after the below *
+         * dictionary will result in the   *
+         * throwing of an exception.       *
+         ***********************************
+         */
+        private static readonly HashSet<char>
+            SuperSubTypeCharacters = new HashSet<char>(SuperSubTypeCharactersS);
+        // A map of suffixes to equivalent media types.
+        private static readonly Dictionary<string, MediaType>
+            MTSfxEquivalencyMap = new Dictionary<string, MediaType>()
         {
             {   "json",         "application/json"          },
             {   "fastinfoset",  "application/fastinfoset"   },
@@ -90,8 +104,6 @@ namespace McSherry.Zener.Core
             {   "xml",          "application/xml"           },
             {   "cbor",         "application/cbor"          },
         };
-        private static readonly HashSet<char>
-            SuperSubTypeCharacters = new HashSet<char>(SuperSubTypeCharactersS);
         private const string
             // Valid characters for the super/subtypes in a media type. All
             // comparisons we do will be in lowercase, so we don't need capitals.
@@ -664,9 +676,8 @@ namespace McSherry.Zener.Core
         }
         /// <summary>
         /// The parameters included with the media type. This
-        /// is typically zero or one name-value pairs.
-        /// 
-        /// This property is null if no parameters are present.
+        /// is typically zero or one name-value pairs, but there
+        /// may be any number of parameters.
         /// </summary>
         public IDictionary<string, string> Parameters
         {
@@ -747,27 +758,24 @@ namespace McSherry.Zener.Core
                     unsuffixed  = type;
                 }
 
-                string
-                    // Will contain the media type Super+SubType pair
-                    // that is equivalent to the suffix.
-                    equiv,
-                    // Will contain the Super+SubType pair that is being
-                    // compared to the suffix's equivalent pair.
-                    actual = String.Format(
-                        "{0}/{1}",
-                        unsuffixed, SuperType, unsuffixed.SubType
-                        );
-                // Attempt to retrieve a media type Super+SubType pair
-                // from the equivalency map.
+                // The MediaType that the suffix is equivalent to.
+                MediaType equiv;
+                // Attempt to retrieve the equivalent media type for
+                // the suffix.
                 if (!MTSfxEquivalencyMap.TryGetValue(suffixed.Suffix, out equiv))
                 {
-                    // We don't know what the suffix means, and so
-                    // we aren't able to determine its equivalent
-                    // Super+SubType pair.
+                    // If we can't retrieve the equivalent media type, it
+                    // isn't a suffix we recognise so we can't determine
+                    // tentative compatibility. Return false.
                     return false;
                 }
 
-                return equiv == actual;
+                // We then determine tentative compatibility via the IsEquivalent
+                // method, which does all the comparison for us. As we called
+                // IsEquivalent on the MediaType we retrieved from our suffix
+                // equivalency map, it won't matter whether the unsuffixed media
+                // type has parameters.
+                return equiv.IsEquivalent(unsuffixed);
             }
         }
         /// <summary>
@@ -798,12 +806,16 @@ namespace McSherry.Zener.Core
                 // If the lengths don't match, there's no point in
                 // comparing values.
                 if (type.Parameters.Count != this.Parameters.Count)
+                {
                     paramEqual = false;
-
-                // paramEqual will be true if all values within both the
-                // dictionaries are equal.
-                paramEqual = this.Parameters
-                    .All(kvp => kvp.Value == type.Parameters[kvp.Key]);
+                }
+                else
+                {
+                    // paramEqual will be true if all values within both the
+                    // dictionaries are equal.
+                    paramEqual = this.Parameters
+                        .All(kvp => kvp.Value == type.Parameters[kvp.Key]);
+                }
             }
             // If there are suffixes, compare them.
             if (this.Suffix != null && type.Suffix != null)
@@ -859,7 +871,7 @@ namespace McSherry.Zener.Core
                     RegistrationTree.GetHashCode()  +
                     SuperType.GetHashCode()         +
                     SubType.GetHashCode()           +
-                    Suffix.GetHashCode()            +
+                    (Suffix ?? "").GetHashCode()    +
                     Parameters.GetHashCode()        ;
             }
 
