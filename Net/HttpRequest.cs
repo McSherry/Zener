@@ -158,6 +158,313 @@ namespace McSherry.Zener.Net
                 .Where(c => VAR_WHITELIST.Contains(c))
                 .Aggregate(new StringBuilder(), (sb, c) => sb.Append(c))
                 .ToString();
+        }        
+
+        /// <summary>
+        /// Determines which POST data handler to use based on the
+        /// "Content-Type" header of an HTTP request.
+        /// </summary>
+        /// <param name="request">The request to determine the handler for.</param>
+        /// <returns>The appropriate handler to use.</returns>
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
+        /// Thrown when the client's "Content-Length" header contains an
+        /// invalid media type.
+        /// </exception>
+        private static PostDataHandler DeterminePostHandler(HttpRequest request)
+        {
+            PostDataHandler handler;
+            // Attempt to retrieve the request's 'Content-Type' header.
+            var ctypeHdr = request.Headers[HDR_CTYPE].LastOrDefault();
+            // If this is true, the request doesn't have a 'Content-Type'
+            // header.
+            if (ctypeHdr == default(HttpHeader))
+            {
+                // There's no 'Content-Type', so we can't determine how
+                // to parse the request body, and so we can't return a
+                // dynamic containing any key-values. Set the handler to
+                // one which returns empty.
+                handler = (r, s) => new Empty();
+            }
+            else
+            {
+                MediaType ctype;
+                try
+                {
+                    ctype = ctypeHdr.Value;
+                }
+                catch (ArgumentException aex)
+                {
+                    throw new HttpRequestException(
+                        "The client sent an invalid \"Content-Length\" header.",
+                        aex
+                        );
+                }
+
+                handler = _postHandlers
+                    // Filter out all the media types that aren't
+                    // equivalent to the one the client sent.
+                    .Where(k => k.Key.IsEquivalent(ctype))
+                    // Select from the matches the handler.
+                    .Select(k => k.Value)
+                    // If there are no matches, make sure there's
+                    // a default one returning empty.
+                    .DefaultIfEmpty((r, s) => new Empty())
+                    // Select the first result in the enumerable.
+                    .First();
+            }
+
+            return handler;
+        }
+        /// <summary>
+        /// Parses the provided string, assuming that it is in the
+        /// application/x-www-formurlencoded format.
+        /// </summary>
+        /// <param name="req">The HTTP request that we are to parse.</param>
+        /// <param name="body">The string to parse.</param>
+        private static dynamic ParseFormUrlEncoded(HttpRequest req, Stream body)
+        {
+            string formatBody;
+            // We don't need anything special from the request body, so we can
+            // just read it to the end as a string.
+            using (var sr = new StreamReader(body)) formatBody = sr.ReadToEnd();
+
+            var dynObj = new ExpandoObject() as IDictionary<string, object>;
+
+            var qBuilder = new StringBuilder();
+
+            string section = String.Empty;
+            bool inVal = false;
+
+            foreach (char c in formatBody)
+            {
+                if (!inVal && c == '=')
+                {
+                    inVal = true;
+                    section = FilterInvalidCharacters(
+                        qBuilder.ToString().UrlDecode(xformsSpaces: true)
+                        );
+                    qBuilder.Clear();
+                }
+                else if (inVal && c == '&')
+                {
+                    dynObj[section] = qBuilder.ToString().UrlDecode(xformsSpaces: true);
+                    qBuilder.Clear();
+                    inVal = false;
+                }
+                else if (!inVal && c == '&')
+                {
+                    section = FilterInvalidCharacters(
+                        qBuilder.ToString().UrlDecode(xformsSpaces: true)
+                        );
+                    dynObj[section] = String.Empty;
+                    qBuilder.Clear();
+                }
+                else
+                {
+                    qBuilder.Append(c);
+                }
+            }
+
+            if (!inVal)
+            {
+                section = FilterInvalidCharacters(
+                    qBuilder.ToString().UrlDecode(xformsSpaces: true)
+                    );
+
+                dynObj[section] = String.Empty;
+            }
+            else dynObj[section] = qBuilder.ToString().UrlDecode(xformsSpaces: true);
+
+            return dynObj;
+        }
+        /// <summary>
+        /// Parses the HTTP request body, assuming that it is in the
+        /// multipart/form-data format.
+        /// </summary>
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
+        ///     Thrown when the client's HTTP request was invalid and
+        ///     could not be parsed.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        ///     Thrown when the provided stream did not support the
+        ///     required operations.
+        /// </exception>
+        private static dynamic ParseMultipartFormData(HttpRequest req, Stream body)
+        {
+            if (!body.CanRead || !body.CanSeek)
+                throw new ArgumentException
+                ("The provided stream must support reading and seeking.", "formatBody");
+
+            MediaType mt;
+            try
+            {
+                mt = req.Headers[HDR_CTYPE].Last().Value;
+            }
+            catch (ArgumentException aex)
+            {
+                throw new HttpRequestException(
+                    "The client sent an invalid \"Content-Length\" header.",
+                    aex
+                    );
+            }
+
+            string boundary;
+            if (!mt.Parameters.TryGetValue(HDR_CTYPE_BOUNDARY, out boundary))
+            {
+                throw new HttpRequestException(
+                    "The client did not provide a boundary with its multipart data."
+                    );
+            }
+
+
+            var dynObj = new ExpandoObject() as IDictionary<string, object>;
+            byte[] boundaryBytes = Encoding.ASCII.GetBytes(boundary);
+            byte[] doubleDash = Encoding.ASCII.GetBytes("--");
+
+            // We should ignore data before the first boundary.
+            body.ReadUntilFound(boundary, Encoding.ASCII, b => { });
+            // Seek past CRLF
+            body.Seek(2, SeekOrigin.Current);
+            boundary = String.Format("\r\n--{0}", boundary);
+
+            while (body.Position != body.Length)
+            {
+                // We know headers are going to be ASCII, so we can read lines
+                // with our ASCIIEncoding until we hit an empty line.
+                StringBuilder partHdrBuilder = new StringBuilder();
+                while (true)
+                {
+                    string line = body.ReadAsciiLine();
+                    // An empty line indicates the break between the part
+                    // headers and the part body. If we get one when reading
+                    // headers, we can safely assume that no more headers are
+                    // associated with this part.
+                    if (String.IsNullOrEmpty(line)) break;
+
+                    if (!line.Equals(boundary))
+                        partHdrBuilder.AppendLine(line);
+                }
+
+                HttpHeaderCollection partHeaders;
+                using (StringReader sr = new StringReader(partHdrBuilder.ToString()))
+                {
+                    partHeaders = new HttpHeaderCollection(
+                        HttpHeader.ParseMany(sr)
+                        );
+                }
+
+                if (!partHeaders.Contains(HDR_CDISPOSITION))
+                {
+                    throw new HttpRequestException(
+                        "Multipart data is malformed; no Content-Disposition."
+                        );
+                }
+                var cdis = new NamedParametersHttpHeader(partHeaders[HDR_CDISPOSITION].Last());
+
+                string name = cdis.Pairs
+                    .Where(p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase))
+                    .Select(p => p.Value)
+                    .DefaultIfEmpty(null)
+                    .First();
+                if (name == null)
+                    throw new HttpRequestException(
+                        "Multipart form data is malformed; no name."
+                        );
+
+                long remLeng = body.Length - body.Position;
+
+                // If the remaining number of bytes is less than the length of the
+                // boundary (plus 2, for the trailing --), then the body is malformed.
+                if (boundaryBytes.Length + 2 > remLeng)
+                {
+                    throw new HttpRequestException(
+                        "Multi-part form data is malformed."
+                        );
+                }
+
+                // Read the contents of this part.
+                List<byte> buffer = new List<byte>();
+                body.ReadUntilFound(boundary, Encoding.ASCII, buffer.Add);
+                // Seek past CRLF
+                body.Seek(2, SeekOrigin.Current);
+
+                Encoding encoding = null;
+                var cType = partHeaders[HDR_CTYPE].LastOrDefault();
+                if (cType != default(HttpHeader))
+                {
+                    MediaType cTypeVal;
+                    try
+                    {
+                        cTypeVal = cType.Value;
+                    }
+                    catch (ArgumentException aex)
+                    {
+                        throw new HttpRequestException(
+                            "The client sent an invalid \"Content-Type\" header.",
+                            aex
+                            );
+                    }
+
+                    // If the media type of the content is in the text/* group,
+                    // we'll need to handle it specially (by selecting the correct
+                    // encoding).
+                    if (cTypeVal.SuperType == "text")
+                    {
+                        if (cTypeVal.Parameters.ContainsKey(HDR_CTYPE_KCHAR))
+                        {
+                            var encName = cTypeVal.Parameters[HDR_CTYPE_KCHAR].ToLower();
+
+                            if (_encodersByName.ContainsKey(encName))
+                            {
+                                encoding = _encodersByName[encName];
+                            }
+                            else
+                            {
+                                encoding = Encoding.ASCII;
+                            }
+                        }
+                        else
+                        {
+                            encoding = Encoding.ASCII;
+                        }
+                    }
+                }
+                else
+                {
+                    encoding = Encoding.ASCII;
+                }
+
+                // If encoding is null, we know that the
+                // data in the part wasn't transferred with a
+                // text/* media type, so we can just treat it
+                // as a byte array.
+                if (encoding == null)
+                {
+                    dynObj[name] = buffer.ToArray();
+                }
+                // If not, we know it's text, and we'll using the
+                // encoding we determined earlier to convert the
+                // bytes of the body to a string.
+                else
+                {
+                    dynObj[name] = encoding.GetString(buffer.ToArray());
+                }
+
+                // The end of the multipart form data is indicated by
+                // the boundary, followed by two dashes (--). If there
+                // are only two remaining bytes, we can assume it will
+                // be the dashes.
+                byte[] next = new byte[2];
+                int res = body.Read(next, 0, next.Length);
+                if (res == 0 ||
+                    body.Length <= body.Position ||
+                    next.SequenceEqual(doubleDash)) break;
+                else body.Seek(-2, SeekOrigin.Current);
+            }
+
+            // If we added anything to dynObj, return it. Else,
+            // return an Empty to indicate that there is no data.
+            return dynObj.Count == 0 ? (dynamic)new Empty() : (dynamic)dynObj;
         }
 
         private HttpHeaderCollection _headers;
@@ -287,315 +594,6 @@ namespace McSherry.Zener.Net
             // appropriate handler. Set the POST property to the
             // result.
             _post = DeterminePostHandler(this)(this, body);
-        }
-        /// <summary>
-        /// Parses the provided string, assuming that it is in the
-        /// application/x-www-formurlencoded format.
-        /// </summary>
-        /// <param name="req">The HTTP request that we are to parse.</param>
-        /// <param name="body">The string to parse.</param>
-        private static dynamic ParseFormUrlEncoded(HttpRequest req, Stream body)
-        {
-            string formatBody;
-            // We don't need anything special from the request body, so we can
-            // just read it to the end as a string.
-            using (var sr = new StreamReader(body)) formatBody = sr.ReadToEnd();
-
-            var dynObj = new ExpandoObject() as IDictionary<string, object>;
-
-            var qBuilder = new StringBuilder();
-
-            string section = String.Empty;
-            bool inVal = false;
-
-            foreach (char c in formatBody)
-            {
-                if (!inVal && c == '=')
-                {
-                    inVal = true;
-                    section = FilterInvalidCharacters(
-                        qBuilder.ToString().UrlDecode(xformsSpaces: true)
-                        );
-                    qBuilder.Clear();
-                }
-                else if (inVal && c == '&')
-                {
-                    dynObj[section] = qBuilder.ToString().UrlDecode(xformsSpaces: true);
-                    qBuilder.Clear();
-                    inVal = false;
-                }
-                else if (!inVal && c == '&')
-                {
-                    section = FilterInvalidCharacters(
-                        qBuilder.ToString().UrlDecode(xformsSpaces: true)
-                        );
-                    dynObj[section] = String.Empty;
-                    qBuilder.Clear();
-                }
-                else
-                {
-                    qBuilder.Append(c);
-                }
-            }
-
-            if (!inVal)
-            {
-                section = FilterInvalidCharacters(
-                    qBuilder.ToString().UrlDecode(xformsSpaces: true)
-                    );
-
-                dynObj[section] = String.Empty;
-            }
-            else dynObj[section] = qBuilder.ToString().UrlDecode(xformsSpaces: true);
-            
-            return dynObj;
-        }
-        /// <summary>
-        /// Determines which POST data handler to use based on the
-        /// "Content-Type" header of an HTTP request.
-        /// </summary>
-        /// <param name="request">The request to determine the handler for.</param>
-        /// <returns>The appropriate handler to use.</returns>
-        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
-        /// Thrown when the client's "Content-Length" header contains an
-        /// invalid media type.
-        /// </exception>
-        private static PostDataHandler DeterminePostHandler(HttpRequest request)
-        {
-            PostDataHandler handler;
-            // Attempt to retrieve the request's 'Content-Type' header.
-            var ctypeHdr = request.Headers[HDR_CTYPE].LastOrDefault();
-            // If this is true, the request doesn't have a 'Content-Type'
-            // header.
-            if (ctypeHdr == default(HttpHeader))
-            {
-                // There's no 'Content-Type', so we can't determine how
-                // to parse the request body, and so we can't return a
-                // dynamic containing any key-values. Set the handler to
-                // one which returns empty.
-                handler = (r, s) => new Empty();
-            }
-            else
-            {
-                MediaType ctype;
-                try
-                {
-                    ctype = ctypeHdr.Value;
-                }
-                catch (ArgumentException aex)
-                {
-                    throw new HttpRequestException(
-                        "The client sent an invalid \"Content-Length\" header.",
-                        aex
-                        );
-                }
-
-                handler = _postHandlers
-                    // Filter out all the media types that aren't
-                    // equivalent to the one the client sent.
-                    .Where(k => k.Key.IsEquivalent(ctype))
-                    // Select from the matches the handler.
-                    .Select(k => k.Value)
-                    // If there are no matches, make sure there's
-                    // a default one returning empty.
-                    .DefaultIfEmpty((r, s) => new Empty())
-                    // Select the first result in the enumerable.
-                    .First();
-            }
-
-            return handler;
-        }
-        /// <summary>
-        /// Parses the HTTP request body, assuming that it is in the
-        /// multipart/form-data format.
-        /// </summary>
-        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
-        ///     Thrown when the client's HTTP request was invalid and
-        ///     could not be parsed.
-        /// </exception>
-        /// <exception cref="System.ArgumentException">
-        ///     Thrown when the provided stream did not support the
-        ///     required operations.
-        /// </exception>
-        private static dynamic ParseMultipartFormData(
-            HttpRequest request,
-            Stream formatBody
-            )
-        {
-            if (!formatBody.CanRead || !formatBody.CanSeek)
-                throw new ArgumentException
-                ("The provided stream must support reading and seeking.", "formatBody");
-
-            MediaType mt;
-            try
-            {
-                mt = request.Headers[HDR_CTYPE].Last().Value;
-            }
-            catch (ArgumentException aex)
-            {
-                throw new HttpRequestException(
-                    "The client sent an invalid \"Content-Length\" header.",
-                    aex
-                    );
-            }
-
-            string boundary;
-            if (!mt.Parameters.TryGetValue(HDR_CTYPE_BOUNDARY, out boundary))
-            {
-                throw new HttpRequestException(
-                    "The client did not provide a boundary with its multipart data."
-                    );
-            }
-
-
-            var dynObj = new ExpandoObject() as IDictionary<string, object>;
-            byte[] boundaryBytes = Encoding.ASCII.GetBytes(boundary);
-            byte[] doubleDash = Encoding.ASCII.GetBytes("--");
-
-            // We should ignore data before the first boundary.
-            formatBody.ReadUntilFound(boundary, Encoding.ASCII, b => { });
-            // Seek past CRLF
-            formatBody.Seek(2, SeekOrigin.Current);
-            boundary = String.Format("\r\n--{0}", boundary);
-
-            while (formatBody.Position != formatBody.Length)
-            {
-                // We know headers are going to be ASCII, so we can read lines
-                // with our ASCIIEncoding until we hit an empty line.
-                StringBuilder partHdrBuilder = new StringBuilder();
-                while (true)
-                {
-                    string line = formatBody.ReadAsciiLine();
-                    // An empty line indicates the break between the part
-                    // headers and the part body. If we get one when reading
-                    // headers, we can safely assume that no more headers are
-                    // associated with this part.
-                    if (String.IsNullOrEmpty(line)) break;
-
-                    if (!line.Equals(boundary))
-                        partHdrBuilder.AppendLine(line);
-                }
-
-                HttpHeaderCollection partHeaders;
-                using (StringReader sr = new StringReader(partHdrBuilder.ToString()))
-                {
-                    partHeaders = new HttpHeaderCollection(
-                        HttpHeader.ParseMany(sr)
-                        );
-                }
-
-                if (!partHeaders.Contains(HDR_CDISPOSITION))
-                {
-                    throw new HttpRequestException(
-                        "Multipart data is malformed; no Content-Disposition."
-                        );
-                }
-                var cdis = new NamedParametersHttpHeader(partHeaders[HDR_CDISPOSITION].Last());
-
-                string name = cdis.Pairs
-                    .Where(p => p.Key.Equals("name", StringComparison.OrdinalIgnoreCase))
-                    .Select(p => p.Value)
-                    .DefaultIfEmpty(null)
-                    .First();
-                if (name == null)
-                    throw new HttpRequestException(
-                        "Multipart form data is malformed; no name."
-                        );
-
-                long remLeng = formatBody.Length - formatBody.Position;
-
-                // If the remaining number of bytes is less than the length of the
-                // boundary (plus 2, for the trailing --), then the body is malformed.
-                if (boundaryBytes.Length + 2 > remLeng)
-                {
-                    throw new HttpRequestException(
-                        "Multi-part form data is malformed."
-                        );
-                }
-
-                // Read the contents of this part.
-                List<byte> buffer = new List<byte>();
-                formatBody.ReadUntilFound(boundary, Encoding.ASCII, buffer.Add);
-                // Seek past CRLF
-                formatBody.Seek(2, SeekOrigin.Current);
-
-                Encoding encoding = null;
-                var cType = partHeaders[HDR_CTYPE].LastOrDefault();
-                if (cType != default(HttpHeader))
-                {
-                    MediaType cTypeVal;
-                    try
-                    {
-                        cTypeVal = cType.Value;
-                    }
-                    catch (ArgumentException aex)
-                    {
-                        throw new HttpRequestException(
-                            "The client sent an invalid \"Content-Type\" header.",
-                            aex
-                            );
-                    }
-
-                    // If the media type of the content is in the text/* group,
-                    // we'll need to handle it specially (by selecting the correct
-                    // encoding).
-                    if (cTypeVal.SuperType == "text")
-                    {
-                        if (cTypeVal.Parameters.ContainsKey(HDR_CTYPE_KCHAR))
-                        {
-                            var encName = cTypeVal.Parameters[HDR_CTYPE_KCHAR].ToLower();
-
-                            if (_encodersByName.ContainsKey(encName))
-                            {
-                                encoding = _encodersByName[encName];
-                            }
-                            else
-                            {
-                                encoding = Encoding.ASCII;
-                            }
-                        }
-                        else
-                        {
-                            encoding = Encoding.ASCII;
-                        }
-                    }
-                }
-                else
-                {
-                    encoding = Encoding.ASCII;
-                }
-
-                // If encoding is null, we know that the
-                // data in the part wasn't transferred with a
-                // text/* media type, so we can just treat it
-                // as a byte array.
-                if (encoding == null)
-                {
-                    dynObj[name] = buffer.ToArray();
-                }
-                // If not, we know it's text, and we'll using the
-                // encoding we determined earlier to convert the
-                // bytes of the body to a string.
-                else
-                {
-                    dynObj[name] = encoding.GetString(buffer.ToArray());
-                }
-
-                // The end of the multipart form data is indicated by
-                // the boundary, followed by two dashes (--). If there
-                // are only two remaining bytes, we can assume it will
-                // be the dashes.
-                byte[] next = new byte[2];
-                int res = formatBody.Read(next, 0, next.Length);
-                if ( res == 0 ||
-                    formatBody.Length <= formatBody.Position ||
-                    next.SequenceEqual(doubleDash)) break;
-                else formatBody.Seek(-2, SeekOrigin.Current);
-            }
-
-            // If we added anything to dynObj, return it. Else,
-            // return an Empty to indicate that there is no data.
-            return dynObj.Count == 0 ? (dynamic)new Empty() : (dynamic)dynObj;
         }
         /// <summary>
         /// Sets the current instance's Cookie property.
