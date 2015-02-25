@@ -470,7 +470,6 @@ namespace McSherry.Zener.Net
 
         private HttpHeaderCollection _headers;
         private dynamic _get, _post, _cookies;
-        private byte[] _raw;
 
         /// <summary>
         /// Parses the HTTP Request Line and sets the appropriate properties
@@ -567,34 +566,6 @@ namespace McSherry.Zener.Net
 
             this.HttpVersion = parts[2];
             this.Method = parts[0].ToUpper();
-        }
-        /// <summary>
-        /// Interprets the contents of the request body and sets
-        /// any properties appropriately.
-        /// </summary>
-        /// <param name="body">A stream containing the request's body.</param>
-        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
-        ///     Thrown when the data contained within the request's
-        ///     body is malformed.
-        /// </exception>
-        private void InterpretRequestBody(Stream body)
-        {
-            if (body.CanSeek && body.Length > 0)
-            {
-                _raw = new byte[body.Length];
-                body.Position = 0;
-                body.Read(_raw, 0, _raw.Length);
-                body.Position = 0;
-            }
-            else
-            {
-                _raw = new byte[0];
-            }
-
-            // Determine how to handle the POST data, then call the
-            // appropriate handler. Set the POST property to the
-            // result.
-            _post = DeterminePostHandler(this)(this, body);
         }
         /// <summary>
         /// Sets the current instance's Cookie property.
@@ -796,7 +767,10 @@ namespace McSherry.Zener.Net
                 }
 
                 request.Headers = headers;
-                request.InterpretRequestBody(ms);
+                // Determine how to handle the POST data, then call the
+                // appropriate handler. Set the POST property to the
+                // result.
+                request._post = DeterminePostHandler(request)(request, ms);
                 request.SetCookiesFromHeaders();
             }
 
@@ -865,13 +839,6 @@ namespace McSherry.Zener.Net
         public dynamic Cookies
         {
             get { return _cookies; }
-        }
-        /// <summary>
-        /// The raw bytes of the client's request.
-        /// </summary>
-        public byte[] Raw
-        {
-            get { return _raw; }
         }
     }
 }
