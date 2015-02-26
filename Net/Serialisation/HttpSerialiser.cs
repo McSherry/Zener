@@ -67,9 +67,10 @@ namespace McSherry.Zener.Net.Serialisation
         /// does not necessarily indicate that the stream
         /// has been closed.
         /// </summary>
-        public abstract bool IsClosed
+        public virtual bool IsClosed
         {
             get;
+            protected set;
         }
         
         /// <summary>
@@ -99,9 +100,15 @@ namespace McSherry.Zener.Net.Serialisation
         public abstract void WriteData(byte[] bytes);
 
         /// <summary>
-        /// Retrieves the underlying response stream the serialiser
-        /// is writing to. It is recommended to use Write unless you
-        /// know you need direct Stream access.
+        ///     <para>
+        ///     Retrieves the underlying response stream the serialiser
+        ///     is writing to. It is recommended to use Write unless you
+        ///     know you need direct Stream access.
+        ///     </para>
+        ///     <para>
+        ///     Calling this method will close the serialiser, but will
+        ///     leave the underlying Stream open to be written to.
+        ///     </para>
         /// </summary>
         /// <param name="flush">
         /// Whether the serialiser should flush its buffer to the
@@ -113,10 +120,16 @@ namespace McSherry.Zener.Net.Serialisation
         /// </returns>
         public abstract Stream GetStream(bool flush);
         /// <summary>
-        /// Retrieves the underlying response stream the serialiser
-        /// is writing to, and discards any data buffered by the
-        /// serialiser. It is recommended to use Write unless you
-        /// know you need direct Stream access.
+        ///     <para>
+        ///     Retrieves the underlying response stream the serialiser
+        ///     is writing to, and discards any data buffered by the
+        ///     serialiser. It is recommended to use Write unless you
+        ///     know you need direct Stream access.
+        ///     </para>
+        ///     <para>
+        ///     Calling this method will close the serialiser, but will
+        ///     leave the underlying Stream open to be written to.
+        ///     </para>
         /// </summary>
         /// <returns>
         /// The Stream the serialiser is writing to.
@@ -125,6 +138,12 @@ namespace McSherry.Zener.Net.Serialisation
         {
             return this.GetStream(flush: false);
         }
+        /// <summary>
+        /// Flushes any data stored by the serialiser to the
+        /// network. This includes the headers and the response
+        /// body.
+        /// </summary>
+        public abstract void Flush();
         /// <summary>
         /// Causes the serialiser to perform any finalising
         /// actions.
@@ -135,7 +154,22 @@ namespace McSherry.Zener.Net.Serialisation
         /// this is false, any data stored by the serialiser is
         /// discarded.
         /// </param>
-        public abstract void Close(bool flush);
+        public virtual void Close(bool flush)
+        {
+            // If we've already closed the serialiser,
+            // we've got nothing to do.
+            if (this.IsClosed) return;
+
+            // If we haven't, we now need to mark it
+            // as closed.
+            this.IsClosed = true;
+            // If we are to flush data to the network,
+            // we need to call the method flush.
+            //
+            // If we're not flushing, we don't need to
+            // do anything more.
+            if (flush) this.Flush();
+        }
         /// <summary>
         /// Causes the serialiser to perform any finalising
         /// actions and to discard any buffered data.
