@@ -34,7 +34,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// </summary>
         /// <remarks>
         /// It is recommended that implementations of
-        /// IResponseSerialiser take an HttpRequest as a
+        /// IHttpSerialiser take an HttpRequest as a
         /// constructor parameter so that they may determine
         /// which, if any, compression methods they will
         /// use when this property is set to true.

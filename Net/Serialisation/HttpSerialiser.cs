@@ -18,7 +18,7 @@ namespace McSherry.Zener.Net.Serialisation
     /// subclass of IHttpSerialiser.
     /// </summary>
     public abstract class HttpSerialiser
-        : IHttpSerialiser
+        : IHttpSerialiser, IDisposable
     {
         /// <summary>
         /// Whether the serialiser should buffer its
@@ -118,5 +118,10 @@ namespace McSherry.Zener.Net.Serialisation
         {
             this.Close(flush:false);
         }
+
+        /// <summary>
+        /// Disposes any resources held by the serialiser.
+        /// </summary>
+        public abstract void Dispose();
     }
 }
