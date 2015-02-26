@@ -43,6 +43,7 @@ namespace McSherry.Zener.Core
         /// Creates a new VirtualHost.
         /// </summary>
         /// <param name="format">The hostname for this virtual host.</param>
+        /// <param name="name">The name to give to this virtual host.</param>
         /// <param name="bindAddress">The IP address to bind this virtual host to.</param>
         /// <param name="port">The port that this virtual host will accept.</param>
         /// <param name="routes">The routes associated with this host.</param>
@@ -54,7 +55,7 @@ namespace McSherry.Zener.Core
         /// Thrown when the specified port is outside the allowable range.
         /// </exception>
         public VirtualHost(
-            string format, 
+            string format, string name,
             IPAddress bindAddress, ushort port, 
             Router routes
             )
@@ -88,6 +89,7 @@ namespace McSherry.Zener.Core
             }
 
             this.Format = format.Trim(' ', DELIMITER);
+            this.Name = name ?? this.Format;
             this.BindAddress = bindAddress;
             this.Port = port;
             this.Routes = routes;

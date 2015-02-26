@@ -63,12 +63,20 @@ namespace McSherry.Zener.Core
             List<dynamic> validParams = new List<dynamic>();
             List<Route> validHandlers;
 
+            List<Route> routes;
             lock (_lockbox)
             {
-                validHandlers = _routes
-                    .Where(r => r.TryMatch(path, method, validParams.Add))
-                    .ToList();
+                // Create a copy of the routes. We want to reduce the
+                // time spent locking, and the eaiest way to do this
+                // is to lock during the copy then run the intensive
+                // method (TryMatch) outside the lock. This might have
+                // the disadvantage of increased memory usage.
+                routes = new List<Route>(_routes);
             }
+
+            validHandlers = routes
+                .Where(r => r.TryMatch(path, method, validParams.Add))
+                .ToList();
 
             if (validHandlers.Count == 0)
             {

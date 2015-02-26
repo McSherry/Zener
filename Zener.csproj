@@ -11,8 +11,7 @@
     <AssemblyName>Zener</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -52,7 +51,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -94,6 +92,7 @@
     <Compile Include="Net\OrderedCsvHttpHeader.cs" />
     <Compile Include="Net\Rfc2045.cs" />
     <Compile Include="Net\Rfc2616.cs" />
+    <Compile Include="Net\Rfc3896.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Net\HttpServer.cs" />
     <Compile Include="Zener.cs" />

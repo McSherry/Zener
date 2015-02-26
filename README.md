@@ -1,7 +1,7 @@
 |  Build  |  Status  |
 |---------|----------|
-|  Linux  | [![Linux Build Status](https://travis-ci.org/McSherry/Zener.svg?branch=master)](https://travis-ci.org/McSherry/Zener)
-| Windows | [![Windows Build status](https://ci.appveyor.com/api/projects/status/ywnl2go7njqeeik0?svg=true)](https://ci.appveyor.com/project/McSherry/zener) |
+|  Linux  | [![Linux Build Status](https://travis-ci.org/McSherry/Zener.svg?branch=develop)](https://travis-ci.org/McSherry/Zener)
+| Windows | [![Windows Build status](https://ci.appveyor.com/api/projects/status/ywnl2go7njqeeik0/branch/develop?svg=true)](https://ci.appveyor.com/project/McSherry/zener) |
 
 ## What is Zener?
 
@@ -9,6 +9,6 @@ If your software uses an HTML renderer to present its GUI, and you're using fram
 
 Zener is an embeddable HTTP server with supporting logic. It handles loading resources and provides a set of APIs that allows your front-end code (such as JavaScript or Dart) to communicate with your back-end logic. Zener can simplify development and means you can use the same client&harr;server mindset you would when writing web applications.
 
-Zener is written in C# 5.0, and has been tested against .NET 4.0 and Mono 3.12.0.
+As well as being great for software using an HTML GUI, Zener is also a perfectly capable general-purpose web server.
 
-
+Zener is written in C# 5.0, and has been tested against .NET 4 Client Profile and Mono 3.12.0. It is released under the BSD 3-Clause licence.
