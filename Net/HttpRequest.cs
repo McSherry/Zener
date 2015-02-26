@@ -113,6 +113,13 @@ namespace McSherry.Zener.Net
         /// </returns>
         private delegate dynamic PostDataHandler(HttpRequest request, Stream body);
 
+        /// <summary>
+        /// The maximum number of empty lines we'll accept before a
+        /// request line. If we receive more empty lines than this,
+        /// we'll terminate the connection.
+        /// </summary>
+        private const int REQUEST_EMPTIES_MAX = 8;
+
         private const string HDR_CDISPOSITION = "Content-Disposition";
         private const string HDR_CLENGTH = "Content-Length";
         private const string HDR_COOKIES = "Cookie";
@@ -120,7 +127,10 @@ namespace McSherry.Zener.Net
         private const string HDR_CTYPE = "Content-Type";
         private const string HDR_CTYPE_KCHAR = "charset";
         private const string HDR_CTYPE_BOUNDARY = "boundary";
-        private const string VAR_WHITELIST = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+        private static readonly HashSet<char> VAR_WHITELIST
+            = new HashSet<char>(
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+                );
         private const string VAR_NOSTART = "0123456789";
         private const int REQUEST_MAXLENGTH = (1024 * 1024) * 32; // 32 MiB
         private const int REQUEST_TIMEOUT = 1000 * 60; // 60 seconds
@@ -467,7 +477,6 @@ namespace McSherry.Zener.Net
 
         private HttpHeaderCollection _headers;
         private dynamic _get, _post, _cookies;
-        private byte[] _raw;
 
         /// <summary>
         /// Parses the HTTP Request Line and sets the appropriate properties
@@ -566,34 +575,6 @@ namespace McSherry.Zener.Net
             this.Method = parts[0].ToUpper();
         }
         /// <summary>
-        /// Interprets the contents of the request body and sets
-        /// any properties appropriately.
-        /// </summary>
-        /// <param name="body">A stream containing the request's body.</param>
-        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
-        ///     Thrown when the data contained within the request's
-        ///     body is malformed.
-        /// </exception>
-        private void InterpretRequestBody(Stream body)
-        {
-            if (body.CanSeek && body.Length > 0)
-            {
-                _raw = new byte[body.Length];
-                body.Position = 0;
-                body.Read(_raw, 0, _raw.Length);
-                body.Position = 0;
-            }
-            else
-            {
-                _raw = new byte[0];
-            }
-
-            // Determine how to handle the POST data, then call the
-            // appropriate handler. Set the POST property to the
-            // result.
-            _post = DeterminePostHandler(this)(this, body);
-        }
-        /// <summary>
         /// Sets the current instance's Cookie property.
         /// </summary>
         private void SetCookiesFromHeaders()
@@ -666,11 +647,28 @@ namespace McSherry.Zener.Net
             HttpRequest request = new HttpRequest();
 
             string line;
+            int empties = 0;
             // Lines before the request line can be blank.
             // We want to skip these since there's nothing
             // to parse.
-            do { line = stream.ReadAsciiLine(); }
-            while (String.IsNullOrEmpty(line));
+            do 
+            { 
+                line = stream.ReadAsciiLine();
+                empties++;
+            }
+            while (empties < REQUEST_EMPTIES_MAX && String.IsNullOrEmpty(line));
+
+            // If this evaluates to true, it means the client has sent
+            // too many empty lines before its request line.
+            if (empties >= REQUEST_EMPTIES_MAX)
+            {
+                // An InvalidDataException will cause HttpServer to
+                // terminate the connection and won't crash the
+                // program.
+                throw new InvalidDataException(
+                    "The client sent too many empty lines."
+                    );
+            }
 
             // We've now hit the first line with content. In
             // a compliant HTTP request, this is the request
@@ -793,7 +791,10 @@ namespace McSherry.Zener.Net
                 }
 
                 request.Headers = headers;
-                request.InterpretRequestBody(ms);
+                // Determine how to handle the POST data, then call the
+                // appropriate handler. Set the POST property to the
+                // result.
+                request._post = DeterminePostHandler(request)(request, ms);
                 request.SetCookiesFromHeaders();
             }
 
@@ -862,13 +863,6 @@ namespace McSherry.Zener.Net
         public dynamic Cookies
         {
             get { return _cookies; }
-        }
-        /// <summary>
-        /// The raw bytes of the client's request.
-        /// </summary>
-        public byte[] Raw
-        {
-            get { return _raw; }
         }
     }
 }

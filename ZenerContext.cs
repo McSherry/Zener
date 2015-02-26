@@ -82,7 +82,7 @@ namespace McSherry.Zener
 
                 string path;
                 if (pr is Empty) path = Environment.CurrentDirectory;
-                else path = Networking.UrlDecode(pr.file);
+                else path = Rfc3896.UrlDecode(pr.file);
 
                 rs.Headers.Add("Content-Type", "application/json");
                 StringBuilder jsonBuilder = new StringBuilder("{");
@@ -248,7 +248,7 @@ namespace McSherry.Zener
                         jsonBuilder.AppendFormat(
                             @"""returned"": {0}, ""return"": ""{1}"", ",
                             (!retIsNull).ToString().ToLower(),
-                            retIsNull ? String.Empty : Networking.UrlEncode(ret)
+                            retIsNull ? String.Empty : Rfc3896.UrlEncode(ret)
                             );
                     }
                     else
