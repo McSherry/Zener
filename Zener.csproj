@@ -94,6 +94,7 @@
     <Compile Include="Net\Rfc2045.cs" />
     <Compile Include="Net\Rfc2616.cs" />
     <Compile Include="Net\Rfc3896.cs" />
+    <Compile Include="Net\Serialisation\Rfc7230Serialiser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Net\HttpServer.cs" />
     <Compile Include="Zener.cs" />

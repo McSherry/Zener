@@ -14,12 +14,29 @@ using System.IO;
 namespace McSherry.Zener.Net.Serialisation
 {
     /// <summary>
-    /// The recommended base class for classes implementing a
-    /// subclass of IHttpSerialiser.
+    /// The base class for classes implementing an HttpResponse
+    /// serialiser.
     /// </summary>
     public abstract class HttpSerialiser
         : IDisposable
     {
+        /// <summary>
+        /// Checks whether the serialiser has been closed,
+        /// and throws an exception if it has been.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the serialiser has been closed.
+        /// </exception>
+        protected void CheckClosed()
+        {
+            if (this.IsClosed)
+            {
+                throw new InvalidOperationException(
+                    "The serialiser has been closed."
+                    );
+            }
+        }
+
         /// <summary>
         /// Whether the serialiser should buffer its
         /// output and only send when flushed.
@@ -44,6 +61,15 @@ namespace McSherry.Zener.Net.Serialisation
         {
             get;
             set;
+        }
+        /// <summary>
+        /// Whether the serialiser has been closed. This
+        /// does not necessarily indicate that the stream
+        /// has been closed.
+        /// </summary>
+        public abstract bool IsClosed
+        {
+            get;
         }
         
         /// <summary>
