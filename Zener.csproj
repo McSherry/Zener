@@ -86,12 +86,12 @@
     <Compile Include="Net\HttpRequest.cs" />
     <Compile Include="Net\HttpResponse.cs" />
     <Compile Include="Net\CsvHttpHeader.cs" />
-    <Compile Include="Net\IResponseSerialiser.cs" />
+    <Compile Include="Net\IHttpSerialiser.cs" />
     <Compile Include="Net\NamedParametersHttpHeader.cs" />
     <Compile Include="Net\NameValueHttpHeader.cs" />
     <Compile Include="Net\Networking.cs" />
     <Compile Include="Net\OrderedCsvHttpHeader.cs" />
-    <Compile Include="Net\ResponseSerialiser.cs" />
+    <Compile Include="Net\HttpSerialiser.cs" />
     <Compile Include="Net\Rfc2045.cs" />
     <Compile Include="Net\Rfc2616.cs" />
     <Compile Include="Net\Rfc3896.cs" />
