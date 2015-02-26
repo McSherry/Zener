@@ -11,21 +11,20 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace McSherry.Zener.Net
+namespace McSherry.Zener.Net.Serialisation
 {
     /// <summary>
-    /// The recommended base class for classes implementing a
-    /// subclass of IHttpSerialiser.
+    /// The interface for classes which transform an HttpResponse
+    /// class in to the format to send over the network.
     /// </summary>
-    public abstract class HttpSerialiser
-        : IHttpSerialiser
+    public interface IHttpSerialiser
     {
         /// <summary>
         /// Whether the serialiser should buffer its
         /// output and only send when flushed.
         /// </summary>
-        public abstract bool BufferOutput
-        {
+        bool BufferOutput 
+        { 
             get;
             set;
         }
@@ -40,12 +39,12 @@ namespace McSherry.Zener.Net
         /// which, if any, compression methods they will
         /// use when this property is set to true.
         /// </remarks>
-        public abstract bool EnableCompression
-        {
+        bool EnableCompression 
+        { 
             get;
-            set;
+            set; 
         }
-        
+
         /// <summary>
         /// Writes the specified headers to the
         /// serialiser.
@@ -53,24 +52,14 @@ namespace McSherry.Zener.Net
         /// <param name="headers">
         /// The HTTP headers to write to the serialiser.
         /// </param>
-        public abstract void WriteHeaders(IEnumerable<HttpHeader> headers);
-        /// <summary>
-        /// Writes a single header to the serialiser.
-        /// </summary>
-        /// <param name="header">
-        /// The HTTP header to write to the serialiser.
-        /// </param>
-        public virtual void WriteHeader(HttpHeader header)
-        {
-            this.WriteHeaders(new[] { header });
-        }
+        void WriteHeaders(IEnumerable<HttpHeader> headers);
         /// <summary>
         /// Writes bytes to the serialiser.
         /// </summary>
         /// <param name="bytes">
         /// The bytes to write to the serialiser.
         /// </param>
-        public abstract void WriteData(byte[] bytes);
+        void WriteData(byte[] bytes);
 
         /// <summary>
         /// Retrieves the underlying response stream the serialiser
@@ -85,20 +74,7 @@ namespace McSherry.Zener.Net
         /// <returns>
         /// The Stream the serialiser is writing to.
         /// </returns>
-        public abstract Stream GetStream(bool flush);
-        /// <summary>
-        /// Retrieves the underlying response stream the serialiser
-        /// is writing to, and discards any data buffered by the
-        /// serialiser. It is recommended to use Write unless you
-        /// know you need direct Stream access.
-        /// </summary>
-        /// <returns>
-        /// The Stream the serialiser is writing to.
-        /// </returns>
-        public Stream GetStream()
-        {
-            return this.GetStream(flush: false);
-        }
+        Stream GetStream(bool flush);
         /// <summary>
         /// Causes the serialiser to perform any finalising
         /// actions.
@@ -109,14 +85,6 @@ namespace McSherry.Zener.Net
         /// this is false, any data stored by the serialiser is
         /// discarded.
         /// </param>
-        public abstract void Close(bool flush);
-        /// <summary>
-        /// Causes the serialiser to perform any finalising
-        /// actions and to discard any buffered data.
-        /// </summary>
-        public void Close()
-        {
-            this.Close(flush:false);
-        }
+        void Close(bool flush);
     }
 }
