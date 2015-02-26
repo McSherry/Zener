@@ -14,17 +14,17 @@ using System.IO;
 namespace McSherry.Zener.Net
 {
     /// <summary>
-    /// The interface for classes which transform an HttpResponse
-    /// class in to the format to send over the network.
+    /// The base class for classes implementing a response serialiser.
     /// </summary>
-    public interface IResponseSerialiser
+    public abstract class ResponseSerialiser
+        : IResponseSerialiser
     {
         /// <summary>
         /// Whether the serialiser should buffer its
         /// output and only send when flushed.
         /// </summary>
-        bool BufferOutput 
-        { 
+        public abstract bool BufferOutput
+        {
             get;
             set;
         }
@@ -39,19 +39,19 @@ namespace McSherry.Zener.Net
         /// which, if any, compression methods they will
         /// use when this property is set to true.
         /// </remarks>
-        bool EnableCompression 
-        { 
+        public abstract bool EnableCompression
+        {
             get;
-            set; 
+            set;
         }
-
+        
         /// <summary>
         /// Writes bytes to the serialiser.
         /// </summary>
         /// <param name="bytes">
         /// The bytes to write to the serialiser.
         /// </param>
-        void Write(byte[] bytes);
+        public abstract void Write(byte[] bytes);
 
         /// <summary>
         /// Retrieves the underlying response stream the serialiser
@@ -66,7 +66,20 @@ namespace McSherry.Zener.Net
         /// <returns>
         /// The Stream the serialiser is writing to.
         /// </returns>
-        Stream GetStream(bool flush);
+        public abstract Stream GetStream(bool flush);
+        /// <summary>
+        /// Retrieves the underlying response stream the serialiser
+        /// is writing to, and discards any data buffered by the
+        /// serialiser. It is recommended to use Write unless you
+        /// know you need direct Stream access.
+        /// </summary>
+        /// <returns>
+        /// The Stream the serialiser is writing to.
+        /// </returns>
+        public Stream GetStream()
+        {
+            return this.GetStream(flush: false);
+        }
         /// <summary>
         /// Causes the serialiser to perform any finalising
         /// actions.
@@ -77,6 +90,14 @@ namespace McSherry.Zener.Net
         /// this is false, any data stored by the serialiser is
         /// discarded.
         /// </param>
-        void Close(bool flush);
+        public abstract void Close(bool flush);
+        /// <summary>
+        /// Causes the serialiser to perform any finalising
+        /// actions and to discard any buffered data.
+        /// </summary>
+        public void Close()
+        {
+            this.Close(flush:false);
+        }
     }
 }
