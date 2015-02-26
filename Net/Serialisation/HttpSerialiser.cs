@@ -21,6 +21,12 @@ namespace McSherry.Zener.Net.Serialisation
         : IDisposable
     {
         /// <summary>
+        /// The stream to which any response data should be
+        /// written.
+        /// </summary>
+        protected readonly Stream ResponseStream;
+
+        /// <summary>
         /// Checks whether the serialiser has been closed,
         /// and throws an exception if it has been.
         /// </summary>
@@ -35,6 +41,40 @@ namespace McSherry.Zener.Net.Serialisation
                     "The serialiser has been closed."
                     );
             }
+        }
+
+        /// <summary>
+        /// Creates a new HttpSerialiser.
+        /// </summary>
+        /// <param name="response">
+        /// The Stream that should underlie the serialiser,
+        /// and to which any serialised response data should
+        /// be written.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided response stream is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided response stream does not
+        /// support writing.
+        /// </exception>
+        public HttpSerialiser(Stream response)
+        {
+            if (response == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided response stream must not be null."
+                    );
+            }
+
+            if (!response.CanWrite)
+            {
+                throw new ArgumentException(
+                    "The provided response stream must support writing."
+                    );
+            }
+
+            this.ResponseStream = response;
         }
 
         /// <summary>
