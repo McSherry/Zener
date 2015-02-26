@@ -18,7 +18,7 @@ namespace McSherry.Zener.Net.Serialisation
     /// subclass of IHttpSerialiser.
     /// </summary>
     public abstract class HttpSerialiser
-        : IHttpSerialiser, IDisposable
+        : IDisposable
     {
         /// <summary>
         /// Whether the serialiser should buffer its
