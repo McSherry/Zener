@@ -86,6 +86,7 @@
     <Compile Include="Net\HttpRequest.cs" />
     <Compile Include="Net\HttpResponse.cs" />
     <Compile Include="Net\CsvHttpHeader.cs" />
+    <Compile Include="Net\IResponseSerialiser.cs" />
     <Compile Include="Net\NamedParametersHttpHeader.cs" />
     <Compile Include="Net\NameValueHttpHeader.cs" />
     <Compile Include="Net\Networking.cs" />
