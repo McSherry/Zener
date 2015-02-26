@@ -17,7 +17,7 @@ namespace McSherry.Zener.Net
     /// The interface for classes which transform an HttpResponse
     /// class in to the format to send over the network.
     /// </summary>
-    public interface IResponseSerialiser
+    public interface IHttpSerialiser
     {
         /// <summary>
         /// Whether the serialiser should buffer its
@@ -46,12 +46,20 @@ namespace McSherry.Zener.Net
         }
 
         /// <summary>
+        /// Writes the specified headers to the
+        /// serialiser.
+        /// </summary>
+        /// <param name="headers">
+        /// The HTTP headers to write to the serialiser.
+        /// </param>
+        void WriteHeaders(IEnumerable<HttpHeader> headers);
+        /// <summary>
         /// Writes bytes to the serialiser.
         /// </summary>
         /// <param name="bytes">
         /// The bytes to write to the serialiser.
         /// </param>
-        void Write(byte[] bytes);
+        void WriteData(byte[] bytes);
 
         /// <summary>
         /// Retrieves the underlying response stream the serialiser

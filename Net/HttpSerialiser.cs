@@ -14,10 +14,11 @@ using System.IO;
 namespace McSherry.Zener.Net
 {
     /// <summary>
-    /// The base class for classes implementing a response serialiser.
+    /// The recommended base class for classes implementing a
+    /// subclass of IHttpSerialiser.
     /// </summary>
-    public abstract class ResponseSerialiser
-        : IResponseSerialiser
+    public abstract class HttpSerialiser
+        : IHttpSerialiser
     {
         /// <summary>
         /// Whether the serialiser should buffer its
@@ -46,12 +47,30 @@ namespace McSherry.Zener.Net
         }
         
         /// <summary>
+        /// Writes the specified headers to the
+        /// serialiser.
+        /// </summary>
+        /// <param name="headers">
+        /// The HTTP headers to write to the serialiser.
+        /// </param>
+        public abstract void WriteHeaders(IEnumerable<HttpHeader> headers);
+        /// <summary>
+        /// Writes a single header to the serialiser.
+        /// </summary>
+        /// <param name="header">
+        /// The HTTP header to write to the serialiser.
+        /// </param>
+        public virtual void WriteHeader(HttpHeader header)
+        {
+            this.WriteHeaders(new[] { header });
+        }
+        /// <summary>
         /// Writes bytes to the serialiser.
         /// </summary>
         /// <param name="bytes">
         /// The bytes to write to the serialiser.
         /// </param>
-        public abstract void Write(byte[] bytes);
+        public abstract void WriteData(byte[] bytes);
 
         /// <summary>
         /// Retrieves the underlying response stream the serialiser
