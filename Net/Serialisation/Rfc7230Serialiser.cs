@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace McSherry.Zener.Net.Serialisation
 {
@@ -38,20 +39,70 @@ namespace McSherry.Zener.Net.Serialisation
         private bool _bodyWritten;
 
         /// <summary>
-        /// Creates a new Rfc7230Serialiser instance.
+        /// The stream we'll buffer output to.
         /// </summary>
+        private MemoryStream _outputBuffer;
+
+        /// <summary>
+        /// Creates a new Rfc7230Serialiser.
+        /// </summary>
+        /// <param name="response">
+        /// The stream that should underlie the serialiser,
+        /// and to which any serialised data should be written.
+        /// </param>
         /// <remarks>
         /// Using this constructor will result in HTTP
         /// compression being disabled, and it will not
         /// be possible to enable compression.
         /// </remarks>
-        public Rfc7230Serialiser()
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided response stream is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided response stream does not
+        /// support writing.
+        /// </exception>
+        public Rfc7230Serialiser(Stream response)
+            : base(response)
         {
             // We haven't been provided with an HttpRequest, so it
             // isn't possible for us to determine whether the client
             // supports compression.
             _canCompress = false;
             _useCompression = false;
+            // We're disabling output buffering by default, as it doing
+            // so will generally provide better performance. Output buffering
+            // being disabled means we'll be sending using chunked encoding,
+            // which means we can send a little at a time and the client can
+            // start displaying earlier.
+            _buffer = false;
+            // As buffering is disabled by default, we want to null our output
+            // buffer.
+            _outputBuffer = null;
+        }
+        /// <summary>
+        /// Creates a new Rfc7230Serialiser.
+        /// </summary>
+        /// <param name="request">
+        /// The request for which this serialiser will be serialising
+        /// a response. This is used to determine acceptable encodings
+        /// and similar.
+        /// </param>
+        /// <param name="response">
+        /// The stream that should underlie the serialiser,
+        /// and to which any serialised data should be written.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided response stream is null.
+        /// </exception>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided response stream does not
+        /// support writing.
+        /// </exception>
+        public Rfc7230Serialiser(HttpRequest request, Stream response)
+            : this(response)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -65,7 +116,43 @@ namespace McSherry.Zener.Net.Serialisation
             {
                 base.CheckClosed();
 
-                throw new NotImplementedException();
+                // If the value isn't changing, we don't need
+                // to take any action.
+                if (this.BufferOutput == value) return;
+
+                // What action to take depends on whether output
+                // buffering is being enabled or disabled.
+                if (value)
+                {
+                    // Output buffering is disabled by default, so
+                    // we need to create our buffer when we're enabling
+                    // it.
+                    _outputBuffer = new MemoryStream();
+                }
+                // If output buffering is being disabled, we want to
+                // check whether there is any data stored in it.
+                else
+                {
+                    if (_outputBuffer.Length == 0)
+                    {
+                        // If nothing's been written to the buffer and we're
+                        // disabling use of it, it'd be a waste of resources
+                        // to leave it there.
+                        //
+                        // Close and dispose the output buffering to release
+                        // any resources it's using.
+                        _outputBuffer.Close();
+                        _outputBuffer.Dispose();
+                        // Set the buffer back to null. We'll be using this
+                        // null value in other methods to determine whether
+                        // there is anything in the buffer to be written to
+                        // the network.
+                        _outputBuffer = null;
+                    }
+                }
+
+                // Finally, set the private field with the value.
+                _buffer = value;
             }
         }
         /// <summary>
@@ -88,14 +175,6 @@ namespace McSherry.Zener.Net.Serialisation
                 // there's no point making an assignment.
                 if (_canCompress) _useCompression = value;
             }
-        }
-        /// <summary>
-        /// Whether the serialiser has been closed.
-        /// </summary>
-        public override bool IsClosed
-        {
-            get;
-            private set;
         }
     }
 }
