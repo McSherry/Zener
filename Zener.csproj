@@ -69,6 +69,8 @@
     <Compile Include="Archives\TarArchive.cs" />
     <Compile Include="Archives\UstarArchive.cs" />
     <Compile Include="Archives\ZlibArchive.cs" />
+    <Compile Include="Core\Coding\IDecoder.cs" />
+    <Compile Include="Core\Coding\IEncoder.cs" />
     <Compile Include="Core\HostRouter.cs" />
     <Compile Include="Core\IndexedDictionary.cs" />
     <Compile Include="Core\MediaType.cs" />
