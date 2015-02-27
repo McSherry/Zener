@@ -206,7 +206,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// which, if any, compression methods they will
         /// use when this property is set to true.
         /// </remarks>
-        public abstract bool EnableCompression
+        public abstract bool Compress
         {
             get;
             set;
@@ -310,6 +310,8 @@ namespace McSherry.Zener.Net.Serialisation
             // If we're not flushing, we don't need to
             // do anything more.
             if (flush) this.Flush();
+
+            this.Dispose();
         }
         /// <summary>
         /// Causes the serialiser to perform any finalising
@@ -323,6 +325,13 @@ namespace McSherry.Zener.Net.Serialisation
         /// <summary>
         /// Disposes any resources held by the serialiser.
         /// </summary>
+        /// <remarks>
+        /// Implementations of HttpSerialiser must not dispose
+        /// or close the response stream. This is handled by
+        /// HttpServer. Code is written with the assumption
+        /// that HttpSerialiser does not close the response
+        /// stream.
+        /// </remarks>
         public abstract void Dispose();
     }
 }
