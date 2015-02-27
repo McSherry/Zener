@@ -19,6 +19,10 @@ namespace McSherry.Zener.Core.Coding
         : IEncoder
     {
         /// <summary>
+        /// This encoding's name.
+        /// </summary>
+        private const string NameStr = "chunked";
+        /// <summary>
         /// The bytes of the character zero (0).
         /// </summary>
         private static readonly byte[] ZeroChar;
@@ -68,6 +72,14 @@ namespace McSherry.Zener.Core.Coding
         private ChunkedEncoder()
         {
             
+        }
+
+        /// <summary>
+        /// The name of this encoding.
+        /// </summary>
+        public string Name
+        {
+            get { return NameStr; }
         }
 
         /// <summary>
