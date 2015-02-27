@@ -11,6 +11,8 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
+using McSherry.Zener.Core.Coding;
+
 namespace McSherry.Zener.Net.Serialisation
 {
     /// <summary>
@@ -20,6 +22,97 @@ namespace McSherry.Zener.Net.Serialisation
     public abstract class HttpSerialiser
         : IDisposable
     {
+        /// <summary>
+        /// A class providing a set of constants for common
+        /// HTTP header names.
+        /// </summary>
+        protected internal static class Headers
+        {
+            /// <summary>
+            /// The header that will contain the encodings that the
+            /// client may find acceptable.
+            /// </summary>
+            public const string AcceptEncoding      = "Accept-Encoding";
+        }
+        /// <summary>
+        /// A class containing methods for creating the encoders
+        /// used in response to the contents of a client's
+        /// 'Accept-Encoding' header.
+        /// </summary>
+        protected internal static class Encoders
+        {
+            /// <summary>
+            /// The names (case-insensitive) of the encodings with the
+            /// associated types that implement them.
+            /// </summary>
+            private static Dictionary<string, Type> _encNamesAndTypes;
+
+            static Encoders()
+            {
+                // We're going to consider names to be case-insensitive.
+                _encNamesAndTypes = new Dictionary<string, Type>(
+                    StringComparer.OrdinalIgnoreCase
+                    )
+                    {
+
+                    };
+
+                // We need a parameterless constructor for this stuff
+                // to work, so we check all of the types in the encoder
+                // dictionary to make sure that they all have one. If
+                // one or more doesn't, throw an exception.
+                if (_encNamesAndTypes.Values.Any(
+                    T => T.GetConstructor(Type.EmptyTypes) == null
+                    ))
+                {
+                    throw new ApplicationException(
+                        "All IEncoders must have a parameterless constructor."
+                        );
+                }
+            }
+
+            /// <summary>
+            /// Determines whether there is an encoder for the specified
+            /// encoding based on the encoding's name.
+            /// </summary>
+            /// <param name="encodingName">
+            /// The name of the encoding.
+            /// </param>
+            /// <returns>
+            /// True if we have an encoder for the specified encoding name.
+            /// </returns>
+            public static bool Contains(string encodingName)
+            {
+                return _encNamesAndTypes.ContainsKey(encodingName);
+            }
+            /// <summary>
+            /// Attempts to retrieve an encoder by name.
+            /// </summary>
+            /// <param name="encodingName">
+            /// The name of the encoding to retrieve the encoder for.
+            /// </param>
+            /// <returns>
+            /// Null if no encoder for the specified encoding was found,
+            /// otherwise an appropriate instance of IEncoder.
+            /// </returns>
+            public static IEncoder Get(string encodingName)
+            {
+                // Attempt to retrieve the type associated with
+                // the provided encoding name.
+                Type T;
+                if (!_encNamesAndTypes.TryGetValue(encodingName, out T))
+                {
+                    // If we can't retrieve it (i.e. we don't have an encoding
+                    // by that name), return null.
+                    return null;
+                }
+
+                // If we can retrieve an encoder, create an instance of it
+                // and return it to the caller.
+                return (IEncoder)Activator.CreateInstance(T);
+            }
+        }
+
         /// <summary>
         /// The stream to which any response data should be
         /// written.
@@ -130,25 +223,8 @@ namespace McSherry.Zener.Net.Serialisation
         }
         
         /// <summary>
-        /// Writes the specified headers to the
-        /// serialiser.
-        /// </summary>
-        /// <param name="headers">
-        /// The HTTP headers to write to the serialiser.
-        /// </param>
-        public abstract void WriteHeaders(IEnumerable<HttpHeader> headers);
-        /// <summary>
-        /// Writes a single header to the serialiser.
-        /// </summary>
-        /// <param name="header">
-        /// The HTTP header to write to the serialiser.
-        /// </param>
-        public virtual void WriteHeader(HttpHeader header)
-        {
-            this.WriteHeaders(new[] { header });
-        }
-        /// <summary>
-        /// Writes bytes to the serialiser.
+        /// Writes data to the serialiser. This data will
+        /// generally be placed in the response body.
         /// </summary>
         /// <param name="bytes">
         /// The bytes to write to the serialiser.
