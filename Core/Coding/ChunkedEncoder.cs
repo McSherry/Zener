@@ -65,7 +65,10 @@ namespace McSherry.Zener.Core.Coding
             return Singleton;
         }
 
-        private ChunkedEncoder();
+        private ChunkedEncoder()
+        {
+            
+        }
 
         /// <summary>
         /// Encodes the data using the chunked transfer
