@@ -140,15 +140,15 @@ namespace McSherry.Zener.Net.Serialisation
         public abstract void WriteData(byte[] bytes);
 
         /// <summary>
-        ///     <para>
-        ///     Retrieves the underlying response stream the serialiser
-        ///     is writing to. It is recommended to use Write unless you
-        ///     know you need direct Stream access.
-        ///     </para>
-        ///     <para>
-        ///     Calling this method will close the serialiser, but will
-        ///     leave the underlying Stream open to be written to.
-        ///     </para>
+        /// <para>
+        /// Retrieves the underlying response stream the serialiser
+        /// is writing to. It is recommended to use Write unless you
+        /// know you need direct Stream access.
+        /// </para>
+        /// <para>
+        /// Calling this method will close the serialiser, but will
+        /// leave the underlying Stream open to be written to.
+        /// </para>
         /// </summary>
         /// <param name="flush">
         /// Whether the serialiser should flush its buffer to the
@@ -158,7 +158,16 @@ namespace McSherry.Zener.Net.Serialisation
         /// <returns>
         /// The Stream the serialiser is writing to.
         /// </returns>
-        public abstract Stream GetStream(bool flush);
+        public virtual Stream GetStream(bool flush)
+        {
+            // If the serialiser is not already closed,
+            // close it and pass on the parameter "flush."
+            if (!this.IsClosed) this.Close(flush);
+
+            // Return the response stream that underlies
+            // this serialiser.
+            return this.ResponseStream;
+        }
         /// <summary>
         ///     <para>
         ///     Retrieves the underlying response stream the serialiser
@@ -216,7 +225,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// </summary>
         public void Close()
         {
-            this.Close(flush:false);
+            this.Close(flush: false);
         }
 
         /// <summary>
