@@ -81,17 +81,19 @@ namespace McSherry.Zener.Net
         /// indicating that they are not acceptable.
         /// </param>
         /// <exception cref="System.ArgumentException">
-        ///     Thrown when:
-        ///         1. The provided field name is null, zero-length, or whitespace.
-        ///         2. The provided value is null, zero-length, or whitespace.
-        ///         3. The field name contains a carriage return or line feed character.
-        ///         4. The value contains a carriage return or line feed character.
+        /// Thrown when:
+        ///     1. The provided field name is null, zero-length, or whitespace.
+        ///     2. The provided value is null, zero-length, or whitespace.
+        ///     3. The field name contains a carriage return or line feed character.
+        ///     4. The value contains a carriage return or line feed character.
+        ///     5. One or more of the comma-separated items cannot be parsed as a
+        ///        set of key-value pairs.
+        ///     6. One or more of the q-values is invalid.
         /// </exception>
         public OrderedCsvHttpHeader(
             HttpHeader header,
             bool removeUnacceptable = false
-            )
-            : this(header.Field, header.Value, removeUnacceptable)
+            ) : this(header.Field, header.Value, removeUnacceptable)
         {
 
         }
@@ -121,8 +123,7 @@ namespace McSherry.Zener.Net
         public OrderedCsvHttpHeader(
             string fieldName, string fieldValue,
             bool removeUnacceptable = false
-            )
-            : base(fieldName, fieldValue)
+            ) : base(fieldName, fieldValue)
         {
             IndexedDictionary<string, string>[] ixDicts = 
                 new IndexedDictionary<string,string>[base.Items.Count];
