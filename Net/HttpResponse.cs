@@ -14,6 +14,8 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 
+using McSherry.Zener.Net.Serialisation;
+
 namespace McSherry.Zener.Net
 {
     /// <summary>
@@ -571,8 +573,16 @@ namespace McSherry.Zener.Net
         /// <exception cref="System.InvalidOperationException">
         ///     Thrown when the response headers have been sent.
         /// </exception>
-        internal void CheckHeadersSent()
+        internal void CheckSerialiser()
         {
+            if (this.Serialiser == null)
+            {
+                throw new ApplicationException(
+                    "The HttpResponse has not been configured with a " +
+                    "serialiser."
+                    );
+            }
+
             if (_beginRespond) throw new InvalidOperationException(
                 "Cannot modify the headers after the response body has been written to."
                 );
@@ -591,7 +601,7 @@ namespace McSherry.Zener.Net
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided stream is null.
         /// </exception>
-        public HttpResponse(Stream responseStream)
+        internal HttpResponse(Stream responseStream)
         {
             if (responseStream == null)
             {
@@ -669,6 +679,17 @@ namespace McSherry.Zener.Net
             get { return _cookies; }
         }
         /// <summary>
+        /// The serialiser that is being used to
+        /// transform the HttpResponse in to the
+        /// format it will be transmitted over the
+        /// network in.
+        /// </summary>
+        public HttpSerialiser Serialiser
+        {
+            get;
+            internal set;
+        }
+        /// <summary>
         /// Whether to enable output buffering. Output buffering delays
         /// the sending of the response body.
         /// </summary>
@@ -720,7 +741,7 @@ namespace McSherry.Zener.Net
         /// </summary>
         public bool Closed
         {
-            get { return _closed; }
+            get { return this.Serialiser.IsClosed; }
         }
 
         /// <summary>
@@ -760,12 +781,18 @@ namespace McSherry.Zener.Net
         /// </exception>
         public void Write(IEnumerable<byte> bytes)
         {
+            // Ensure that we've been configured with a
+            // serialiser.
+            this.CheckSerialiser();
             // Ensure that the response has not been closed.
-            CheckClosed();
-            // Send headers if necessary.
-            _ConditionalSendHeaders();
+            this.CheckClosed();
 
-            _Write(bytes is byte[] ? (byte[])bytes : bytes.ToArray());
+            // Write data to the serialiser. The serialiser will
+            // then perform any necessary action (such as sending
+            // the data over the network).
+            this.Serialiser.WriteData(
+                bytes is byte[] ? (byte[])bytes : bytes.ToArray()
+                );
         }
         /// <summary>
         /// Writes the provided values to the response in the
@@ -828,127 +855,6 @@ namespace McSherry.Zener.Net
             formatBuilder.Append(HTTP_NEWLINE);
 
             this.Write(value: formatBuilder.ToString());
-        }
-
-        /// <summary>
-        /// Enables HTTP compression if the client reports
-        /// support for it. To make use of HTTP compression,
-        /// output buffering must also be enabled.
-        /// </summary>
-        /// <param name="request">
-        /// The client's request. This should contain headers
-        /// indicating compression support.
-        /// </param>
-        /// <returns>
-        /// True if compression was enabled.
-        /// </returns>
-        /// <remarks>
-        /// Zener only supports "gzip" compression. If the client
-        /// does not support this, compression will not be enabled.
-        /// </remarks>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when the provided HttpRequest is null.
-        /// </exception>
-        /// <exception cref="System.InvalidOperationException">
-        /// Thrown when the HttpResponse has been closed, or when the
-        /// HttpResponse's headers have already been sent.
-        /// </exception>
-        public bool EnableCompression(HttpRequest request)
-        {
-            if (request == null)
-            {
-                throw new ArgumentNullException(
-                    "The provided HttpRequest must not be null."
-                    );
-            }
-
-            this.CheckClosed();
-            this.CheckHeadersSent();
-
-            // Get the 'Accept-Encoding' header. This will let us
-            // know whether the client supports gzip encoding.
-            var accEnc = request.Headers[HDR_ACCEPTENCODING].FirstOrDefault();
-
-            bool canCompress = false;
-            // If this evaluates to true, we've retrieved
-            // a header with the name 'Accept-Encoding'.
-            if (accEnc != default(HttpHeader))
-            {
-                // The 'Accept-Encoding' header will be a a set
-                // of comma-separated values which may or may not
-                // have a set of associated q-values, so it makes
-                // sense to parse them using the OrderedCsvHttpHeader
-                // class.
-                OrderedCsvHttpHeader ocsv;
-                try
-                {
-                    ocsv = new OrderedCsvHttpHeader(
-                        header:             accEnc,
-                        removeUnacceptable: true
-                        );
-                }
-                catch (ArgumentException)
-                {
-                    // The 'Accept-Encoding' header is invalid,
-                    // so we need to skip to the method's return,
-                    // where we will return false.
-                    //
-                    // In this situation, a 'goto' is probably the
-                    // cleanest way to go about skipping any code
-                    // we now can't execute.
-                    goto returnLabel;
-                }
-
-                // There are various ways that a client could indicate
-                // support for compression.
-                if (
-                    // An empty 'Accept-Encoding' header (i.e. it has no items).
-                    ocsv.Items.Count == 0 ||
-                    // A wildcard value (an asterisk, *) indicating that any
-                    // encoding is acceptable.
-                    ocsv.Items.Any(s => s == HDRF_ENCODING_ANY) ||
-                    // The presence of the 'gzip' value.
-                    ocsv.Items.Contains(HDRF_ENCODING_GZIP)
-                    )
-                {
-                    // If we're here, gzip encoding is acceptable.
-                    canCompress = true;
-                }
-            }
-
-            // If we weren't able to retrieve an 'Accept-Encoding'
-            // header, the canCompress variable will never be set
-            // to anything other than false.
-            //
-            // We're also setting IsCompressed appropriately. Assignment
-            // expressions return the assigned value, so we can put it
-            // all on one line.
-            returnLabel: return (this.IsCompressed = canCompress);
-        }
-        /// <summary>
-        /// Disables HTTP compression if it is enabled.
-        /// </summary>
-        /// <returns>
-        /// True if compression was disabled.
-        /// </returns>
-        /// <exception cref="System.InvalidOperationException">
-        /// Thrown when the HttpResponse has been closed, or when the
-        /// HttpResponse's headers have already been sent.
-        /// </exception>
-        public bool DisableCompression()
-        {
-            this.CheckClosed();
-            this.CheckHeadersSent();
-
-            // If compression is already disabled, we
-            // don't need to do anything.
-            if (!this.IsCompressed) return false;
-
-            // If it isn't disabled, disable it and
-            // return true to indicate that we have
-            // disabled it.
-            this.IsCompressed = false;
-            return true;
         }
 
         /// <summary>

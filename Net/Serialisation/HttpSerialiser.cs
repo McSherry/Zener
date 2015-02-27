@@ -25,6 +25,10 @@ namespace McSherry.Zener.Net.Serialisation
         /// written.
         /// </summary>
         protected readonly Stream ResponseStream;
+        /// <summary>
+        /// The HttpResponse that we will be serialising.
+        /// </summary>
+        protected readonly HttpResponse Response;
 
         /// <summary>
         /// Checks whether the serialiser has been closed,
@@ -47,6 +51,9 @@ namespace McSherry.Zener.Net.Serialisation
         /// Creates a new HttpSerialiser.
         /// </summary>
         /// <param name="response">
+        /// The HttpResponse to be serialised.
+        /// </param>
+        /// <param name="output">
         /// The Stream that should underlie the serialiser,
         /// and to which any serialised response data should
         /// be written.
@@ -58,23 +65,32 @@ namespace McSherry.Zener.Net.Serialisation
         /// Thrown when the provided response stream does not
         /// support writing.
         /// </exception>
-        public HttpSerialiser(Stream response)
+        public HttpSerialiser(HttpResponse response, Stream output)
         {
-            if (response == null)
+            if (output == null)
             {
                 throw new ArgumentNullException(
                     "The provided response stream must not be null."
                     );
             }
 
-            if (!response.CanWrite)
+            if (response == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided HttpResponse must not be null."
+                    );
+            }
+
+            if (!output.CanWrite)
             {
                 throw new ArgumentException(
                     "The provided response stream must support writing."
                     );
             }
 
-            this.ResponseStream = response;
+            this.ResponseStream = output;
+            this.Response = response;
+            this.Response.Serialiser = this;
         }
 
         /// <summary>

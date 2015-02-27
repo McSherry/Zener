@@ -65,6 +65,9 @@ namespace McSherry.Zener.Net.Serialisation
         /// Creates a new Rfc7230Serialiser.
         /// </summary>
         /// <param name="response">
+        /// The HttpResponse to be serialised.
+        /// </param>
+        /// <param name="output">
         /// The stream that should underlie the serialiser,
         /// and to which any serialised data should be written.
         /// </param>
@@ -80,8 +83,8 @@ namespace McSherry.Zener.Net.Serialisation
         /// Thrown when the provided response stream does not
         /// support writing.
         /// </exception>
-        public Rfc7230Serialiser(Stream response)
-            : base(response)
+        public Rfc7230Serialiser(HttpResponse response, Stream output)
+            : base(response, output)
         {
             // We haven't been provided with an HttpRequest, so it
             // isn't possible for us to determine whether the client
@@ -107,6 +110,9 @@ namespace McSherry.Zener.Net.Serialisation
         /// and similar.
         /// </param>
         /// <param name="response">
+        /// The HttpResponse to be serialised.
+        /// </param>
+        /// <param name="output">
         /// The stream that should underlie the serialiser,
         /// and to which any serialised data should be written.
         /// </param>
@@ -117,8 +123,10 @@ namespace McSherry.Zener.Net.Serialisation
         /// Thrown when the provided response stream does not
         /// support writing.
         /// </exception>
-        public Rfc7230Serialiser(HttpRequest request, Stream response)
-            : this(response)
+        public Rfc7230Serialiser(
+            HttpRequest request,
+            HttpResponse response, Stream output
+            ) : this(response, output)
         {
             throw new NotImplementedException();
         }
