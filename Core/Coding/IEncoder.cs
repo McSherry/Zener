@@ -24,6 +24,20 @@ namespace McSherry.Zener.Core.Coding
     public interface IEncoder
     {
         /// <summary>
+        /// The name of the encoding this encoder encodes
+        /// to.
+        /// </summary>
+        /// <remarks>
+        /// If this encoding has an 'Accept-Encoding' value
+        /// associated with it, that value should be used as
+        /// the name.
+        /// </remarks>
+        string Name
+        {
+            get;
+        }
+
+        /// <summary>
         /// Encodes the provided data.
         /// </summary>
         /// <param name="data">
