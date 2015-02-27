@@ -252,7 +252,7 @@ namespace McSherry.Zener.Net
             HDR_ACCEPTENCODING  = "Accept-Encoding",
             HDR_CONTENTENCODING = "Content-Encoding",
 
-            HDRF_CHUNKEDXFER    = "Chunked",
+            HDRF_CHUNKEDXFER    = "chunked",
             HDRF_SERVER         = "Zener/{0}",
             HDRF_CONTENTTYPE    = "text/html",
             HDRF_ENCODING_GZIP  = "gzip",
