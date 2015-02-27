@@ -310,7 +310,11 @@ namespace McSherry.Zener.Net.Serialisation
             // If we're not flushing, we don't need to
             // do anything more.
             if (flush) this.Flush();
-
+            // We've just closed the serialiser, and we
+            // are safe in assuming that dispose will not
+            // close the response stream, so we can call
+            // it since any serialiser-internal resources
+            // won't be getting used after closing.
             this.Dispose();
         }
         /// <summary>
