@@ -30,6 +30,12 @@ namespace McSherry.Zener.Core.Coding
         /// The chunk to be used as a terminator chunk.
         /// </summary>
         private static readonly byte[] Terminator;
+        /// <summary>
+        /// ChunkedEncoder doesn't need to maintain any state,
+        /// and there are no thread-safety concerns, so it makes
+        /// sense to only ever have one instance.
+        /// </summary>
+        private static readonly ChunkedEncoder Singleton;
 
         static ChunkedEncoder()
         {
@@ -46,7 +52,20 @@ namespace McSherry.Zener.Core.Coding
                 CRLF, 0,
                 Terminator, Terminator.Length - CRLF.Length, CRLF.Length
                 );
+
+            Singleton = new ChunkedEncoder();
         }
+
+        /// <summary>
+        /// Creates a new chunked encoder.
+        /// </summary>
+        /// <returns>The created chunked encoder.</returns>
+        public static ChunkedEncoder Create()
+        {
+            return Singleton;
+        }
+
+        private ChunkedEncoder();
 
         /// <summary>
         /// Encodes the data using the chunked transfer
