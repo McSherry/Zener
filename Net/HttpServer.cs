@@ -155,7 +155,7 @@ namespace McSherry.Zener.Net
         {
             var exception = (HttpException)param.Exception;
 
-            res.BufferOutput = true;
+            res.Serialiser.BufferOutput = true;
             res.StatusCode = exception.StatusCode;
             res.Headers.Add("Content-Type", "text/plain");
 
@@ -213,7 +213,7 @@ namespace McSherry.Zener.Net
             NetworkStream ns = tcl.GetStream();
 
             HttpRequest req;
-            HttpResponse res = new HttpResponse(ns);
+            HttpResponse res = new HttpResponse();
 
             try
             {
@@ -242,7 +242,7 @@ namespace McSherry.Zener.Net
                 // terminate the connection without a response. This
                 // is generally done when the connection is not in a
                 // recoverable state (e.g. completely malformed data).
-                res.Close();
+                res.Serialiser.Close(flush: true);
                 ns.Close();
                 ns.Dispose();
                 tcl.Close();
@@ -257,7 +257,7 @@ namespace McSherry.Zener.Net
                 // skip it and continue on.
                 if (ioex.InnerException is SocketException)
                 {
-                    res.Close();
+                    res.Serialiser.Close(flush: true);
                     ns.Close();
                     ns.Dispose();
                     tcl.Close();
@@ -270,7 +270,7 @@ namespace McSherry.Zener.Net
             // We're finished with this request, so we can close it. This
             // will flush any buffers to the network, and with close/dispose
             // any disposable resources.
-            res.Close();
+            res.Serialiser.Close(flush: true);
             // We need to support HTTP pipelining for HTTP/1.1 compliance, and
             // this is how we're going to do it. Pipelining involves the user
             // agent sending multiple requests, one after the other, without

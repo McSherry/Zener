@@ -490,7 +490,7 @@ namespace McSherry.Zener.Net
             response.CheckClosed();
             response.CheckSerialiser();
 
-            response.BufferOutput = true;
+            response.Serialiser.BufferOutput = true;
 
             var hdr = request.Headers[HDR_CLAUTH].DefaultIfEmpty(null).First();
             // If hdr is null, it means that the client hasn't sent an
@@ -519,7 +519,7 @@ namespace McSherry.Zener.Net
                 // We've sent out WWW-Authentication header, and we don't
                 // want user code to be able to send any data. Close the
                 // response.
-                response.Close();
+                response.Serialiser.Close(flush: true);
                 // Authentication of the client did not succeed. Return false.
                 return false;
             }

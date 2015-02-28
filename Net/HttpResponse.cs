@@ -239,8 +239,7 @@ namespace McSherry.Zener.Net
     /// A class providing the functionality required for a handler to
     /// respond to an HTTP request.
     /// </summary>
-    public class HttpResponse
-        : IDisposable
+    public sealed class HttpResponse
     {
         private const string 
             HDR_SETCOOKIE       = "Set-Cookie",
@@ -268,33 +267,7 @@ namespace McSherry.Zener.Net
         private HttpStatus _httpStatus;
         private HttpHeaderCollection _headers;
         private HttpCookieCollection _cookies;
-        // Response stream, output buffer stream
-        private Stream _rstr, _obstr;
-        // Set to true when the first write is made. When this is
-        // true, it indicates that the response headers have been
-        // sent to the client.
-        private bool _beginRespond, 
-            // True when the Close() method has been called.
-            _closed, 
-            // Whether output buffering is enabled.
-            _bufferOutput,
-            // Whether to compress output. Requires output
-            // buffering be enabled.
-            _enableCompression
-            ;
         private Encoding _encoding;
-
-        private void _Write(byte[] bytes)
-        {
-            if (this.BufferOutput)
-            {
-                _BufferedWrite(bytes);
-            }
-            else
-            {
-                _ChunkedNetworkWrite(bytes);
-            }
-        }
         
         /// <summary>
         /// Checks whether the response has been closed, and
@@ -305,8 +278,9 @@ namespace McSherry.Zener.Net
         /// </exception>
         internal void CheckClosed()
         {
-            if (_closed) throw new InvalidOperationException
-            ("Cannot modify the response after the connection has been closed.");
+            if (this.IsClosed) throw new InvalidOperationException(
+                "Cannot modify the response after the connection has been closed."
+                );
         }
         /// <summary>
         /// Checks whether the headers have been sent, and
@@ -329,9 +303,6 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Creates a new HttpResponse.
         /// </summary>
-        /// <param name="responseStream">
-        /// The stream to write the contents of the response to.
-        /// </param>
         /// <exception cref="System.ArgumentException">
         ///     Thrown when the provided stream does not support the
         ///     required operations.
@@ -339,31 +310,12 @@ namespace McSherry.Zener.Net
         /// <exception cref="System.ArgumentNullException">
         ///     Thrown when the provided stream is null.
         /// </exception>
-        internal HttpResponse(Stream responseStream)
+        internal HttpResponse()
         {
-            if (responseStream == null)
-            {
-                throw new ArgumentNullException(
-                    "The response stream cannot be null."
-                    );
-            }
-
-            if (
-                !responseStream.CanRead ||
-                !responseStream.CanWrite)
-            {
-                throw new ArgumentException
-                ("Provided stream must support reading and writing.");
-            }
-
             this.StatusCode = HttpStatus.OK;
-            this.BufferOutput = false;
             this.Encoding = Encoding.UTF8;
-            _rstr = responseStream;
             _headers = new HttpHeaderCollection();
             _cookies = new HttpCookieCollection();
-            _beginRespond = false;
-            _closed = false;
         }
 
         /// <summary>
@@ -428,25 +380,6 @@ namespace McSherry.Zener.Net
             internal set;
         }
         /// <summary>
-        /// Whether to enable output buffering. Output buffering delays
-        /// the sending of the response body.
-        /// </summary>
-        public bool BufferOutput
-        {
-            get { return _bufferOutput; }
-            set
-            {
-                this.CheckSerialiser();
-
-                if (value && _obstr == null)
-                {
-                    _obstr = new MemoryStream();
-                }
-
-                _bufferOutput = value;
-            }
-        }
-        /// <summary>
         /// The encoding used when writing strings to the response. Defaults
         /// to UTF-8.
         /// </summary>
@@ -466,18 +399,9 @@ namespace McSherry.Zener.Net
             }
         }
         /// <summary>
-        /// Whether HTTP compression is currently enabled
-        /// for this response.
-        /// </summary>
-        public bool IsCompressed
-        {
-            get { return _enableCompression; }
-            private set { _enableCompression = value; }
-        }
-        /// <summary>
         /// Whether the response has been closed.
         /// </summary>
-        public bool Closed
+        public bool IsClosed
         {
             get { return this.Serialiser.IsClosed; }
         }
@@ -593,49 +517,6 @@ namespace McSherry.Zener.Net
             formatBuilder.Append(HTTP_NEWLINE);
 
             this.Write(value: formatBuilder.ToString());
-        }
-
-        /// <summary>
-        /// Closes the connection between the server and the client.
-        /// </summary>
-        public void Close()
-        {
-            if (!_closed)
-            {
-                // The _closed variable must be set to true
-                // for the headers/body to be sent properly
-                // when output buffering is enabled.
-                _closed = true;
-                // Send the headers and, if output buffering
-                // is enabled, flush the buffer to the network.
-                _ConditionalSendHeaders();
-
-                // If output buffering is disabled, we're sending
-                // with chunked transfer encoding. This means that
-                // we need to send a terminating chunk to signify
-                // that we've finished sending chunked data.
-                // 
-                // Terminating chunks are "zero-length." Quoted
-                // because we still send bytes, but the bytes
-                // indicate that the chunk has no data.
-                if (!this.BufferOutput)
-                {
-                    _ChunkedNetworkWrite(new byte[0]);
-                }
-
-                if (_obstr != null)
-                {
-                    _obstr.Close();
-                    _obstr.Dispose();
-                }
-            }
-        }
-        /// <summary>
-        /// Calls HttpResponse.Close.
-        /// </summary>
-        void IDisposable.Dispose()
-        {
-            this.Close();
         }
     }
 }
