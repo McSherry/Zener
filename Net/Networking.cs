@@ -488,7 +488,7 @@ namespace McSherry.Zener.Net
             )
         {
             response.CheckClosed();
-            response.CheckHeadersSent();
+            response.CheckSerialiser();
 
             response.BufferOutput = true;
 

@@ -582,10 +582,6 @@ namespace McSherry.Zener.Net
                     "serialiser."
                     );
             }
-
-            if (_beginRespond) throw new InvalidOperationException(
-                "Cannot modify the headers after the response body has been written to."
-                );
         }
 
         /// <summary>
@@ -659,7 +655,7 @@ namespace McSherry.Zener.Net
             set
             {
                 this.CheckClosed();
-                this.CheckHeadersSent();
+                this.CheckSerialiser();
 
                 _httpStatus = value;
             }
@@ -698,7 +694,7 @@ namespace McSherry.Zener.Net
             get { return _bufferOutput; }
             set
             {
-                CheckHeadersSent();
+                this.CheckSerialiser();
 
                 if (value && _obstr == null)
                 {
