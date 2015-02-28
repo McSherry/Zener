@@ -512,5 +512,39 @@ namespace McSherry.Zener.Net.Serialisation
             // flushed to the response stream and the _bodyWritten property
             // set to true, our job here is done.
         }
+
+        /// <summary>
+        /// Disposes any resources held by the serialiser.
+        /// </summary>
+        /// <remarks>
+        /// Implementations of HttpSerialiser must not dispose
+        /// or close the response stream. This is handled by
+        /// HttpServer. Code is written with the assumption
+        /// that HttpSerialiser does not close the response
+        /// stream.
+        /// </remarks>
+        public override void Dispose()
+        {
+            // If the output buffer has been used, we need to
+            // close and dispose it to encourage collection of
+            // the memory stream's resources.
+            if (_outputBuffer != null)
+            {
+                _outputBuffer.Close();
+                _outputBuffer.Dispose();
+                _outputBuffer = null;
+            }
+            // If we had a compressor/encoder, it's possible that
+            // it will need to be disposed. First we perform a null
+            // check to determine whether the encoder was used. If it
+            // was, we then check whether it implements IDisposable.
+            if (_compressor != null && _compressor is IDisposable)
+            {
+                // If we're here, the encoder implements IDisposable.
+                // We cast the encoder to IDisposable, then dispose it
+                // since we will now be done with it
+                ((IDisposable)_compressor).Dispose();
+            }
+        }
     }
 }
