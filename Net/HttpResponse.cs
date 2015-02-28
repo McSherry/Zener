@@ -312,7 +312,7 @@ namespace McSherry.Zener.Net
         /// </exception>
         internal HttpResponse()
         {
-            this.StatusCode = HttpStatus.OK;
+            _httpStatus = HttpStatus.OK;
             this.Encoding = Encoding.UTF8;
             _headers = new HttpHeaderCollection();
             _cookies = new HttpCookieCollection();
