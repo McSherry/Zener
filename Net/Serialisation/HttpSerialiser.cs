@@ -33,6 +33,38 @@ namespace McSherry.Zener.Net.Serialisation
             /// client may find acceptable.
             /// </summary>
             public const string AcceptEncoding      = "Accept-Encoding";
+            /// <summary>
+            /// The header that indicates to the client which encoding has
+            /// been applied to the response body.
+            /// </summary>
+            public const string ContentEncoding     = "Content-Encoding";
+            /// <summary>
+            /// The header that indicates how the response has been encoded
+            /// for transfer.
+            /// </summary>
+            public const string TransferEncoding    = "Transfer-Encoding";
+
+            /// <summary>
+            /// The header providing the length, in bytes, of the response
+            /// body.
+            /// </summary>
+            public const string ContentLength       = "Content-Length";
+            /// <summary>
+            /// The header which tells the client what type of content the
+            /// server is responding with.
+            /// </summary>
+            public const string ContentType         = "Content-Type";
+
+            /// <summary>
+            /// The header used by the server to provide date and time the
+            /// response was generated on to the client.
+            /// </summary>
+            public const string Date                = "Date";
+            /// <summary>
+            /// The header used by the server to provide the client with
+            /// information about the server software in use.
+            /// </summary>
+            public const string Server              = "Server";
         }
         /// <summary>
         /// A class containing methods for creating the encoders

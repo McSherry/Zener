@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
+using McSherry.Zener.Core;
 using McSherry.Zener.Core.Coding;
 
 namespace McSherry.Zener.Net.Serialisation
@@ -22,6 +23,14 @@ namespace McSherry.Zener.Net.Serialisation
     public sealed class Rfc7230Serialiser
         : HttpSerialiser
     {
+        /// <summary>
+        /// The format string used for the response line.
+        /// </summary>
+        private const string ResponseLineFormat = "HTTP/1.1 {0} {1}\r\n";
+        /// <summary>
+        /// The format string used for HTTP/1.1 headers.
+        /// </summary>
+        private const string HeaderFormat       = "{0}: {1}\r\n";
         // It's quite likely that we'll be using chunked
         // encoding when writing to the stream, so we might
         // as well preëmptively get the instance. Having it
@@ -336,6 +345,172 @@ namespace McSherry.Zener.Net.Serialisation
                 // All that's left is to write the data to the response stream.
                 base.ResponseStream.Write(bytes, 0, bytes.Length);
             }
+        }
+
+        /// <summary>
+        /// Flushes any data stored by the serialiser to the
+        /// network. This includes the headers and the response
+        /// body.
+        /// </summary>
+        /// <remarks>
+        /// If this is called while output buffering is enabled,
+        /// the contents of the output buffer will be flushed to
+        /// the network, and output buffering will be disabled.
+        /// </remarks>
+        public override void Flush()
+        {
+            this.CheckClosed();
+
+            // If we haven't written the body yet, it means we need
+            // to write the headers. 
+            if (!_bodyWritten)
+            {
+                // Set the field containing the bool indicating whether we've
+                // written the body yet to true.
+                _bodyWritten = true;
+
+                // If compression is enabled, we need to add the appropriate
+                // 'Content-Encoding' header so the client knows that the data
+                // is encoded, and can determine how to decode it.
+                if (this.Compress)
+                {
+                    // The encoder provides us with the appropriate name. As long
+                    // as the encoders have been set up with the correct name, this
+                    // should never throw an exception.
+                    base.Response.Headers.Add(
+                        fieldName:  Headers.ContentEncoding,
+                        fieldValue: _compressor.Name,
+                        overwrite:  true
+                        );
+
+                    // If the output has been buffered AND we're compressing, it
+                    // means we need to compress the buffer before sending it.
+                    if (this.BufferOutput)
+                    {
+                        // Retrieve the memory stream's internal buffer. This
+                        // lets us directly manipulate its buffer, rather than
+                        // creating a new array and copying the value.
+                        byte[] buf = _outputBuffer.GetBuffer();
+                        // The buffer is likely to be larger than the actual
+                        // length of data in the stream, so we resize it. We will
+                        // hit a problem if there is more than about 2^31 bytes in
+                        // the buffer.
+                        Array.Resize(ref buf, (int)_outputBuffer.Length);
+                        // Compress the contents of the buffer, and assign the
+                        // result to it.
+                        buf = _compressor.Encode(buf);
+                        // Set the length of the output buffer to the new length
+                        // of the now-compressed contents.
+                        _outputBuffer.SetLength(buf.Length);
+                    }
+                }
+
+                // If output is being buffered, we need to flush it from the
+                // memory stream we're using as a buffer. 
+                if (this.BufferOutput)
+                {
+                    // The output was buffered, which means we're sending it all
+                    // at once. This means that we need to specify the length of
+                    // the content.
+                    base.Response.Headers.Add(
+                        fieldName:  Headers.ContentLength,
+                        fieldValue: _outputBuffer.Length.ToString(),
+                        overwrite:  true
+                        );
+                }
+                else
+                {
+                    // If the output isn't being buffered, it means we're going to
+                    // be sending it in chunks. To do this, we need to indicate to
+                    // the client that we're using chunked transfer encoding.
+                    base.Response.Headers.Add(
+                        fieldName:  Headers.TransferEncoding,
+                        fieldValue: Chunker.Name,
+                        overwrite:  true
+                        );
+                }
+
+                // We're required to send a 'Date' header in a specific format
+                // to indicate to the client when the response was generated.
+                // Thankfully, the DateTime class provides us with a formatter
+                // that will spit out an appropriately-formatted string for the
+                // HTTP 'Date' header.
+                base.Response.Headers.Add(
+                    fieldName:  Headers.Date,
+                    fieldValue: DateTime.UtcNow.ToString("R"),
+                    overwrite:  true
+                    );
+                // While we're not required to send this header, we will send a
+                // 'Server' header to advertise the name of the server and the
+                // version. Who knows, maybe it could aid in troubleshooting
+                // one day?
+                base.Response.Headers.Add(
+                    fieldName:  Headers.Server,
+                    fieldValue: String.Format(
+                                    "Zener/{0}",
+                                    ZenerCore.Version.ToString(3)
+                                    ),
+                    overwrite:  true
+                    );
+
+                // We need to send a 'Content-Type' header with the response.
+                // However, it is possible that the programmer has already set
+                // one.
+                if (!base.Response.Headers.Contains(Headers.ContentType))
+                {
+                    // The programmer hasn't set a 'Content-Type', we'll add
+                    // a default one with the content type for HTML.
+                    base.Response.Headers.Add(
+                        fieldName:  Headers.ContentType,
+                        fieldValue: MediaType.Html
+                        );
+                }
+
+                // We're sending the headers now, so we want to make sure that
+                // the programmer knows they cannot be modified. Mark the headers
+                // read-only so that an attempt to modify the collection will
+                // result in an exception.
+                base.Response.Headers.IsReadOnly = true;
+
+                byte[] hbuf = Encoding.ASCII
+                    .GetBytes(String.Format(
+                        ResponseLineFormat,
+                        base.Response.StatusCode.GetCode(),
+                        base.Response.StatusCode.GetMessage()
+                        ));
+                // The first thing we need to write is the response line. This
+                // lets the client know the HTTP version of the response, and
+                // provides a status code indicating the success or failure of
+                // the client's request.
+                base.ResponseStream.Write(hbuf, 0, hbuf.Length);
+                // We now need to write out each HTTP header to the response.
+                foreach (var header in base.Response.Headers)
+                {
+                    hbuf = Encoding.ASCII
+                        .GetBytes(
+                            String.Format(
+                                HeaderFormat,
+                                header.Field, header.Value
+                            ));
+                    base.ResponseStream.Write(hbuf, 0, hbuf.Length);
+                }
+            }
+
+            // If there is any data in the output buffer, we need to
+            // write it out to the response first.
+            if (_outputBuffer != null && _outputBuffer.Length > 0)
+            {
+                // Seek to the very start of the output buffer.
+                _outputBuffer.Position = 0;
+                // Copy the contents of the output buffer to
+                // the response stream.
+                _outputBuffer.CopyTo(base.ResponseStream);
+            }
+
+            // We don't have to handle closing the output stream, as
+            // that will be handled in Dispose. With the output buffer
+            // flushed to the response stream and the _bodyWritten property
+            // set to true, our job here is done.
         }
     }
 }
