@@ -483,7 +483,7 @@ namespace McSherry.Zener.Net
         /// based on its values.
         /// </summary>
         /// <param name="requestLine">The HTTP request's request line.</param>
-        /// <exception cref="System.IO.InvalidDataException">
+        /// <exception cref="McSherry.Zener.Net.HttpFatalException">
         ///     Thrown when the HTTP request line is invalid or
         ///     is malformed.
         /// </exception>
@@ -529,9 +529,7 @@ namespace McSherry.Zener.Net
 
             if (parts.Count != 3)
             {
-                throw new InvalidDataException(
-                    "The HTTP request line is malformed."
-                    );
+                throw new HttpFatalException();
             }
 
             int strIndex = 0;
@@ -608,7 +606,7 @@ namespace McSherry.Zener.Net
          * variables.
          * 
          * If the request's request line cannot be parsed,
-         * an InvalidDataException will be thrown instead.
+         * a HttpFatalException will be thrown instead.
          * This exception indicates that it is not possible
          * to glean meaningful information from the request.
          */
@@ -662,12 +660,10 @@ namespace McSherry.Zener.Net
             // too many empty lines before its request line.
             if (empties >= REQUEST_EMPTIES_MAX)
             {
-                // An InvalidDataException will cause HttpServer to
+                // A HttpFatalException will cause HttpServer to
                 // terminate the connection and won't crash the
                 // program.
-                throw new InvalidDataException(
-                    "The client sent too many empty lines."
-                    );
+                throw new HttpFatalException();
             }
 
             // We've now hit the first line with content. In

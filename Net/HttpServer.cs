@@ -104,6 +104,26 @@ namespace McSherry.Zener.Net
 
         }
     }
+    /// <summary>
+    /// The exception thrown when a request handler wishes to terminate
+    /// the connection to the client.
+    /// </summary>
+    /// <remarks>
+    /// This class is handled specially by HttpServer, and throwing it
+    /// will terminate the connection to the client without sending a
+    /// response.
+    /// </remarks>
+    public sealed class HttpFatalException : HttpException
+    {
+        /// <summary>
+        /// Creates a new HttpFatalException.
+        /// </summary>
+        public HttpFatalException()
+            : base((HttpStatus)(-1))
+        {
+
+        }
+    }
 
     /// <summary>
     /// The delegate used for handling messages from the HTTP server.
@@ -215,12 +235,13 @@ namespace McSherry.Zener.Net
                     res
                     );
             }
-            catch (InvalidDataException)
+            catch (HttpFatalException)
             {
-                // The request creator throwing InvalidDataException
-                // indicates that the request is malformed beyond having
-                // any useful data. The only sensible course of action
-                // from here is to close the connection.
+                // The throwing of an HttpFatalException indicates
+                // that the request creator or handler wishes to
+                // terminate the connection without a response. This
+                // is generally done when the connection is not in a
+                // recoverable state (e.g. completely malformed data).
                 res.Close();
                 ns.Close();
                 ns.Dispose();
@@ -282,6 +303,13 @@ namespace McSherry.Zener.Net
                 {
                     this.MessageEmitted(new HttpServerMessage(msgType, args));
                 }
+            }
+            catch (HttpFatalException)
+            {
+                // HttpFatalException is a special case, and we need to
+                // catch it and rethrow it so this try-catch doesn't
+                // swallow it.
+                throw;
             }
             catch (HttpException hex)
             {
