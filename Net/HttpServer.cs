@@ -246,7 +246,7 @@ namespace McSherry.Zener.Net
                 // terminate the connection without a response. This
                 // is generally done when the connection is not in a
                 // recoverable state (e.g. completely malformed data).
-                res.Serialiser.Close(flush: true);
+                httpSer.Close();
                 ns.Close();
                 ns.Dispose();
                 tcl.Close();
@@ -261,7 +261,7 @@ namespace McSherry.Zener.Net
                 // skip it and continue on.
                 if (ioex.InnerException is SocketException)
                 {
-                    res.Serialiser.Close(flush: true);
+                    httpSer.Close();
                     ns.Close();
                     ns.Dispose();
                     tcl.Close();
@@ -274,9 +274,9 @@ namespace McSherry.Zener.Net
             // We're finished with this request, so we can close it. This
             // will flush any buffers to the network, and with close/dispose
             // any disposable resources.
-            res.Serialiser.Close(flush: true);
+            httpSer.Close(flush: true);
             // Dispose any resources held by the serialiser.
-            res.Serialiser.Dispose();
+            httpSer.Dispose();
             // We need to support HTTP pipelining for HTTP/1.1 compliance, and
             // this is how we're going to do it. Pipelining involves the user
             // agent sending multiple requests, one after the other, without
