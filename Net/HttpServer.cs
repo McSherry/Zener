@@ -304,15 +304,18 @@ namespace McSherry.Zener.Net
                     this.MessageEmitted(new HttpServerMessage(msgType, args));
                 }
             }
-            catch (HttpFatalException)
-            {
+            catch (HttpException hex)
+            {                    
                 // HttpFatalException is a special case, and we need to
                 // catch it and rethrow it so this try-catch doesn't
                 // swallow it.
-                throw;
-            }
-            catch (HttpException hex)
-            {
+                //
+                // When we throw it, it will be caught in HttpRequestHandler,
+                // and HttpRequestHandler will terminate the connection without
+                // crashing the program.
+                if (hex is HttpFatalException)
+                    throw;
+
                 /* Message handlers can throw HttpExceptions or types
                  * that inherit from HttpException to cause the HttpServer
                  * to generate an InvokeErrorHandler message.
