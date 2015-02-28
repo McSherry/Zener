@@ -15,6 +15,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 
+using McSherry.Zener.Net.Serialisation;
+
 namespace McSherry.Zener.Net
 {
     /// <summary>
@@ -202,7 +204,7 @@ namespace McSherry.Zener.Net
                 // HTTP compression. The developer will
                 // also need to enable output buffering
                 // to make use of HTTP compression.
-                res.EnableCompression(req);
+                //res.EnableCompression(req);
 
                 // If creation succeeds, emit a message
                 // with the request and response objects
