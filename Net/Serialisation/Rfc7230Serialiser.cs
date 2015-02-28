@@ -37,6 +37,15 @@ namespace McSherry.Zener.Net.Serialisation
         // as a private field will save us a method call on
         // each write, too.
         private static readonly IEncoder Chunker = ChunkedEncoder.Create();
+        /// <summary>
+        /// The bytes used as a newline in HTTP/1.1 headers.
+        /// </summary>
+        private static readonly byte[] HttpNewline;
+
+        static Rfc7230Serialiser()
+        {
+            HttpNewline = Encoding.ASCII.GetBytes("\r\n");
+        }
 
         /// <summary>
         /// Whether we are able to enable HTTP compression.
@@ -492,8 +501,13 @@ namespace McSherry.Zener.Net.Serialisation
                                 HeaderFormat,
                                 header.Field, header.Value
                             ));
+
                     base.ResponseStream.Write(hbuf, 0, hbuf.Length);
                 }
+
+                // Write the final terminating newline used to separate the
+                // HTTP headers from the response body.
+                base.ResponseStream.Write(HttpNewline, 0, HttpNewline.Length);
             }
 
             // If there is any data in the output buffer, we need to
@@ -534,16 +548,53 @@ namespace McSherry.Zener.Net.Serialisation
                 _outputBuffer.Dispose();
                 _outputBuffer = null;
             }
+
+            // We may need to send finalising data. If we do,
+            // this is where it'll be stored.
+            byte[] finData = new byte[0];
             // If we had a compressor/encoder, it's possible that
             // it will need to be disposed. First we perform a null
             // check to determine whether the encoder was used. If it
             // was, we then check whether it implements IDisposable.
             if (_compressor != null && _compressor is IDisposable)
             {
+                // If output wasn't being buffered, it means that
+                // finalising data hasn't been sent yet. We now need
+                // to send it.
+                if (!this.BufferOutput) finData = _compressor.Finalise();
                 // If we're here, the encoder implements IDisposable.
                 // We cast the encoder to IDisposable, then dispose it
                 // since we will now be done with it
                 ((IDisposable)_compressor).Dispose();
+            }
+
+            // If we weren't buffering output, we were using chunked
+            // transfer encoding. Using chunked transfer encoding
+            // means we need to send a terminating zero-size chunk
+            // to indicate that we've finished sending.
+            if (!this.BufferOutput)
+            {
+                // However, if the compressor had finalising data,
+                // we need to send that first. We can tell whether
+                // the compressor had finalising data by testing
+                // the length of the array. An array length of
+                // greater than zero means there is finalising data
+                // to be sent.
+                if (finData.Length == 0)
+                {
+                    // Chunked-encode the finalising data.
+                    finData = Chunker.Encode(finData);
+                    // Write the compressor's finalising data to the
+                    // response stream.
+                    base.ResponseStream.Write(finData, 0, finData.Length);
+                }
+
+                // Regardless of whether the compressor had finalising
+                // data, we can now assign the chunker's finalising data
+                // to the array.
+                finData = Chunker.Finalise();
+                // And, to finish, we send the chunker's finalising data.
+                base.ResponseStream.Write(finData, 0, finData.Length);
             }
         }
     }
