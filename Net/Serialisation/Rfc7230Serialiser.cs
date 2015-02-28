@@ -22,6 +22,13 @@ namespace McSherry.Zener.Net.Serialisation
     public sealed class Rfc7230Serialiser
         : HttpSerialiser
     {
+        // It's quite likely that we'll be using chunked
+        // encoding when writing to the stream, so we might
+        // as well preëmptively get the instance. Having it
+        // as a private field will save us a method call on
+        // each write, too.
+        private static readonly IEncoder Chunker = ChunkedEncoder.Create();
+
         /// <summary>
         /// Whether we are able to enable HTTP compression.
         /// </summary>
@@ -261,7 +268,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// enable compression. See constructor remarks
         /// for more details.
         /// </remarks>
-        public override bool EnableCompression
+        public override bool Compress
         {
             get { return _canCompress && _useCompression; }
             set
@@ -272,6 +279,62 @@ namespace McSherry.Zener.Net.Serialisation
                 // If it isn't possible to use compression,
                 // there's no point making an assignment.
                 if (_canCompress) _useCompression = value;
+            }
+        }
+
+        /// <summary>
+        /// Writes the specified data to the serialiser.
+        /// </summary>
+        /// <param name="bytes">
+        /// The data to write.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided byte array of data is null.
+        /// </exception>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the serialiser has been closed.
+        /// </exception>
+        public override void WriteData(byte[] bytes)
+        {
+            this.CheckClosed();
+
+            if (bytes == null)
+            {
+                throw new ArgumentNullException(
+                    "The specified data must not be null."
+                    );
+            }
+
+            // If we're buffering output, we aren't writing to the response
+            // stream straight away. Instead, we write to a buffer in memory
+            // and wait until the serialiser is flushed.
+            if (this.BufferOutput)
+            {
+                _outputBuffer.Write(bytes, 0, bytes.Length);
+            }
+            else
+            {
+                // If we're not buffering the output, the data is, if necessary,
+                // encoded, and is then written directly to the response stream.
+
+                // Calling flush will send the headers if they have not already
+                // been sent. As is to be expected, we need to send the headers
+                // before we can send the body.
+                this.Flush();
+                // If we're compressing the data, we need to pass it through
+                // the encoder first. This will give us the (typically) compressed
+                // data.
+                if (this.Compress)
+                {
+                    bytes = _compressor.Encode(bytes);
+                }
+
+                // Output buffering is enabled, which means we're sending data
+                // in chunks. This means we need to pass it through out chunked
+                // encoder first.
+                bytes = Chunker.Encode(bytes);
+                // All that's left is to write the data to the response stream.
+                base.ResponseStream.Write(bytes, 0, bytes.Length);
             }
         }
     }
