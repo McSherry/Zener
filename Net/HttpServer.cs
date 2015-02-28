@@ -215,6 +215,10 @@ namespace McSherry.Zener.Net
             HttpRequest req;
             HttpResponse res = new HttpResponse();
 
+            /* TODO: Implement code to determine which serialiser to use.
+             */
+            HttpSerialiser httpSer = new Rfc7230Serialiser(res, ns);
+
             try
             {
                 // Attempt to create a request object.
@@ -271,6 +275,8 @@ namespace McSherry.Zener.Net
             // will flush any buffers to the network, and with close/dispose
             // any disposable resources.
             res.Serialiser.Close(flush: true);
+            // Dispose any resources held by the serialiser.
+            res.Serialiser.Dispose();
             // We need to support HTTP pipelining for HTTP/1.1 compliance, and
             // this is how we're going to do it. Pipelining involves the user
             // agent sending multiple requests, one after the other, without
