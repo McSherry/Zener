@@ -127,6 +127,84 @@ namespace McSherry.Zener.Net.Serialisation
                     );
             }
         }
+        /// <summary>
+        /// Evaluates the capabilities of the client and
+        /// sets any private fields appropriately.
+        /// </summary>
+        /// <param name="request">
+        /// The client's request.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided HttpRequest is null.
+        /// </exception>
+        internal void EvaluateClient(HttpRequest request)
+        {
+            if (request == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided HttpRequest must not be null."
+                    );
+            }
+
+            // Attempt to retrieve the client's 'Accept-Encoding' header. We
+            // can use this to determine which headers are considered acceptable.
+            var acceptEncoding = request.Headers[Headers.AcceptEncoding].FirstOrDefault();
+            // We only want to do something if the client has sent an 'Accept-Encoding'
+            // header. If it hasn't, no changes need be made.
+            if (acceptEncoding != default(HttpHeader))
+            {
+                // Attempt to parse the 'Accept-Encoding' header as an ordered
+                // HTTP header. This will allow us to filter out any encodings
+                // the client has explicitly forbade.
+                OrderedCsvHttpHeader accEncOcsv;
+                try
+                {
+                    accEncOcsv = new OrderedCsvHttpHeader(
+                                    header: acceptEncoding,
+                        removeUnacceptable: true
+                        );
+                }
+                catch (ArgumentException)
+                {
+                    // We can't parse the HTTP header, so we'll consider
+                    // the client as not accepting any "special" encodings.
+                    //
+                    // Thanks to our other constructor being called before
+                    // the body of this constructor, all values that would
+                    // otherwise be set are defaulted to the "no encoding"
+                    // values.
+                    return;
+                }
+
+                // If we get here, we managed to parse at least one item
+                // from the HTTP header. We now need to try to select an
+                // encoder based on the items.
+                //
+                // By iterating through the items, we should maintain order
+                // the order of preference specified by the client.
+                foreach (string encName in accEncOcsv.Items)
+                {
+                    // Attempt to retrieve an encoder based on the name.
+                    // If the value we retrieve isn't null, then we've
+                    // found an encoding that both we and the client support.
+                    if ((_compressor = Encoders.Get(encName)) != null)
+                    {
+                        // We've got an encoder, so we can now allow
+                        // compression to be enabled.
+                        _canCompress = true;
+                        // We'll use "enabled" as a sane default for
+                        // compression. There aren't a great deal of
+                        // situations where you wouldn't want the
+                        // output to be compressed.
+                        _useCompression = true;
+                        // We've found our compressor, so break out of
+                        // the loop. We don't need to check for any other
+                        // supported encodings.
+                        break;
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// The stream we'll buffer output to.
@@ -154,7 +232,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// be possible to enable compression.
         /// </remarks>
         /// <exception cref="System.ArgumentNullException">
-        /// Thrown when the provided response stream is null.
+        /// Thrown when one of the provided parameters is null.
         /// </exception>
         /// <exception cref="System.ArgumentException">
         /// Thrown when the provided response stream does not
@@ -195,7 +273,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// and to which any serialised data should be written.
         /// </param>
         /// <exception cref="System.ArgumentNullException">
-        /// Thrown when the provided response stream is null.
+        /// Thrown when one of the provided parameters is null.
         /// </exception>
         /// <exception cref="System.ArgumentException">
         /// Thrown when the provided response stream does not
@@ -206,69 +284,7 @@ namespace McSherry.Zener.Net.Serialisation
             HttpResponse response, Stream output
             ) : this(response, output)
         {
-            // Attempt to retrieve the client's 'Accept-Encoding' header. We
-            // can use this to determine which headers are considered acceptable.
-            var acceptEncoding = request.Headers[Headers.AcceptEncoding].FirstOrDefault();
-            // We only want to do something if the client has sent an 'Accept-Encoding'
-            // header. If it hasn't, no changes need be made.
-            if (acceptEncoding != default(HttpHeader))
-            {
-                // Attempt to parse the 'Accept-Encoding' header as an ordered
-                // HTTP header. This will allow us to filter out any encodings
-                // the client has explicitly forbade.
-                OrderedCsvHttpHeader accEncOcsv;
-                try
-                {
-                    accEncOcsv = new OrderedCsvHttpHeader(
-                                    header: acceptEncoding,
-                        removeUnacceptable: true
-                        );
-                }
-                catch (ArgumentException)
-                {
-                    // We can't parse the HTTP header, so we'll consider
-                    // the client as not accepting any "special" encodings.
-                    //
-                    // Thanks to our other constructor being called before
-                    // the body of this constructor, all values that would
-                    // otherwise be set are defaulted to the "no encoding"
-                    // values.
-                    goto endOfAcceptEncodingParsing;
-                }
-
-                // If we get here, we managed to parse at least one item
-                // from the HTTP header. We now need to try to select an
-                // encoder based on the items.
-                //
-                // By iterating through the items, we should maintain order
-                // the order of preference specified by the client.
-                foreach (string encName in accEncOcsv.Items)
-                {
-                    // Attempt to retrieve an encoder based on the name.
-                    // If the value we retrieve isn't null, then we've
-                    // found an encoding that both we and the client support.
-                    if ((_compressor = Encoders.Get(encName)) != null)
-                    {
-                        // We've got an encoder, so we can now allow
-                        // compression to be enabled.
-                        _canCompress = true;
-                        // We'll use "enabled" as a sane default for
-                        // compression. There aren't a great deal of
-                        // situations where you wouldn't want the
-                        // output to be compressed.
-                        _useCompression = true;
-                        // We've found our compressor, so break out of
-                        // the loop. We don't need to check for any other
-                        // supported encodings.
-                        break;
-                    }
-                }
-
-            // We use this label to get to the end of this 'if' statement. This
-            // is more future-proof than a 'return', as it means we can add further
-            // code below this 'if' statement without modifying this code.
-            endOfAcceptEncodingParsing: ;
-            }
+            this.EvaluateClient(request);
         }
 
         /// <summary>
