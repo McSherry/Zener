@@ -66,6 +66,10 @@ namespace McSherry.Zener.Net.Serialisation
             /// information about the server software in use.
             /// </summary>
             public const string Server = "Server";
+            /// <summary>
+            /// The header field used to send cookies.
+            /// </summary>
+            public const string Cookie = "Cookie";
         }
 
         /// <summary>
@@ -548,6 +552,69 @@ namespace McSherry.Zener.Net.Serialisation
                     base.Response.Headers.Add(
                         fieldName:  Headers.ContentType,
                         fieldValue: MediaType.Html
+                        );
+                }
+
+                // Cookies are sent to the client as headers. This means
+                // that, before we can mark the headers read-only, we need
+                // to add all the cookie headers.
+                foreach (var cookie in base.Response.Cookies)
+                {
+                    StringBuilder cBdr = new StringBuilder();
+
+                    // First comes the name of the cookie and the cookie's
+                    // value. The cookie may or may not have a value, so we
+                    // insert an empty string if the cookie doesn't have a
+                    // value.
+                    cBdr.AppendFormat("{0}={1}; ",
+                        cookie.Name, cookie.Value ?? String.Empty
+                        );
+
+                    // All of the options after this point are optional, so
+                    // all of them require checks to ensure that they have a
+                    // value.
+
+                    // The expiry instructs the user agent to discard the cookie
+                    // after a certain time.
+                    if (cookie.Expiry.HasValue)
+                    {
+                        cBdr.AppendFormat("Expires={0}; ",
+                            // Expiries are given in UTC and are formatted in the
+                            // same HTTP date format used in the 'Date' header.
+                            cookie.Expiry.Value.ToUniversalTime().ToString("R")
+                            );
+                    }
+                    // The Domain field instructs the client to only send this cookie
+                    // with requests to a specific domain.
+                    if (!String.IsNullOrWhiteSpace(cookie.Domain))
+                    {
+                        cBdr.AppendFormat("Domain={0}; ", cookie.Domain);
+                    }
+                    // The Path field specifies the path within the domain to limit
+                    // the sending of this cookie to.
+                    if (!String.IsNullOrWhiteSpace(cookie.Path))
+                    {
+                        cBdr.AppendFormat("Path={0}; ", cookie.Path);
+                    }
+                    
+                    if (cookie.HttpOnly)
+                    {
+                        cBdr.Append("HttpOnly; ");
+                    }
+                    // This flag requires that the user agent only send the cookie
+                    // over a secure connection.
+                    if (cookie.Secure)
+                    {
+                        cBdr.Append("Secure; ");
+                    }
+
+                    base.Response.Headers.Add(
+                        fieldName:  Headers.Cookie,
+                        fieldValue: cBdr.ToString(),
+                        // Each cookie is sent in a separate header field.
+                        // This means that we don't want to overwrite any
+                        // previous headers with this name.
+                        overwrite:  false
                         );
                 }
 
