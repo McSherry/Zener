@@ -22,18 +22,6 @@ namespace McSherry.Zener.Net.Serialisation
     public abstract class HttpSerialiser
         : IDisposable
     {
-        /* NOTE:    All serialisers placed within this dictionary MUST
-         *          have a constructor with the signature ctor(HttpResponse, Stream).
-         *          If they do not, and a caller of Create requests the version
-         *          for which that serialiser is used, Create will leak an
-         *          exception from Activator.CreateInstance.
-         */
-        private static Dictionary<Version, Type> _serialisersByVersion
-            = new Dictionary<Version, Type>()
-            {
-                { new Version(1,1), typeof(Rfc7230Serialiser) }
-            };
-
         /// <summary>
         /// A class containing methods for creating the encoders
         /// used in response to the contents of a client's
@@ -113,6 +101,8 @@ namespace McSherry.Zener.Net.Serialisation
             }
         }
 
+        private static readonly Version Rfc7230 = new Version(1, 1);
+
         /// <summary>
         /// Creates an HttpSerialiser instance based on the provided
         /// version.
@@ -160,20 +150,16 @@ namespace McSherry.Zener.Net.Serialisation
                     );
             }
 
-            Type T;
-            if (!_serialisersByVersion.TryGetValue(
-                new Version(httpVersion.Major, httpVersion.Minor),
-                out T
-                ))
+            if (httpVersion.Equals(Rfc7230))
+            {
+                return new Rfc7230Serialiser(response, output);
+            }
+            else
             {
                 throw new NotSupportedException(
-                    "The specified HTTP version is not supported."
+                    "There is no serialiser for the specified version."
                     );
             }
-
-            return (HttpSerialiser)Activator.CreateInstance(
-                T, response, output
-                );
         }
 
         /// <summary>
