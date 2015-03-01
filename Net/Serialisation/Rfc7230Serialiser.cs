@@ -396,6 +396,8 @@ namespace McSherry.Zener.Net.Serialisation
                     // means we need to compress the buffer before sending it.
                     if (this.BufferOutput)
                     {
+                        // TODO: Test this output buffer-compressing piece of code.
+
                         // Retrieve the memory stream's internal buffer. This
                         // lets us directly manipulate its buffer, rather than
                         // creating a new array and copying the value.
@@ -405,12 +407,25 @@ namespace McSherry.Zener.Net.Serialisation
                         // hit a problem if there is more than about 2^31 bytes in
                         // the buffer.
                         Array.Resize(ref buf, (int)_outputBuffer.Length);
-                        // Compress the contents of the buffer, and assign the
-                        // result to it.
+                        // Compress the contents of the buffer.
                         buf = _compressor.Encode(buf);
-                        // Set the length of the output buffer to the new length
-                        // of the now-compressed contents.
-                        _outputBuffer.SetLength(buf.Length);
+                        // Seek to the start of the stream.
+                        _outputBuffer.Position = 0;
+                        // Empty the memory stream.
+                        _outputBuffer.SetLength(0);
+                        // Write the compressed content to the stream.
+                        _outputBuffer.Write(buf, 0, buf.Length);
+                        // Get any finalising data from the compressor.
+                        buf = _compressor.Finalise();
+
+                        // If the length of the finalising data is zero,
+                        // there isn't anything to write.
+                        if (buf.Length > 0)
+                        {
+                            // If the length is greater than zero, however,
+                            // we do need to write the finalising data.
+                            _outputBuffer.Write(buf, 0, buf.Length);
+                        }
                     }
                 }
 
