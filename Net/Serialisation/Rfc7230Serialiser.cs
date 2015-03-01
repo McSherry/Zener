@@ -21,13 +21,13 @@ namespace McSherry.Zener.Net.Serialisation
     /// an HTTP/1.1 (RFC 7230) response.
     /// </summary>
     public sealed class Rfc7230Serialiser
-        : HttpSerialiser
+        : HttpSerialiser, IDisposable
     {        
         /// <summary>
         /// A class providing a set of constants for common
         /// HTTP header names.
         /// </summary>
-        protected internal static class Headers
+        private static class Headers
         {
             /// <summary>
             /// The header that will contain the encodings that the
