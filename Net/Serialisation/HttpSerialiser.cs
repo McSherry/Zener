@@ -22,6 +22,18 @@ namespace McSherry.Zener.Net.Serialisation
     public abstract class HttpSerialiser
         : IDisposable
     {
+        /* NOTE:    All serialisers placed within this dictionary MUST
+         *          have a constructor with the signature ctor(HttpResponse, Stream).
+         *          If they do not, and a caller of Create requests the version
+         *          for which that serialiser is used, Create will leak an
+         *          exception from Activator.CreateInstance.
+         */
+        private static Dictionary<Version, Type> _serialisersByVersion
+            = new Dictionary<Version, Type>()
+            {
+                { new Version(1,1), typeof(Rfc7230Serialiser) }
+            };
+
         /// <summary>
         /// A class containing methods for creating the encoders
         /// used in response to the contents of a client's
@@ -99,6 +111,69 @@ namespace McSherry.Zener.Net.Serialisation
                 // and return it to the caller.
                 return (IEncoder)Activator.CreateInstance(T);
             }
+        }
+
+        /// <summary>
+        /// Creates an HttpSerialiser instance based on the provided
+        /// version.
+        /// </summary>
+        /// <param name="httpVersion">
+        /// The version of HTTP to create a serialiser for. Only the
+        /// major and minor versions are considered.
+        /// </param>
+        /// <param name="response">
+        /// The HttpResponse to be serialised.
+        /// </param>
+        /// <param name="output">
+        /// The Stream to write the serialised data to.
+        /// </param>
+        /// <returns>
+        /// An HttpSerialiser instance for the specified HTTP version.
+        /// </returns>
+        /// <exception cref="System.NotSupportedException">
+        /// Thrown when no serialiser exists for the specified HTTP
+        /// version.
+        /// </exception>
+        public static HttpSerialiser Create(
+            Version httpVersion,
+            HttpResponse response, Stream output
+            )
+        {
+            if (httpVersion == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided Version must not be null."
+                    );
+            }
+
+            if (response == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided HttpResponse must not be null."
+                    );
+            }
+
+            if (output == null)
+            {
+                throw new ArgumentNullException(
+                    "The provided output Stream must not be null."
+                    );
+            }
+
+            Type T;
+            if (!_serialisersByVersion.TryGetValue(
+                new Version(httpVersion.Major, httpVersion.Minor),
+                out T
+                ))
+            {
+                throw new NotSupportedException(
+                    "The specified HTTP version is not supported."
+                    );
+            }
+
+            return (HttpSerialiser)Activator.CreateInstance(
+                T, response, output
+                );
         }
 
         /// <summary>
