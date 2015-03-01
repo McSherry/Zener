@@ -313,7 +313,7 @@ namespace McSherry.Zener.Net
         internal HttpResponse()
         {
             _httpStatus = HttpStatus.OK;
-            this.Encoding = Encoding.UTF8;
+            _encoding = Encoding.UTF8;
             _headers = new HttpHeaderCollection();
             _cookies = new HttpCookieCollection();
         }
@@ -388,6 +388,9 @@ namespace McSherry.Zener.Net
             get { return _encoding; }
             set
             {
+                this.CheckClosed();
+                this.CheckSerialiser();
+
                 if (value == null)
                 {
                     throw new ArgumentNullException(
