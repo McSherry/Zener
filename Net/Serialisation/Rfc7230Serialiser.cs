@@ -69,7 +69,7 @@ namespace McSherry.Zener.Net.Serialisation
             /// <summary>
             /// The header field used to send cookies.
             /// </summary>
-            public const string Cookie = "Cookie";
+            public const string SetCookie = "Set-Cookie";
         }
 
         /// <summary>
@@ -609,8 +609,8 @@ namespace McSherry.Zener.Net.Serialisation
                     }
 
                     base.Response.Headers.Add(
-                        fieldName:  Headers.Cookie,
-                        fieldValue: cBdr.ToString(),
+                        fieldName:  Headers.SetCookie,
+                        fieldValue: cBdr.ToString().TrimEnd(' ', ';'),
                         // Each cookie is sent in a separate header field.
                         // This means that we don't want to overwrite any
                         // previous headers with this name.
