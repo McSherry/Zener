@@ -557,6 +557,35 @@ namespace McSherry.Zener.Core
 
             return type;
         }
+        /// <summary>
+        /// Attempts to create a MediaType class from a string.
+        /// </summary>
+        /// <param name="mediaType">The string to parse.</param>
+        /// <param name="type">
+        /// The MediaType that will be given the parsed value if
+        /// creation succeeds.
+        /// </param>
+        /// <returns>True if creation succeeds.</returns>
+        public static bool TryCreate(string mediaType, out MediaType type)
+        {
+            bool success;
+
+            try
+            {
+                type = MediaType.Create(mediaType);
+                success = true;
+            }
+            // Yes, I know, bad practice to catch all exceptions. However,
+            // the whole point of this method is to not throw an exception
+            // when something goes wrong with parsing the MediaType.
+            catch (Exception)
+            {
+                type = null;
+                success = false;
+            }
+
+            return success;
+        }
         
         /// <summary>
         /// Converts a string to a MediaType by passing the string
