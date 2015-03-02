@@ -123,6 +123,15 @@ namespace McSherry.Zener.Net
         {
 
         }
+        /// <summary>
+        /// Creates a new HttpFatalException.
+        /// </summary>
+        /// <param name="message">The message to send with the exception.</param>
+        public HttpFatalException(string message)
+            : base((HttpStatus)(-1), message)
+        {
+
+        }
     }
 
     /// <summary>
