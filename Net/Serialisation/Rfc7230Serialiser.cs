@@ -27,7 +27,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// A class providing a set of constants for common
         /// HTTP header names.
         /// </summary>
-        private static class Headers
+        internal static class Headers
         {
             /// <summary>
             /// The header that will contain the encodings that the
