@@ -15,6 +15,44 @@ using System.Dynamic;
 namespace McSherry.Zener.Net.Serialisation
 {
     /// <summary>
+    /// The exception used when an HTTP request times out
+    /// (status code 408).
+    /// </summary>
+    public class HttpRequestTimeoutException
+        : HttpException
+    {
+        /// <summary>
+        /// Creates a new HttpRequestTimeoutException.
+        /// </summary>
+        public HttpRequestTimeoutException()
+            : base(HttpStatus.RequestTimeout)
+        {
+
+        }
+        /// <summary>
+        /// Creates a new HttpRequestTimeoutException.
+        /// </summary>
+        /// <param name="message">The message to send with the exception.</param>
+        public HttpRequestTimeoutException(string message)
+            : base(HttpStatus.RequestTimeout, message)
+        {
+
+        }
+        /// <summary>
+        /// Creates a new HttpRequestTimeoutException.
+        /// </summary>
+        /// <param name="message">The message to send with the exception.</param>
+        /// <param name="innerException">
+        /// The exception that caused this exception to be raised.
+        /// </param>
+        public HttpRequestTimeoutException(string message, Exception innerException)
+            : base(HttpStatus.RequestTimeout, message, innerException)
+        {
+
+        }
+    }
+
+    /// <summary>
     /// The base class for implementing a deserialiser that
     /// transforms data in to an HttpRequest class.
     /// </summary>
