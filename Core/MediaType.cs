@@ -72,6 +72,42 @@ namespace McSherry.Zener.Core
             /// </summary>
             Parameter
         }
+
+        /// <summary>
+        /// Implements an IEqualityComparer for MediaType that uses
+        /// the MediaType.IsEquivalent method to determine equality.
+        /// </summary>
+        public class EquivalencyComparer : IEqualityComparer<MediaType>
+        {
+            /// <summary>
+            /// Determines whether the left-hand MediaType is
+            /// equivalent to the right-hand MediaType.
+            /// </summary>
+            /// <param name="lhs">The left-hand MediaType.</param>
+            /// <param name="rhs">The right-hand MediaType.</param>
+            /// <returns>
+            /// True if the left-hand MediaType is equivalent
+            /// to the right-hand MediaType.
+            /// </returns>
+            public bool Equals(MediaType lhs, MediaType rhs)
+            {
+                return lhs.IsEquivalent(rhs);
+            }
+            /// <summary>
+            /// Retrieves a hash code for the MediaType.
+            /// </summary>
+            /// <param name="mt">
+            /// The MediaType to retrieve the hash code for.
+            /// </param>
+            /// <returns>
+            /// The hash code of the provided MediaType.
+            /// </returns>
+            public int GetHashCode(MediaType mt)
+            {
+                return mt.GetHashCode();
+            }
+        }
+
         private static readonly Dictionary<MediaTypeRegTree, string>
             MediaTypeRegTreeStrings = new Dictionary<MediaTypeRegTree, string>()
         {
