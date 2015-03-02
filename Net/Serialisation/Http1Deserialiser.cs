@@ -315,7 +315,7 @@ namespace McSherry.Zener.Net.Serialisation
                 new MediaType.EquivalencyComparer()
                 )
             {
-                /*
+                /* TODO: Move over multipart/form-data parsing
                 { "multipart/form-data",                ParseMultipartFormData  },
                 */
                 { "application/x-www-form-urlencoded",  ParseFormUrlEncoded     },
@@ -608,6 +608,8 @@ namespace McSherry.Zener.Net.Serialisation
             // right at the end that we can jump to.
             readBodyExit: ;
             }
+
+            // TODO: Implement cookie deserialisation
 
         deserialiseExit:
             // The user shouldn't be able to modify the headers, since they
