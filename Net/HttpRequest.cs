@@ -475,8 +475,8 @@ namespace McSherry.Zener.Net
             return dynObj.Count == 0 ? (dynamic)new Empty() : (dynamic)dynObj;
         }
 
-        private HttpHeaderCollection _headers;
-        private dynamic _get, _post, _cookies;
+        internal HttpHeaderCollection _headers;
+        internal dynamic _get, _post, _cookies;
 
         /// <summary>
         /// Parses the HTTP Request Line and sets the appropriate properties
@@ -561,12 +561,12 @@ namespace McSherry.Zener.Net
                     Encoding.ASCII.GetBytes(parts[1].Substring(strIndex))
                     ))
                 {
-                    this.GET = ParseFormUrlEncoded(this, ms);
+                    _get = ParseFormUrlEncoded(this, ms);
                 }
             }
             else
             {
-                this.GET = new Empty();
+                _get = new Empty();
             }
 
             this.HttpVersion = parts[2];
@@ -629,6 +629,7 @@ namespace McSherry.Zener.Net
         /// <exception cref="McSherry.Zener.Net.HttpLengthRequiredException">
         ///     Thrown when the request does not include a Content-Length header.
         /// </exception>
+        [Obsolete]
         public static HttpRequest Create(Stream stream)
         {
             if (stream == null)
@@ -786,7 +787,7 @@ namespace McSherry.Zener.Net
                     ms.Position = 0;
                 }
 
-                request.Headers = headers;
+                request._headers = headers;
                 // Determine how to handle the POST data, then call the
                 // appropriate handler. Set the POST property to the
                 // result.
@@ -800,7 +801,7 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// Create a new HttpRequest to be manually initialised.
         /// </summary>
-        private HttpRequest()
+        internal HttpRequest()
         {
 
         }
@@ -811,7 +812,7 @@ namespace McSherry.Zener.Net
         public string Method
         {
             get;
-            private set;
+            internal set;
         }
         /// <summary>
         /// The path requested by the HTTP user agent, sans any query
@@ -820,7 +821,7 @@ namespace McSherry.Zener.Net
         public string Path
         {
             get;
-            private set;
+            internal set;
         }
         /// <summary>
         /// The HTTP version requested by the user agent.
@@ -828,7 +829,7 @@ namespace McSherry.Zener.Net
         public string HttpVersion
         {
             get;
-            private set;
+            internal set;
         }
         /// <summary>
         /// The HTTP headers sent with the request.
@@ -836,7 +837,6 @@ namespace McSherry.Zener.Net
         public HttpHeaderCollection Headers
         {
             get { return _headers; }
-            private set { _headers = value; }
         }
         /// <summary>
         /// All POST parameters sent with the request.
@@ -851,7 +851,6 @@ namespace McSherry.Zener.Net
         public dynamic GET
         {
             get { return _get; }
-            private set { _get = value; }
         }
         /// <summary>
         /// Any cookies sent with the request.
