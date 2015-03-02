@@ -104,7 +104,16 @@ namespace McSherry.Zener.Core
             /// </returns>
             public int GetHashCode(MediaType mt)
             {
-                return mt.GetHashCode();
+                unchecked
+                {
+                    return
+                        (mt.SuperType.GetHashCode()         * 2)    +
+                        (mt.RegistrationTree.GetHashCode()  * 3)    +
+                        (mt.SubType.GetHashCode()           * 5)    +
+                        0x4389AB3 // Random prime number as a seed
+                        ;
+                        
+                }
             }
         }
 
