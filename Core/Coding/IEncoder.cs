@@ -40,13 +40,19 @@ namespace McSherry.Zener.Core.Coding
         /// <summary>
         /// Encodes the provided data.
         /// </summary>
-        /// <param name="data">
-        /// The data to encode.
+        /// <param name="data">The data to encode.</param>
+        /// <param name="startIndex">
+        /// The index within the array to begin encoding
+        /// from.
+        /// </param>
+        /// <param name="count">
+        /// The number of bytes in the array, from the start
+        /// index, to encode.
         /// </param>
         /// <returns>
         /// The encoded data as a byte array.
         /// </returns>
-        byte[] Encode(byte[] data);
+        byte[] Encode(byte[] data, int startIndex, int count);
         /// <summary>
         /// Performs any required finalising action.
         /// </summary>

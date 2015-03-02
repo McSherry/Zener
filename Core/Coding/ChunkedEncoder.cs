@@ -87,41 +87,45 @@ namespace McSherry.Zener.Core.Coding
         /// encoding scheme.
         /// </summary>
         /// <param name="data">The data to encode.</param>
+        /// <param name="startIndex">
+        /// The index within the array to begin encoding
+        /// from.
+        /// </param>
+        /// <param name="count">
+        /// The number of bytes in the array, from the start
+        /// index, to encode.
+        /// </param>
         /// <returns>The provided data, as a chunk.</returns>
         /// <exception cref="System.ArgumentNullException">
         /// Thrown when the provided data is null.
         /// </exception>
-        public byte[] Encode(byte[] data)
-        {
-            if (data == null)
-            {
-                throw new ArgumentNullException(
-                    "The provided data must not be null."
-                    );
-            }
-
+        public byte[] Encode(byte[] data, int startIndex, int count)
+        {            
             // We want to catch any zero-data before attempting
             // to encode it. A "zero-length" (length field with
             // hex digit 0 and no data between CRLFs) chunk
             // indicates the end of the stream of chunks, so we
             // don't want the user to accidentally send that.
             if (data.Length == 0) return data;
+            // Ensure that the caller has provided us with a valid
+            // set of bounds.
+            Coding.ValidateBounds(data, startIndex, count);
 
             // Convert the length of the data, in bytes, to
             // a hexadecimal string, then convert that string
             // to a set of ASCII bytes.
             byte[] lenBytes = Encoding.ASCII.GetBytes(
-                data.Length.ToString("x")
+                count.ToString("x")
                 );
 
             // The final data will be the hex string containing
             // the length of the data, followed by a CRLF, followed
             // by the data itself, and terminated with a CRLF.
-            byte[] fin = new byte[lenBytes.Length + (2 * CRLF.Length) + data.Length];
+            byte[] fin = new byte[lenBytes.Length + (2 * CRLF.Length) + count];
 
             Buffer.BlockCopy(lenBytes, 0, fin, 0, lenBytes.Length);
             Buffer.BlockCopy(CRLF, 0, fin, lenBytes.Length, CRLF.Length);
-            Buffer.BlockCopy(data, 0, fin, CRLF.Length + lenBytes.Length, data.Length);
+            Buffer.BlockCopy(data, startIndex, fin, CRLF.Length + lenBytes.Length, count);
             Buffer.BlockCopy(CRLF, 0, fin, fin.Length - CRLF.Length, CRLF.Length);
 
             return fin;

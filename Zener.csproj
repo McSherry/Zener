@@ -70,6 +70,7 @@
     <Compile Include="Archives\UstarArchive.cs" />
     <Compile Include="Archives\ZlibArchive.cs" />
     <Compile Include="Core\Coding\ChunkedEncoder.cs" />
+    <Compile Include="Core\Coding\Coding.cs" />
     <Compile Include="Core\Coding\IDecoder.cs" />
     <Compile Include="Core\Coding\IEncoder.cs" />
     <Compile Include="Core\HostRouter.cs" />

@@ -44,10 +44,18 @@ namespace McSherry.Zener.Core.Coding
         /// <param name="data">
         /// The data to decode.
         /// </param>
+        /// <param name="startIndex">
+        /// The index within the array to begin decoding
+        /// from.
+        /// </param>
+        /// <param name="count">
+        /// The number of bytes in the array, from the start
+        /// index, to decode.
+        /// </param>
         /// <returns>
         /// The decoded data as a byte array.
         /// </returns>
-        byte[] Decode(byte[] data);
+        byte[] Decode(byte[] data, int startIndex, int count);
         /// <summary>
         /// Performs any required finalising action.
         /// </summary>
