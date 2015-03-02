@@ -21,9 +21,25 @@ namespace McSherry.Zener.Net.Serialisation
         : IDisposable
     {
         /// <summary>
+        /// The default/recommended timeout value, in milliseconds.
+        /// </summary>
+        protected const int DefaultTimeout = 30000;
+
+        /// <summary>
         /// The stream containing the request to deserialise.
         /// </summary>
         protected readonly Stream RequestStream;
+        /// <summary>
+        /// The request to assign deserialised values to.
+        /// </summary>
+        protected readonly HttpRequest pRequest;
+
+        /// <summary>
+        /// The method which implements deserialisation using the
+        /// protected RequestStream property, and which assigns the
+        /// deserialised data to the protected pRequest
+        /// </summary>
+        protected abstract void Deserialise();
 
         /// <summary>
         /// Creates a new HttpDeserialiser.
@@ -54,6 +70,18 @@ namespace McSherry.Zener.Net.Serialisation
             }
 
             this.RequestStream = input;
+            this.pRequest = new HttpRequest();
+
+            this.Deserialise();
+        }
+
+        /// <summary>
+        /// The request that was created by deserialising
+        /// the data in the provided stream.
+        /// </summary>
+        public HttpRequest Request
+        {
+            get { return this.pRequest; }
         }
 
         /// <summary>
