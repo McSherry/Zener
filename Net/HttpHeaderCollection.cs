@@ -178,6 +178,17 @@ namespace McSherry.Zener.Net
 
             _headerList.Add(header);
         }
+        /// <summary>
+        /// Adds a set of headers to the collection.
+        /// </summary>
+        /// <param name="headers">The headers to add to the collection.</param>
+        public void AddRange(IEnumerable<HttpHeader> headers)
+        {
+            foreach (var header in headers)
+            {
+                this.Add(header);
+            }
+        }
 
         /// <summary>
         /// Removes all headers with the specified field name.
