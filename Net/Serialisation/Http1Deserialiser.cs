@@ -76,7 +76,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// Thrown when the client sends an invalid or malformed request
         /// line.
         /// </exception>
-        /// <exception cref="System.HttpRequestException">
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
         /// <para>
         /// Thrown when the client sends a query string with invalid
         /// percent-encoded characters.
