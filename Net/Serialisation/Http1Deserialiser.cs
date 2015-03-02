@@ -54,6 +54,12 @@ namespace McSherry.Zener.Net.Serialisation
         /// Thrown when the client sends an invalid or malformed request
         /// line.
         /// </exception>
+        /// <exception cref="System.HttpRequestException">
+        /// <para>
+        /// Thrown when the client sends a query string with invalid
+        /// percent-encoded characters.
+        /// </para>
+        /// </exception>
         private static void ParseRequestLine(HttpRequest rq, string rqLine)
         {
             // As is written in Deserialise, a client may send as many empty
@@ -184,38 +190,89 @@ namespace McSherry.Zener.Net.Serialisation
                     break;
                 }
             }
-            // What we do next depends on whether we have a query string.
-            if (hasQuery)
+
+            try
             {
-                // If we have one, we take the bottom section of the
-                // string (the bit before the question mark) and set
-                // the request's path to its value.
-                rq.Path = path.Substring(0, strIndex);
+                // What we do next depends on whether we have a query string.
+                if (hasQuery)
+                {
+                    // If we have one, we take the bottom section of the
+                    // string (the bit before the question mark) and set
+                    // the request's path to its value.
+                    rq.Path = path.Substring(0, strIndex).UrlDecode();
 
-                // We only want to parse the query string if it isn't
-                // zero length. It is possible that the client sent us
-                // a URL with a question mark but no actual variables.
-                // 
-                //  For example:     example.org?
-                //
-
-                // Except for the prefixing question mark, query string
-                // variables obey exactly the format used in POST requests
-                // with the application/x-www-form-urlencoded media type.
-                // This means that we can just call the same method we
-                // use with POST requests for GET variables.
-                //
-                // At this point, strIndex will be on the query string's
-                // prefixing question mark. We don't want this in the
-                // string we're parsing, so we need to increment past it.
-                rq._get = ParseFormUrlEncoded(path.Substring(++strIndex));
+                    // We only want to parse the query string if it isn't
+                    // zero length. It is possible that the client sent us
+                    // a URL with a question mark but no actual variables.
+                    // 
+                    //  For example:     example.org?
+                    //
+                    // Except for the prefixing question mark, query string
+                    // variables obey exactly the format used in POST requests
+                    // with the application/x-www-form-urlencoded media type.
+                    // This means that we can just call the same method we
+                    // use with POST requests for GET variables.
+                    //
+                    // At this point, strIndex will be on the query string's
+                    // prefixing question mark. We don't want this in the
+                    // string we're parsing, so we need to increment past it.
+                    rq._get = ParseFormUrlEncoded(path.Substring(++strIndex));
+                }
+                else
+                {
+                    // If there's no query string, it means the entire part
+                    // comprises the request path, so we just set the path
+                    // to the entirety of the received path string.
+                    rq.Path = path.UrlDecode();
+                }
             }
+            // The method ParseFormUrlEncoded calls UrlDecode internally.
+            // This method will, if the client sends invalid percent-encoded
+            // characters, throw a FormatException.
+            //
+            // In addition, the path may contain encoded characters, which
+            // may result in the setting of the HttpRequest.Path property
+            // throwing an exception.
+            //
+            // This fault isn't necessarily fatal (i.e. it may be worthwhile
+            // to send a response to the client rather than just closing the
+            // connection), so we throw an HttpRequestException instead of
+            // an HttpFatalException.
+            catch (FormatException fex)
+            {
+                throw new HttpRequestException(
+                    "The client sent invalid percent-encoded characters " +
+                    "in its request line.",
+                    fex
+                    );
+            }
+
+            // We're using a regular expression both to check whether the HTTP
+            // version string sent with the request is valid and to extract the
+            // version identifier from that string (i.e. HTTP/1.1 -> 1.1).
+            var match = RequestVersionRegex.Match(parts[2]);
+            // If the client's version string matches our regular expression,
+            // we can proceed.
+            if (match.Success)
+            {
+                // If we end up here, we know that the version string is going
+                // to be something that Version can parse without issue, so we
+                // don't need a try-catch.
+                //
+                // We used a named group in our regular expression, which means
+                // we can access the value via the key "Version".
+                rq.HttpVersion = new Version(match.Groups["Version"].Value);
+            }
+            // If it doesn't, it means we can't be sure whether the client speaks
+            // HTTP. We're not throwing HttpRequestException because a malformed
+            // HTTP version is much more likely to mean that the request has come
+            // from a non-HTTP client than a malformed percent-encoded string, which
+            // might have come from a poorly-written HTTP client.
             else
             {
-                // If there's no query string, it means the entire part
-                // comprises the request path, so we just set the path
-                // to the entirety of the received path string.
-                rq.Path = path;
+                throw new HttpFatalException(
+                    "The client sent an invalid HTTP version string."
+                    );
             }
         }
 
@@ -228,7 +285,7 @@ namespace McSherry.Zener.Net.Serialisation
             RequestLineWhiteSpaceArray = RequestLineWhiteSpace.ToArray();
 
             RequestVersionRegex = new Regex(
-                @"HTTP/([0-9]{1}\.[0-9]{1})",
+                @"HTTP/(?<Version>[0-9]{1}\.[0-9]{1})",
                 RegexOptions.Compiled
                 );
         }
