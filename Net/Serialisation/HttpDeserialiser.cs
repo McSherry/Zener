@@ -40,6 +40,37 @@ namespace McSherry.Zener.Net.Serialisation
         /// deserialised data to the protected pRequest
         /// </summary>
         protected abstract void Deserialise();
+        
+        /// <summary>
+        /// Parses the provided string, assuming it is in the
+        /// application/x-www-form-urlencoded format.
+        /// </summary>
+        /// <param name="req">The HttpRequest sending the data.</param>
+        /// <param name="body">The stream containing the request body.</param>
+        /// <returns>
+        /// If the string contains any key-value pairs, an
+        /// ExpandoObject containing them. Else, an Empty.
+        /// </returns>
+        protected static dynamic ParseFormUrlEncoded(HttpRequest req, Stream body)
+        {
+            using (var sr = new StreamReader(body))
+            {
+                return ParseFormUrlEncoded(sr.ReadToEnd());
+            }
+        }
+        /// <summary>
+        /// Parses the provided string, assuming it is in the
+        /// application/x-www-form-urlencoded format.
+        /// </summary>
+        /// <param name="body">The string to parse.</param>
+        /// <returns>
+        /// If the string contains any key-value pairs, an
+        /// ExpandoObject containing them. Else, an Empty.
+        /// </returns>
+        protected static dynamic ParseFormUrlEncoded(string body)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// Creates a new HttpDeserialiser.
