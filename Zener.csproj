@@ -94,6 +94,7 @@
     <Compile Include="Net\NameValueHttpHeader.cs" />
     <Compile Include="Net\Networking.cs" />
     <Compile Include="Net\OrderedCsvHttpHeader.cs" />
+    <Compile Include="Net\Serialisation\Http1Deserialiser.cs" />
     <Compile Include="Net\Serialisation\HttpDeserialiser.cs" />
     <Compile Include="Net\Serialisation\HttpSerialiser.cs" />
     <Compile Include="Net\Rfc2045.cs" />
