@@ -401,6 +401,20 @@ namespace McSherry.Zener.Net.Serialisation
             // can read until we reach a blank line.
             do
             {
+                // We're reading from the network again, so we need to make sure
+                // that we don't time out. This time we won't be using the short
+                // circuit timeout, but the default timeout value provided by the
+                // HttpDeserialiser base class.
+                if ((DateTime.Now - start).TotalMilliseconds > DefaultTimeout)
+                {
+                    // The timeout has elapsed, so we need to throw the
+                    // appropriate exception and provide a suitable error
+                    // message to go with it.
+                    throw new HttpRequestTimeoutException(
+                        "The client took too long to send its headers."
+                        );
+                }
+
                 // We've already read a line from the stream and verified that it
                 // is not null or empty, so we can append it to the StringBuilder.
                 hdrBdr.AppendLine(line);
@@ -434,7 +448,167 @@ namespace McSherry.Zener.Net.Serialisation
                     aex
                     );
             }
-            
+
+            // The 'Content-Length' header tells us two things: 1) whether the
+            // client has sent a request body; and 2) how long, in bytes, that
+            // request body is.
+            var ctnLen = base.Request
+                .Headers[Rfc7230Serialiser.Headers.ContentLength]
+                // It is possible that the client has sent multiple
+                // 'Content-Length' headers (it could be a programmable client
+                // and the programmer has opted, intentionally or otherwise, to
+                // send multiple). We will consider the last header to be the
+                // valid one, as that is the header that will have been set
+                // the closest to the sending of the request.
+                .LastOrDefault();
+            // If the client sent a request body, we need to know its type
+            // to be able to parse it. This means that the client should also
+            // have sent a 'Content-Type' header.
+            var ctnType = base.Request
+                .Headers[Rfc7230Serialiser.Headers.ContentType]
+                // For the same reason as with the 'Content-Length' header,
+                // we take the last 'Content-Type' header present in the
+                // request.
+                .LastOrDefault();
+
+            // If the retrieved header is the default value, it means
+            // that the client sent no 'Content-Length' header. This is not
+            // an error, as in most cases the client won't be sending a
+            // request with a body.
+            //
+            // We only want to proceed with request body parsing if there
+            // is a request body, and we're using the presence of the header
+            // to determine the presence of the request body.
+            //
+            // We also need to check whether the client sent a 'Content-Type'
+            // with its request body. We can only proceed if it has, as otherwise
+            // we would not be able to determine whether we could parse the body.
+            if (ctnLen != default(HttpHeader) && ctnType != default(HttpHeader))
+            {
+                // We receive and parse the header value as a string, which
+                // means we won't catch an invalid value when parsing the
+                // header.
+                //
+                // The 'Content-Length' header needs to be a valid positive
+                // integer. We are unlikely to be receiving 4GiB+ files, so
+                // a UInt32 is fine. Using an unsigned integer has the
+                // additional benefit of saving us having to check to see
+                // whether the value is positive.
+                uint contentLength;
+                if (!UInt32.TryParse(ctnLen.Value, out contentLength))
+                {
+                    throw new HttpRequestException(
+                        "The client sent an invalid \"Content-Length\" header."
+                        );
+                }
+                // It is perfectly valid for the client to send a
+                // 'Content-Length' header for a zero-length body. We need
+                // to check for this.
+                if (contentLength == 0)
+                {
+                    base.Request._post = new Empty();
+                    // If the body is zero-length, we have nothing to read,
+                    // so we skip to the end of the body-reading block.
+                    goto readBodyExit;
+                }
+
+                // As with the 'Content-Length' header, we need to make sure
+                // that the 'Content-Type' header is valid.
+                MediaType contentType;
+                if (!MediaType.TryCreate(ctnType.Value, out contentType))
+                {
+                    throw new HttpRequestException(
+                        "The client sent an invalid \"Content-Type\" header."
+                        );
+                }
+                // If we don't have a handler for the media type specified
+                // by the client, there's no point wasting time and memory
+                // reading the body.
+                if (!PostHandlers.ContainsKey(contentType))
+                {
+                    // We're not going to be parsing any POST data, so we
+                    // need to make sure the HttpRequest.POST property gives
+                    // an Empty.
+                    base.Request._post = new Empty();
+                    goto readBodyExit;
+                }
+
+                // If we're here, we're going to be reading the request body.
+                // To do that, we'll need somewhere to store the data before
+                // processing. This somewhere will be an array. We are, however,
+                // also going to need a MemoryStream for passing to our POST
+                // parser methods.
+                //
+                // We're also entering a new scope here to encourage early
+                // garbage collection of the resources. Premature optimisation,
+                // maybe, but there's no performance or readability detraction,
+                // so we might as well.
+                {
+                    byte[] bodyBuffer = new byte[contentLength];
+                    using (var bodyStream = new MemoryStream(bodyBuffer))
+                    {
+                        // The running total lets us know how much we've read,
+                        // and allows us to calculate how much we have to read.
+                        //
+                        // We need to keep a running total because calls to
+                        // NetworkStream.Read will not block. Instead, they
+                        // will read what is available and then return, regardless
+                        // of whether what is read is the same length as what
+                        // was requested.
+                        int runningTotal = 0;
+                        // We need to iterate until we've read as many bytes
+                        // as we can store in the byte array.
+                        while (runningTotal != bodyBuffer.Length)
+                        {
+                            // If the timeout expires while we're reading, we need
+                            // to throw an exception.
+                            if ((DateTime.Now - start).TotalMilliseconds > DefaultTimeout)
+                            {
+                                throw new HttpRequestTimeoutException(
+                                    "The client took too long to send its request body."
+                                    );
+                            }
+
+                            // The method Read returns an int indicating how many
+                            // bytes have been read from the stream. We can add this
+                            // to our running total variable to keep track of how
+                            // much we've read.
+                            runningTotal += base.RequestStream.Read(
+                                // As we instantiated the MemoryStream with a reference
+                                // to this byte array, writing to the byte array will
+                                // also write to the MemoryStream. It also has the
+                                // benefit of not advancing the MemoryStream's position.
+                                buffer: bodyBuffer,
+                                // We don't want to overwrite any previously-read bytes,
+                                // so we need to start reading bytes from the Stream in
+                                // to the buffer at the location we left off at.
+                                offset: runningTotal,
+                                // The count is just the number of bytes read subtracted
+                                // from the number of bytes to be read.
+                                count:  bodyBuffer.Length - runningTotal
+                                );
+                        }
+
+                        // We've read the body, and we know that we support the media
+                        // type that the client requested, so now all that's left is
+                        // to put the body data through the handler for that media type.
+                        //
+                        // These handlers return a dynamic, and so they deal with 
+                        // returning Empty. They should also only throw exceptions that
+                        // are subclasses of HttpException, so we shouldn't need a
+                        // try-catch around them.
+                        base.Request._post = PostHandlers[contentType](
+                            request:    base.Request,
+                            body:       bodyStream
+                            );
+                    }
+                }
+            // There are situations where we'll need to exit from the parsing
+            // of the request body. To make this easier, we're using a label
+            // right at the end that we can jump to.
+            readBodyExit: ;
+            }
+
         deserialiseExit:
             // The user shouldn't be able to modify the headers, since they
             // were sent in a request and are concrete. To ensure that the
