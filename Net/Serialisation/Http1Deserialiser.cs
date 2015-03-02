@@ -328,6 +328,86 @@ namespace McSherry.Zener.Net.Serialisation
                         );
                 }
             } while (String.IsNullOrEmpty(line));
+
+            // We've received our first non-empty line. This line should, then,
+            // contain the client's request line. To parse it, we hand it off to
+            // the ParseRequestLine function along with the HttpRequest we want to
+            // populate with values.
+            ParseRequestLine(base.Request, line);
+            // The next request line should contain headers. It would be highly
+            // unusual for a client to send a request with no headers, but it
+            // would be completely valid.
+            line = base.RequestStream.ReadAsciiLine();
+
+            // Regardless of whether there are headers to parse, we're going to
+            // need to 
+            base.Request._headers = new HttpHeaderCollection();
+            // How we proceed depends on whether the line is empty or not. If it
+            // is empty, it means that the client has sent no headers, so we don't
+            // have anything more to parse.
+            if (String.IsNullOrEmpty(line))
+            {
+                // If we're here, there's nothing left to parse from the
+                // request. Set anything we would have parsed to its default
+                // value.
+                base.Request._post = new Empty();
+                base.Request._cookies = new Empty();
+
+                // Since there's nothing left to do, skip to the exit
+                // point of the method. This will perform any required finishing
+                // up (like making Headers read-only) and will return from the
+                // function.
+                goto deserialiseExit;
+            }
+
+            // HTTP headers can span multiple lines. While this is uncommon in the
+            // wild, it is still something we need to support. It's already
+            // by HttpHeader (in ParseMany), we just need to use a StringBuilder to
+            // read multiple lines in to one string.
+            StringBuilder hdrBdr = new StringBuilder();
+            // Headers are separated from the body by a blank line. This means we
+            // can read until we reach a blank line.
+            do
+            {
+                // We've already read a line from the stream and verified that it
+                // is not null or empty, so we can append it to the StringBuilder.
+                hdrBdr.AppendLine(line);
+                // We now need to read the next line from the stream.
+                line = base.RequestStream.ReadAsciiLine();
+            }
+            while (!String.IsNullOrEmpty(line));
+
+            // The method ParseMany will throw an exception if we received an
+            // invalid or malformed header, so we need to wrap this in a try-catch.
+            try
+            {
+                // ParseMany takes a TextReader as an argument, and we've got a
+                // source string. This means we just need to feed the string in to
+                // a StringReader, and the StringReader in to ParseMany.
+                using (var sr = new StringReader(hdrBdr.ToString()))
+                {
+                    base.Request.Headers.AddRange(HttpHeader.ParseMany(sr));
+                }
+            }
+            catch (ArgumentException aex)
+            {
+                // ParseMany threw an exception, which means that the client sent
+                // invalid headers. If we got to this stage, it means the client
+                // sent a valid request line. This means it would make sense to
+                // respond to the client rather than close the connection. For this
+                // reason, we throw an HttpRequestException instead of an
+                // HttpFatalException.
+                throw new HttpRequestException(
+                    "The client sent invalid or malformed HTTP headers.",
+                    aex
+                    );
+            }
+            
+        deserialiseExit:
+            // The user shouldn't be able to modify the headers, since they
+            // were sent in a request and are concrete. To ensure that the
+            // user doesn't, we mark the HttpHeaderCollection read-only.
+            base.Request._headers.IsReadOnly = true;
         }
 
         /// <summary>
