@@ -12,7 +12,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
 
-using MediaType = McSherry.Zener.Core.MediaType;
+using ExpandoObject = System.Dynamic.ExpandoObject;
+using MediaType     = McSherry.Zener.Core.MediaType;
 
 namespace McSherry.Zener.Net.Serialisation
 {
@@ -304,12 +305,58 @@ namespace McSherry.Zener.Net.Serialisation
         /// <param name="request">
         /// The request to parse cookies from and assign to.
         /// </param>
-        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
-        /// Thrown when the client sends a malformed "Cookie" header.
-        /// </exception>
         private static void ParseCookies(HttpRequest request)
         {
-            throw new NotImplementedException();
+            // The client will send us cookies in zero or more 'Cookie'
+            // headers. Thankfully, the format the client sends us cookies
+            // in is much simpler than the format we send cookies to the
+            // client in.
+            var cookieHeaders = request.Headers[Rfc7230Serialiser.Headers.Cookie];
+            // If there are no cookies, we've not got anything to deserialise.
+            // Check to see whether the client sent any 'Cookie' headers.
+            if (cookieHeaders.Count == 0)
+            {
+                // The client hasn't sent any cookies, so we set
+                // the property to Empty.
+                request._cookies = new Empty();
+                // Nothing more to do, so return from the method.
+                return;
+            }
+
+            // Cookies are key-value pairs, and the Cookie property of
+            // HttpRequest is a dynamic. The best thing to use is an ExpandoObject,
+            // as it implements IDictionary and supports dynamic stuff.
+            var cookies = new ExpandoObject() as IDictionary<string, object>;
+            
+            // We need to iterate through every 'Cookie' header sent to
+            // make sure that we get every cookie that the client sent.
+            foreach (var header in cookieHeaders)
+            {
+                // Cookies are (potentially quoted) key-value pairs, so we
+                // use our appropriate parsing
+                var pairs = NameValueHttpHeader.ParsePairs(header.Value);
+                // Each pair we retrieve is then an individual cookie.
+                foreach (var pair in pairs)
+                {
+                    // We need to iterate through each individual cookie and
+                    // add it to the dictionary. We cannot, however, use the
+                    // method Add, as this will throw an exception if the key
+                    // is already present. This requires we use the indexer.
+                    //
+                    // As with POST/GET variables, we need to URL-decode and
+                    // filter the variable's name, and URL-decode the variable's
+                    // value.
+                    //
+                    // This probably ends up being O(scary).
+                    cookies[FilterInvalidNameCharacters(pair.Key.UrlDecode())]
+                        = pair.Value.UrlDecode();
+                }
+            }
+
+            // We've iterated through and parsed all the cookies, so now all
+            // that's left is to assign the result to the HttpRequest's backing
+            // field for the Cookie property.
+            request._cookies = cookies;
         }
 
         static Http1Deserialiser()
