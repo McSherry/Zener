@@ -82,6 +82,12 @@ namespace McSherry.Zener.Net.Serialisation
         private static readonly char[] VarStartProhibited;
 
         /// <summary>
+        /// A dictionary of character encodings by name. The names are
+        /// considered case-insensitive.
+        /// </summary>
+        protected static readonly Dictionary<string, Encoding> CharacterEncodings;
+
+        /// <summary>
         /// Filters any characters that are not permitted in C# variable
         /// names from the provided string.
         /// </summary>
@@ -94,7 +100,6 @@ namespace McSherry.Zener.Net.Serialisation
             return new string(str.Where(VarPermitted.Contains).ToArray())
                 .TrimStart(VarStartProhibited);
         }
-
         /// <summary>
         /// Parses the provided string, assuming it is in the
         /// application/x-www-form-urlencoded format.
@@ -272,6 +277,20 @@ namespace McSherry.Zener.Net.Serialisation
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
                 );
             VarStartProhibited = "0123456789".ToCharArray();
+
+            CharacterEncodings = new Dictionary<string, Encoding>(
+                StringComparer.OrdinalIgnoreCase
+                )
+                {
+                    { "ascii",          Encoding.ASCII                      },
+                    { "us-ascii",       Encoding.ASCII                      },
+                    { "utf-8",          Encoding.UTF8                       },
+                    { "utf8",           Encoding.UTF8                       },
+                    { "iso-8859-1",     Encoding.GetEncoding("ISO-8859-1")  },
+                    { "latin-1",        Encoding.GetEncoding("ISO-8859-1")  },
+                    { "windows-1252",   Encoding.GetEncoding(1252)          },
+                    { "cp-1252",        Encoding.GetEncoding(1252)          },
+                };
         }
 
         /// <summary>
