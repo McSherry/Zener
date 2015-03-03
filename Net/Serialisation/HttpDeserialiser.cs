@@ -292,6 +292,20 @@ namespace McSherry.Zener.Net.Serialisation
             // key-value pair. All we need to do now is return it to the caller.
             return dyn;
         }
+        /// <summary>
+        /// Parses the provided request body, assuming that it is
+        /// in the multipart/form-data format.
+        /// </summary>
+        /// <param name="req">The HttpRequest that included the body.</param>
+        /// <param name="body">The Stream containing the request body.</param>
+        /// <returns>
+        /// If the body contains any key-value pairs/parts, an
+        /// ExpandoObject containing them. Else, an Empty.
+        /// </returns>
+        protected static dynamic ParseMultipartFormData(HttpRequest req, Stream body)
+        {
+            throw new NotImplementedException();
+        }
 
         static HttpDeserialiser()
         {
@@ -318,9 +332,7 @@ namespace McSherry.Zener.Net.Serialisation
                 new MediaType.EquivalencyComparer()
                 )
             {
-                /* TODO: Move over multipart/form-data parsing
                 { "multipart/form-data",                ParseMultipartFormData  },
-                */
                 { "application/x-www-form-urlencoded",  ParseFormUrlEncoded     },
             };
         }
