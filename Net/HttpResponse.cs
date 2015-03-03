@@ -288,22 +288,6 @@ namespace McSherry.Zener.Net
         private Encoding _encoding;
         
         /// <summary>
-        /// Checks whether the response has been closed, and
-        /// throws an InvalidOperationException if it has.
-        /// </summary>
-        /// <exception cref="System.InvalidOperationException">
-        ///     Thrown when the resonse has been closed.
-        /// </exception>
-        internal void CheckClosed()
-        {
-            if (this.IsClosed)
-            {
-                throw new InvalidOperationException(
-                   "Cannot modify the response after the connection has been closed."
-                   );
-            }
-        }
-        /// <summary>
         /// Checks whether the headers have been sent, and
         /// throws an InvalidOperationException if they have.
         /// </summary>
@@ -319,6 +303,7 @@ namespace McSherry.Zener.Net
                     );
             }
 
+            this.Serialiser.CheckClosed();
             this.Serialiser.CheckCanModify();
         }
 
@@ -370,7 +355,6 @@ namespace McSherry.Zener.Net
             get { return _httpStatus; }
             set
             {
-                this.CheckClosed();
                 this.CheckSerialiser();
 
                 _httpStatus = value;
@@ -410,7 +394,6 @@ namespace McSherry.Zener.Net
             get { return _encoding; }
             set
             {
-                this.CheckClosed();
                 this.CheckSerialiser();
 
                 if (value == null)
@@ -445,17 +428,9 @@ namespace McSherry.Zener.Net
             set
             {
                 this.CheckSerialiser();
-                this.CheckClosed();
 
                 _httpConn = value;
             }
-        }
-        /// <summary>
-        /// Whether the response has been closed.
-        /// </summary>
-        public bool IsClosed
-        {
-            get { return this.Serialiser.IsClosed; }
         }
 
         /// <summary>
@@ -498,8 +473,6 @@ namespace McSherry.Zener.Net
             // Ensure that we've been configured with a
             // serialiser.
             this.CheckSerialiser();
-            // Ensure that the response has not been closed.
-            this.CheckClosed();
 
             // Write data to the serialiser. The serialiser will
             // then perform any necessary action (such as sending

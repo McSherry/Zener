@@ -179,7 +179,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// <exception cref="System.InvalidOperationException">
         /// Thrown when the serialiser has been closed.
         /// </exception>
-        protected void CheckClosed()
+        protected internal void CheckClosed()
         {
             if (this.IsClosed)
             {

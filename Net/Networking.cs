@@ -487,7 +487,6 @@ namespace McSherry.Zener.Net
             string realm = null
             )
         {
-            response.CheckClosed();
             response.CheckSerialiser();
 
             response.Serialiser.BufferOutput = true;
