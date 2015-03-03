@@ -77,6 +77,12 @@ namespace McSherry.Zener.Net.Serialisation
         protected delegate dynamic PostDataHandler(HttpRequest request, Stream body);
 
         /// <summary>
+        /// The media type parameter used to provide the boundary in multipart
+        /// requests.
+        /// </summary>
+        private const string MultipartBoundary = "boundary";
+
+        /// <summary>
         /// The default/recommended timeout value, in milliseconds.
         /// </summary>
         protected const int DefaultTimeout = 30000;
@@ -97,6 +103,24 @@ namespace McSherry.Zener.Net.Serialisation
         /// POST/GET variables).
         /// </summary>
         private static readonly char[] VarStartProhibited;
+        /// <summary>
+        /// The multipart/form-data format makes use of the
+        /// double-dash in places. Having these bytes handy
+        /// saves having to retrieve them on each call to
+        /// ParseMultipartFormData.
+        /// </summary>
+        private static readonly byte[] MultipartDoubleDash;
+        /// <summary>
+        /// The CRLF (Carriage Return, Line Feed) bytes are also used
+        /// in multipart data, and having them pre-decoded saves us
+        /// decoding each time in ParseMultipartFormData.
+        /// </summary>
+        private static readonly byte[] CRLF;
+        /// <summary>
+        /// The default encoding to use when deserialising strings
+        /// (such as in multipart data).
+        /// </summary>
+        private static readonly Encoding DefaultCharEncoding;
 
         /// <summary>
         /// A dictionary of character encodings by name. The names are
@@ -302,9 +326,348 @@ namespace McSherry.Zener.Net.Serialisation
         /// If the body contains any key-value pairs/parts, an
         /// ExpandoObject containing them. Else, an Empty.
         /// </returns>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the provided stream does not support reading or
+        /// seeking.
+        /// </exception>
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
+        /// <para>
+        /// Thrown when the client does not provide a boundary with its
+        /// request.
+        /// </para>
+        /// <para>
+        /// Thrown when one or more of the parts provided by the client
+        /// contain invalid or malformed headers.
+        /// </para>
+        /// <para>
+        /// Thrown when one or more of the parts provided by the client
+        /// is incomplete.
+        /// </para>
+        /// </exception>
         protected static dynamic ParseMultipartFormData(HttpRequest req, Stream body)
         {
-            throw new NotImplementedException();
+            if (!body.CanRead || !body.CanSeek)
+            {
+                throw new ArgumentException(
+                    "The provided stream must support reading and seeking."
+                    );
+            }
+
+            // We already know that the content uses the multipart/form-data
+            // media type. However, this media type should have a parameter
+            // giving us the boundary used to separate parts.
+            //
+            // As the MediaType will already have been parsed, we don't need
+            // a try-catch or a call to TryCreate, as we already know it is
+            // valid.
+            MediaType mt = req.Headers[Rfc7230Serialiser.Headers.ContentType]
+                .Last()
+                .Value;
+            // We need to make sure that the request includes a boundary. If it
+            // does not, the request is invalid as there is no way for us to
+            // differentiate parts.
+            string boundary;
+            if (!mt.Parameters.TryGetValue(MultipartBoundary, out boundary))
+            {
+                // The client has not provided us with a boundary for its
+                // multipart data. Throw an exception so that the client receives
+                // a 400 response and an error message.
+                throw new HttpRequestException(
+                    "The client's request contained invalid multipart data (" +
+                    "no boundary provided)."
+                    );
+            }
+
+            // The boundary should be an ASCII-encoded string. We're also passing
+            // the boundary's bytes to our boundary-finding method. This method
+            // takes a byte array, so performing this conversion first rather than
+            // using the overload that converts it on each call saves us a bit of
+            // execution time.
+            byte[] firstBoundaryBytes = Encoding.ASCII.GetBytes(boundary);
+            // The boundaries after the first will be preceded by a CRLF and
+            // two additional dashes.
+            byte[] boundaryBytes = new byte[
+                firstBoundaryBytes.Length + MultipartDoubleDash.Length + CRLF.Length
+                ];
+            // The CRLF comes first, as the boundaries will be on their own lines.
+            Array.Copy(CRLF, boundaryBytes, CRLF.Length);
+            // Following the CRLF comes the additional two dashes.
+            Array.Copy(
+                sourceArray:        MultipartDoubleDash,
+                sourceIndex:        0,
+                destinationArray:   boundaryBytes,
+                // We need to make sure that the bytes are copied after the CRLF
+                // we've just copied in to the array. We don't want to overwrite
+                // those bytes.
+                destinationIndex:   CRLF.Length,
+                length:             MultipartDoubleDash.Length
+                );
+            // All that's left now is to copy the bytes of the boundary in to
+            // the array.
+            Array.Copy(
+                sourceArray:        firstBoundaryBytes,
+                sourceIndex:        0,
+                destinationArray:   boundaryBytes,
+                // Just like before, we don't want to overwrite what we've already
+                // copied in to the array, so we need to set the destination index
+                // to the sum of the lengths of what we've already copied in.
+                destinationIndex:   CRLF.Length + MultipartDoubleDash.Length,
+                length:             firstBoundaryBytes.Length
+                );
+
+            // At this point, we know we're going to be reading data from the body,
+            // so creation of the ExpandoObject here isn't premature.
+            var dyn = new ExpandoObject() as IDictionary<string, object>;
+            // We need to ignore data found before the first boundary, as the first
+            // boundary indicates the start of multipart data. Any data before the
+            // boundary may have meaning, but it is not meaning we know of or are
+            // prepared to receive.
+            body.ReadUntilFound(firstBoundaryBytes, b => { });
+            // The boundary we've just read up to will have a CRLF after it. We don't
+            // want this in our data since it's part of the multipart format and not
+            // part of the data the client sent, so we seek past it.
+            body.Seek(CRLF.Length, SeekOrigin.Current);
+
+            // We're going to need string-building services at several points in the
+            // below code, so it would make sense to only ever keep one instance
+            // around.
+            StringBuilder partBdr = new StringBuilder();
+            // We need to read to the end of the stream to make sure we get all the
+            // data.
+            while (body.Position != body.Length)
+            {
+                // The first order of business is to read the headers for each part.
+                // The headers give us information about what's in the part, such as
+                // the media type of the associated content and the name of the data
+                // we've been sent (usually the name of the form element or the
+                // uploaded file).
+
+                // As we're reading headers, we're safe to use ASCII encoding.
+                string line = body.ReadAsciiLine();
+                // Just as with HTTP requests, the headers in a part are separated
+                // from the part body by an empty line. The difference here is that
+                // part headers may not be prefixed with an empty line.
+                while (!String.IsNullOrEmpty(line))
+                {
+                    // The line isn't empty/null, so we can append it to the
+                    // StringBuilder we're using to build the headers.
+                    partBdr.AppendLine(line);
+                    // Read the next line from the stream.
+                    line = body.ReadAsciiLine();
+                }
+
+                // We now need to parse the headers the client sent us so
+                // we can make use of them.
+                HttpHeaderCollection headers;
+                using (var sr = new StringReader(partBdr.ToString()))
+                {
+                    // We've just used the value in the StringBuilder, so
+                    // we can clear it for use later.
+                    partBdr.Clear();
+
+                    try
+                    {
+                        // We now need to attempt to parse the headers
+                        // that the client provided to us.
+                        headers = new HttpHeaderCollection(
+                            HttpHeader.ParseMany(sr)
+                            );
+                    }
+                    // If the client has sent us an invalid header, the
+                    // method ParseMany will throw an ArgumentException.
+                    catch (ArgumentException aex)
+                    {
+                        // We need to catch the ArgumentException and then
+                        // rethrow it as an HttpRequestException so that it
+                        // is caught by HttpServer.
+                        throw new HttpRequestException(
+                            "The client sent a part with invalid headers.",
+                            aex
+                            );
+                    }
+                }
+
+                // After reading the headers, there needs to be space at least for
+                // one boundary and that boundary's trailing double-dashes. If there
+                // is not, the client has sent a malformed request.
+                if (boundaryBytes.Length + 2 > (body.Length - body.Position))
+                {
+                    throw new HttpRequestException(
+                        "The client sent an incomplete part."
+                        );
+                }
+
+                // Each part should have with it a 'Content-Disposition' header.
+                // We need to use this header's value to name the key we add to
+                // our ExpandoObject.
+                HttpHeader ctnDis = headers[Rfc7230Serialiser.Headers.ContentDisposition]
+                    .LastOrDefault(),
+                // We also need a 'Content-Type' header so we know how to handle the
+                // content that was sent with the request. We won't consider a missing
+                // 'Content-Type' header an error, but we will have to treat the body
+                // associated with that part as a byte array rather than a string.
+                    ctnType = headers[Rfc7230Serialiser.Headers.ContentType]
+                    .LastOrDefault();
+                // If the client hasn't sent a 'Content-Disposition' header, we
+                // will consider the request malformed, and need to throw an exception
+                // to report this to the client.
+                if (ctnDis == default(HttpHeader))
+                {
+                    throw new HttpRequestException(
+                        "The client sent a part without a \"Content-Disposition\" " +
+                        " header."
+                        );
+                }
+
+                string partName;
+                // The 'Content-Disposition' header should be a set of named
+                // parameters. We've got a HttpHeader subclass just for this.
+                var contentDisposition = new NamedParametersHttpHeader(
+                    header:             ctnDis,
+                    // We're making this a bit friendlier to potentially
+                    // badly-written clients. We are considering the case of
+                    // the paremeter keys case-insensitive.
+                    keyCaseInsensitive: true
+                    );
+                // We require that the part have a name. If it doesn't, we have
+                // no way to identify it.
+                if (!contentDisposition.Pairs.TryGetValue("name", out partName))
+                {
+                    // If there isn't a part name, we need to throw an exception.
+                    throw new HttpRequestException(
+                        "The client sent a part without a name."
+                        );
+                }
+                // We don't know what the part name may contain, so we need to
+                // URL-decode it and then filter out any invalid characters.
+                partName = FilterInvalidNameCharacters(partName.UrlDecode());
+                // We're going to need somewhere to store the bytes we read from
+                // this part.
+                List<byte> partBuffer = new List<byte>();
+                // Read all the bytes in the part until we find the boundary.
+                // The bytes are read in to our part buffer.
+                body.ReadUntilFound(boundaryBytes, partBuffer.Add);
+                // We then need to seek past the CRLF that suffixes the boundary.
+                body.Seek(CRLF.Length, SeekOrigin.Current);
+
+                MediaType contentType;
+                // We need to check both that the part contains a 'Content-Type'
+                // header and that the provided 'Content-Type' header is valid. If
+                // either the part does not contain a header, or the provided header
+                // is invalid, 
+                if (
+                    ctnType == default(HttpHeader) ||
+                    !MediaType.TryCreate(ctnType.Value, out contentType)
+                    )
+                {
+                    // If the header is invalid or not present, we have to treat
+                    // the data as arbitrary binary data. To do this, we'll assign
+                    // the application/octet-stream media type.
+                    contentType = MediaType.OctetStream;
+                }
+
+                // We've parsed (and, if necessary, defaulted) the media type, so
+                // now we need to determine how to handle it. If the media type is
+                // in the text/* super-type group, we can attempt to handle it as
+                // a string.
+                if (MediaType.Text.IsEquivalent(contentType))
+                {
+                    Encoding encoding;
+                    string encodingName;
+                    // We attempt to retrieve the 'charset' parameter from the text/*
+                    // media type. Some media types will be sent with the specific
+                    // character set, some will not.
+                    if (contentType.Parameters.TryGetValue("charset", out encodingName))
+                    {
+                        // We then attempt to, from our map of names to encodings,
+                        // retrieve an encoder for the character set the media type
+                        // has specified.
+                        if (!CharacterEncodings.TryGetValue(encodingName, out encoding))
+                        {
+                            // If we don't have an encoder for the specified character
+                            // set, use the default one.
+                            encoding = DefaultCharEncoding;
+                        }
+                    }
+                    // The media type is not required to include a 'charset' parameter,
+                    // so it is quite likely we won't have one and will have to pick a
+                    // default.
+                    else
+                    {
+                        // If no character set is specified, use the default one.
+                        encoding = DefaultCharEncoding;
+                    }
+
+                    // We've successfully retrieved an encoding. What this means is that
+                    // we have to convert the list of bytes to an array, then use the
+                    // encoding to retrieve the text represented by those bytes in the
+                    // specified encoding.
+                    //
+                    // The retrieved string is then assigned to the key with the value
+                    // of the part's filtered name.
+                    dyn[partName] = encoding.GetString(partBuffer.ToArray());
+                }
+                // The media type specified by the client is not a text media type, so
+                // we have to treat it as bytes and not attempt to interpret it as text.
+                else
+                {
+                    // Convert the part bytes to an array from the list, and assign the
+                    // value of the array to the key with the value of the part's
+                    // (filtered) name.
+                    dyn[partName] = partBuffer.ToArray();
+                }
+
+                // The end of the multipart data will be indicated by a boundary suffixed
+                // with two dashes. We need to read some bytes from the stream to check
+                // whether we've reached the end of the multipart data.
+                byte[] next = new byte[MultipartDoubleDash.Length];
+                // Read the bytes from the stream and take the return value from the call.
+                // This will help us determine whether the end of the multipart data has
+                // been reached.
+                int read = body.Read(next, 0, next.Length);
+                // There are three ways we will use to determine whether we've reached
+                // the end of the multipart data:
+                if (
+                    // #1:  If we read no bytes or Read returns a -1 (end of stream), we
+                    //      have probably reached the end of stream and cannot read
+                    //      anything more.
+                    //
+                    //      We won't throw an exception in this instance because leaving
+                    //      out the suffixing dashes seems like a mistake that could be
+                    //      easily made in a poorly-written client.
+                    read == 0 || read == -1 ||
+                    // #2:  If the position within the stream is greater than the length
+                    //      of the stream, we've read past the end. See last paragraph of
+                    //      above comment.
+                    body.Length <= body.Position ||
+                    // #3:  The bytes we read from the stream are double dashes. This is
+                    //      the correct way of indicating that we've reached the end of
+                    //      the multipart data.
+                    next.SequenceEqual(MultipartDoubleDash)
+                    )
+                {
+                    // We've reached the end, so we don't need to iterate through anything
+                    // else and can break out of the loop.
+                    break;
+                }
+                // If we're here, we've not reached the end of the data.
+                else
+                {
+                    // We've not reached the end, but we have read some bytes from the
+                    // stream. This will have advanced the stream's position, so we need
+                    // to move backwards from where we are so the next iteration can
+                    // read the bytes we just read without issue.
+                    body.Seek(-next.Length, SeekOrigin.Current);
+                }
+            }
+
+            // What we return depends on whether we read any parts from the stream.
+            // If we did, the ExpandoObject will have a number of items that is greater
+            // than zero, and we can return it.
+            //
+            // If we didn't, the ExpandoObject will have no items, and we have to return
+            // an Empty.
+            return dyn.Count == 0 ? (dynamic)new Empty() : dyn;
         }
 
         static HttpDeserialiser()
@@ -313,6 +676,11 @@ namespace McSherry.Zener.Net.Serialisation
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
                 );
             VarStartProhibited = "0123456789".ToCharArray();
+
+            MultipartDoubleDash = Encoding.ASCII.GetBytes("--");
+            CRLF = Encoding.ASCII.GetBytes("\r\n");
+
+            DefaultCharEncoding = Encoding.UTF8;
 
             CharacterEncodings = new Dictionary<string, Encoding>(
                 StringComparer.OrdinalIgnoreCase
