@@ -669,6 +669,13 @@ namespace McSherry.Zener.Core
         }
 
         /// <summary>
+        /// A wildcard media type for all text media types.
+        /// </summary>
+        public static MediaType Text
+        {
+            get { return "text/*"; }
+        }
+        /// <summary>
         /// The media type for plain text content.
         /// </summary>
         public static MediaType PlainText
