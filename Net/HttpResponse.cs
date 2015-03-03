@@ -234,6 +234,23 @@ namespace McSherry.Zener.Net
         /// </summary>
         HttpVersionNotSupported         = 505
     }
+    /// <summary>
+    /// How the HTTP server should handle the connection to
+    /// the client after the response has been sent.
+    /// </summary>
+    public enum HttpConnection
+    {
+        /// <summary>
+        /// The server should keep the connection alive to
+        /// allow potential reuse.
+        /// </summary>
+        KeepAlive,
+        /// <summary>
+        /// The server should close the connection to the
+        /// client after sending the request.
+        /// </summary>
+        Close
+    }
 
     /// <summary>
     /// A class providing the functionality required for a handler to
@@ -265,6 +282,7 @@ namespace McSherry.Zener.Net
             ;
 
         private HttpStatus _httpStatus;
+        private HttpConnection _httpConn;
         private HttpHeaderCollection _headers;
         private HttpCookieCollection _cookies;
         private Encoding _encoding;
@@ -399,6 +417,33 @@ namespace McSherry.Zener.Net
                 }
 
                 _encoding = value;
+            }
+        }
+        /// <summary>
+        /// How the connection to the client should
+        /// be handled after the server has sent this
+        /// request.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This defaults to KeepAlive.
+        /// </para>
+        /// <para>
+        /// If the response is being sent to an HTTP/1.0
+        /// client, this value may be ignored unless the
+        /// client explicitly lists support for persistent
+        /// connections.
+        /// </para>
+        /// </remarks>
+        public HttpConnection Connection
+        {
+            get { return _httpConn; }
+            set
+            {
+                this.CheckSerialiser();
+                this.CheckClosed();
+
+                _httpConn = value;
             }
         }
         /// <summary>
