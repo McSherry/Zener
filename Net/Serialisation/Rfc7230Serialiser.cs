@@ -55,6 +55,11 @@ namespace McSherry.Zener.Net.Serialisation
             /// server is responding with.
             /// </summary>
             public const string ContentType = "Content-Type";
+            /// <summary>
+            /// The header that provides information about the content,
+            /// such as its file-name.
+            /// </summary>
+            public const string ContentDisposition = "Content-Disposition";
 
             /// <summary>
             /// The header used by the server to provide date and time the
