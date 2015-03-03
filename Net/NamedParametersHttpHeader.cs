@@ -28,9 +28,20 @@ namespace McSherry.Zener.Net
         /// </summary>
         /// <param name="field">The header field name.</param>
         /// <param name="value">The header value.</param>
-        public NamedParametersHttpHeader(string field, string value)
+        /// <param name="keyCaseInsensitive">
+        /// Whether the names of the keys associated with the
+        /// header should be considered case-insensitive.
+        /// </param>
+        public NamedParametersHttpHeader(
+            string field, string value,
+            bool keyCaseInsensitive = false
+            )
             : base(field, value)
         {
+            IEqualityComparer<string> cmp = keyCaseInsensitive
+                ? (IEqualityComparer<string>)StringComparer.OrdinalIgnoreCase
+                : (IEqualityComparer<string>)EqualityComparer<string>.Default
+                ;
             StringBuilder secb = new StringBuilder();
             int index;
             // Extract the header's main value from the string.
@@ -52,20 +63,38 @@ namespace McSherry.Zener.Net
                 _nvPairs = NameValueHttpHeader.ParsePairs(
                     value.Substring(index)
                     );
-            else _nvPairs = new Dictionary<string, string>();
+            else _nvPairs = new Dictionary<string, string>(cmp);
         }
         /// <summary>
         /// Creates a new NamedParametersHttpHeader from an HttpHeader.
         /// </summary>
         /// <param name="header">The header to create from.</param>
-        public NamedParametersHttpHeader(HttpHeader header)
-            : this(header.Field, header.Value) { }
+        /// <param name="keyCaseInsensitive">
+        /// Whether the names of the keys associated with the
+        /// header should be considered case-insensitive.
+        /// </param>
+        public NamedParametersHttpHeader(
+            HttpHeader header,
+            bool keyCaseInsensitive = false
+            ) : this(header.Field, header.Value, keyCaseInsensitive)
+        { 
+
+        }
         /// <summary>
         /// Creates a NamedParametersHttpHeader from a raw header string.
         /// </summary>
         /// <param name="httpHeader">The header string to parse.</param>
-        public NamedParametersHttpHeader(string httpHeader)
-            : this(HttpHeader.Parse(httpHeader)) { }
+        /// <param name="keyCaseInsensitive">
+        /// Whether the names of the keys associated with the
+        /// header should be considered case-insensitive.
+        /// </param>
+        public NamedParametersHttpHeader(
+            string httpHeader,
+            bool keyCaseInsensitive = false
+            ) : this(HttpHeader.Parse(httpHeader), keyCaseInsensitive) 
+        {
+
+        }
 
         /// <summary>
         /// Returns a string that represents the NamedParametersHttpHeader instance.
