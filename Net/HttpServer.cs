@@ -53,8 +53,7 @@ namespace McSherry.Zener.Net
         public HttpException(
             HttpStatus status,
             string message, Exception innerException
-            )
-            : base(message, innerException)
+            ) : base(message, innerException)
         {
             this.StatusCode = status;
         }
@@ -149,7 +148,7 @@ namespace McSherry.Zener.Net
     /// <summary>
     /// A class implementing a basic HTTP server.
     /// </summary>
-    public class HttpServer
+    public sealed class HttpServer
     {
         private const int TCP_EPHEMERAL_MIN = 49152;
         private const int TCP_EPHEMERAL_MAX = 65535;

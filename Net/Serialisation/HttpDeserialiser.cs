@@ -18,7 +18,7 @@ namespace McSherry.Zener.Net.Serialisation
     /// The exception used when an HTTP request times out
     /// (status code 408).
     /// </summary>
-    public class HttpRequestTimeoutException
+    public sealed class HttpRequestTimeoutException
         : HttpException
     {
         /// <summary>
