@@ -129,7 +129,7 @@ namespace McSherry.Zener.Net
         /// <summary>
         /// The HTTP version requested by the user agent.
         /// </summary>
-        public string HttpVersion
+        public Version HttpVersion
         {
             get;
             internal set;
