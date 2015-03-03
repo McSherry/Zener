@@ -304,7 +304,6 @@ namespace McSherry.Zener.Net
             }
 
             this.Serialiser.CheckClosed();
-            this.Serialiser.CheckCanModify();
         }
 
         /// <summary>
@@ -356,6 +355,7 @@ namespace McSherry.Zener.Net
             set
             {
                 this.CheckSerialiser();
+                this.Serialiser.CheckCanModify();
 
                 _httpStatus = value;
             }
@@ -395,6 +395,7 @@ namespace McSherry.Zener.Net
             set
             {
                 this.CheckSerialiser();
+                this.Serialiser.CheckCanModify();
 
                 if (value == null)
                 {
@@ -428,6 +429,7 @@ namespace McSherry.Zener.Net
             set
             {
                 this.CheckSerialiser();
+                this.Serialiser.CheckCanModify();
 
                 _httpConn = value;
             }

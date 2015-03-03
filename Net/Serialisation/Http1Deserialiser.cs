@@ -122,7 +122,7 @@ namespace McSherry.Zener.Net.Serialisation
                     // the current position (minus one), we can determine
                     // how long the current part is.
                     parts.Add(rqLine
-                        .Substring(s, (i - 1) - s)
+                        .Substring(s, i - s)
                         // Just in case we've let some white-space slip
                         // in, we'll trim the substring.
                         .Trim(RequestLineWhiteSpaceArray)
@@ -231,6 +231,10 @@ namespace McSherry.Zener.Net.Serialisation
                     // comprises the request path, so we just set the path
                     // to the entirety of the received path string.
                     rq.Path = path.UrlDecode();
+                    // As there is no query string, there can be no query
+                    // string parameters. We need to set the GET variable
+                    // property to Empty.
+                    rq._get = new Empty();
                 }
             }
             // The method ParseFormUrlEncoded calls UrlDecode internally.
@@ -664,6 +668,12 @@ namespace McSherry.Zener.Net.Serialisation
             // of the request body. To make this easier, we're using a label
             // right at the end that we can jump to.
             readBodyExit: ;
+            }
+            // If there's no body to read, we need to set the POST backing
+            // field to an Empty.
+            else
+            {
+                base.Request._post = new Empty();
             }
 
             // The client may or may not have sent cookies. Call the cookie-parsing

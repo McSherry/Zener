@@ -214,6 +214,13 @@ namespace McSherry.Zener.Net.Serialisation
                         // value so that the user gets an accurate representation and
                         // doesn't need to deal with encoding/decoding it.
                         dyn[section] = bdr.ToString().UrlDecode(xformsSpaces: true);
+                        // Being at the end of a key-value pair, it means that any
+                        // further characters will be a key again, so we need to set
+                        // the variable to indicate that we're no longer in a value.
+                        inValue = false;
+                        // Clear the StringBuilder so that the current value doesn't
+                        // get mixed in with the next key.
+                        bdr.Clear();
                     }
                     else
                     {
@@ -560,10 +567,9 @@ namespace McSherry.Zener.Net.Serialisation
                     !MediaType.TryCreate(ctnType.Value, out contentType)
                     )
                 {
-                    // If the header is invalid or not present, we have to treat
-                    // the data as arbitrary binary data. To do this, we'll assign
-                    // the application/octet-stream media type.
-                    contentType = MediaType.OctetStream;
+                    // If the header is invalid or not present, we will interpret
+                    // the data as plain text.
+                    contentType = MediaType.PlainText;
                 }
 
                 // We've parsed (and, if necessary, defaulted) the media type, so
