@@ -297,6 +297,20 @@ namespace McSherry.Zener.Net.Serialisation
                     );
             }
         }
+        /// <summary>
+        /// Parses any cookies in the provided HttpRequest, and assigns
+        /// the result to the HttpRequest.Cookies property.
+        /// </summary>
+        /// <param name="request">
+        /// The request to parse cookies from and assign to.
+        /// </param>
+        /// <exception cref="McSherry.Zener.Net.HttpRequestException">
+        /// Thrown when the client sends a malformed "Cookie" header.
+        /// </exception>
+        private static void ParseCookies(HttpRequest request)
+        {
+            throw new NotImplementedException();
+        }
 
         static Http1Deserialiser()
         {
@@ -609,7 +623,10 @@ namespace McSherry.Zener.Net.Serialisation
             readBodyExit: ;
             }
 
-            // TODO: Implement cookie deserialisation
+            // The client may or may not have sent cookies. Call the cookie-parsing
+            // method, which will determine whether the client has sent cookies, parse
+            // them if it has, and make any appropriate assignments.
+            ParseCookies(base.Request);
 
         deserialiseExit:
             // The user shouldn't be able to modify the headers, since they
