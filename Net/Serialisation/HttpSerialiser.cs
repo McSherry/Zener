@@ -188,6 +188,23 @@ namespace McSherry.Zener.Net.Serialisation
                     );
             }
         }
+        /// <summary>
+        /// Checks whether the serialiser is accepting modifications
+        /// to its headers, and throws an exception if it is not.
+        /// </summary>
+        /// <exception cref="System.InvalidOperationException">
+        /// Thrown when the serialiser is not accepting modifications
+        /// to the headers.
+        /// </exception>
+        protected internal void CheckCanModify()
+        {
+            if (!this.CanModifyHeaders)
+            {
+                throw new InvalidOperationException(
+                    "The serialiser is not accepting header modifications."
+                    );
+            }
+        }
 
         /// <summary>
         /// Creates a new HttpSerialiser.
@@ -259,6 +276,15 @@ namespace McSherry.Zener.Net.Serialisation
         {
             get;
             set;
+        }
+        /// <summary>
+        /// Whether the serialiser will accept modifications
+        /// to the headers, response status, connection details,
+        /// and so on.
+        /// </summary>
+        public abstract bool CanModifyHeaders
+        {
+            get;
         }
         /// <summary>
         /// Whether the serialiser has been closed. This

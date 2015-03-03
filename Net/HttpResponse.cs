@@ -296,9 +296,12 @@ namespace McSherry.Zener.Net
         /// </exception>
         internal void CheckClosed()
         {
-            if (this.IsClosed) throw new InvalidOperationException(
-                "Cannot modify the response after the connection has been closed."
-                );
+            if (this.IsClosed)
+            {
+                throw new InvalidOperationException(
+                   "Cannot modify the response after the connection has been closed."
+                   );
+            }
         }
         /// <summary>
         /// Checks whether the headers have been sent, and
@@ -312,10 +315,11 @@ namespace McSherry.Zener.Net
             if (this.Serialiser == null)
             {
                 throw new ApplicationException(
-                    "The HttpResponse has not been configured with a " +
-                    "serialiser."
+                    "The HttpResponse has not been configured with a serialiser."
                     );
             }
+
+            this.Serialiser.CheckCanModify();
         }
 
         /// <summary>
