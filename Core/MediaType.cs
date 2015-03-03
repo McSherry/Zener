@@ -710,6 +710,13 @@ namespace McSherry.Zener.Core
         {
             get { return "*/*"; }
         }
+        /// <summary>
+        /// The media type used for arbitrary binary data.
+        /// </summary>
+        public static MediaType OctetStream
+        {
+            get { return "application/octet-stream"; }
+        }
 
         private MediaType() { }
 
