@@ -50,6 +50,10 @@ namespace McSherry.Zener.Net.Serialisation
         /// </summary>
         private const int ShortCircuitTimeout = 750;
 
+        /// <summary>
+        /// An array containing the same characters the HashSet
+        /// RequestLineWhiteSpace contains.
+        /// </summary>
         private static readonly char[] RequestLineWhiteSpaceArray;
         /// <summary>
         /// The characters that are considered valid white-space in a
@@ -369,6 +373,10 @@ namespace McSherry.Zener.Net.Serialisation
 
             RequestVersionRegex = new Regex(
                 @"HTTP/(?<Version>[0-9]{1}\.[0-9]{1})",
+                // Sure, there's a much higher init cost, which will probably
+                // slow down the first request even more, but we're going to,
+                // potentially, be using this thousands of times. That probably
+                // outweighs the init cost.
                 RegexOptions.Compiled
                 );
 

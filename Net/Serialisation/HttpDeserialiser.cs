@@ -63,6 +63,11 @@ namespace McSherry.Zener.Net.Serialisation
         /// The default/recommended timeout value, in milliseconds.
         /// </summary>
         protected const int DefaultTimeout = 30000;
+        /// <summary>
+        /// The maximum length of the headers, in octets, a
+        /// HTTP deserialiser should accept.
+        /// </summary>
+        protected const int MaxHeaderLength = 8192;
 
         /// <summary>
         /// A hashset of the characters permitted in a variable name.
