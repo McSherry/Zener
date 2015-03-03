@@ -28,21 +28,6 @@ namespace McSherry.Zener.Net.Serialisation
         : HttpDeserialiser, IDisposable
     {
         /// <summary>
-        /// The handler used to handle the data sent with POST requests.
-        /// </summary>
-        /// <param name="request">
-        /// The request with the POST data in it.
-        /// </param>
-        /// <param name="body">
-        /// The request body containing the data sent in the POST request.
-        /// </param>
-        /// <returns>
-        /// If the POST data is meaningful, an ExpandoObject containing any
-        /// key-value pairs. Otherwise, an Empty.
-        /// </returns>
-        private delegate dynamic PostDataHandler(HttpRequest request, Stream body);
-
-        /// <summary>
         /// The "short circuit" timeout is used as a timeout for sending the
         /// first header. If we don't receive the first header before the end
         /// of the timeout, we consider the client incompetent or malicious,
@@ -65,11 +50,6 @@ namespace McSherry.Zener.Net.Serialisation
         /// sent in the client's request line.
         /// </summary>
         private static readonly Regex RequestVersionRegex;
-        /// <summary>
-        /// A which maps MediaType instances to their handlers. Used to
-        /// determine how to parse POST data from the client.
-        /// </summary>
-        private static readonly Dictionary<MediaType, PostDataHandler> PostHandlers;
 
         /// <summary>
         /// Parses the provided line as an HTTP request line, and sets
@@ -379,16 +359,6 @@ namespace McSherry.Zener.Net.Serialisation
                 // outweighs the init cost.
                 RegexOptions.Compiled
                 );
-
-            PostHandlers = new Dictionary<MediaType, PostDataHandler>(
-                new MediaType.EquivalencyComparer()
-                )
-            {
-                /* TODO: Move over multipart/form-data parsing
-                { "multipart/form-data",                ParseMultipartFormData  },
-                */
-                { "application/x-www-form-urlencoded",  ParseFormUrlEncoded     },
-            };
         }
 
         /// <summary>

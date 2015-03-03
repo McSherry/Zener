@@ -12,6 +12,8 @@ using System.Text;
 using System.IO;
 using System.Dynamic;
 
+using MediaType     = McSherry.Zener.Core.MediaType;
+
 namespace McSherry.Zener.Net.Serialisation
 {
     /// <summary>
@@ -60,6 +62,21 @@ namespace McSherry.Zener.Net.Serialisation
         : IDisposable
     {
         /// <summary>
+        /// The handler used to handle the data sent with POST requests.
+        /// </summary>
+        /// <param name="request">
+        /// The request with the POST data in it.
+        /// </param>
+        /// <param name="body">
+        /// The request body containing the data sent in the POST request.
+        /// </param>
+        /// <returns>
+        /// If the POST data is meaningful, an ExpandoObject containing any
+        /// key-value pairs. Otherwise, an Empty.
+        /// </returns>
+        protected delegate dynamic PostDataHandler(HttpRequest request, Stream body);
+
+        /// <summary>
         /// The default/recommended timeout value, in milliseconds.
         /// </summary>
         protected const int DefaultTimeout = 30000;
@@ -85,7 +102,12 @@ namespace McSherry.Zener.Net.Serialisation
         /// A dictionary of character encodings by name. The names are
         /// considered case-insensitive.
         /// </summary>
-        protected static readonly Dictionary<string, Encoding> CharacterEncodings;
+        protected static readonly Dictionary<string, Encoding> CharacterEncodings;        
+        /// <summary>
+        /// A which maps MediaType instances to their handlers. Used to
+        /// determine how to parse POST data from the client.
+        /// </summary>
+        protected static readonly Dictionary<MediaType, PostDataHandler> PostHandlers;
 
         /// <summary>
         /// Filters any characters that are not permitted in C# variable
@@ -291,6 +313,16 @@ namespace McSherry.Zener.Net.Serialisation
                     { "windows-1252",   Encoding.GetEncoding(1252)          },
                     { "cp-1252",        Encoding.GetEncoding(1252)          },
                 };
+
+            PostHandlers = new Dictionary<MediaType, PostDataHandler>(
+                new MediaType.EquivalencyComparer()
+                )
+            {
+                /* TODO: Move over multipart/form-data parsing
+                { "multipart/form-data",                ParseMultipartFormData  },
+                */
+                { "application/x-www-form-urlencoded",  ParseFormUrlEncoded     },
+            };
         }
 
         /// <summary>
