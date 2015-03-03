@@ -93,7 +93,7 @@ namespace McSherry.Zener.Core.Coding
                     );
             }
 
-            if (startIndex + count >= data.Length)
+            if (startIndex + count > data.Length)
             {
                 throw new IndexOutOfRangeException(
                     "The specified byte range extends past the end of the array."

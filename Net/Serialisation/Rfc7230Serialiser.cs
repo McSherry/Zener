@@ -364,7 +364,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// </summary>
         public override bool CanModifyHeaders
         {
-            get { return _bodyWritten; }
+            get { return !_bodyWritten; }
         }
 
         /// <summary>
