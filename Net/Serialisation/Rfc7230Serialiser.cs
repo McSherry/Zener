@@ -120,23 +120,6 @@ namespace McSherry.Zener.Net.Serialisation
         private bool _bodyWritten;
 
         /// <summary>
-        /// Checks whether the writing of the body has
-        /// already started, and throws an exception if
-        /// it has.
-        /// </summary>
-        /// <exception cref="System.InvalidOperationException">
-        /// Thrown when the writing of the body has started.
-        /// </exception>
-        private void CheckWritten()
-        {
-            if (_bodyWritten)
-            {
-                throw new InvalidOperationException(
-                    "The response body has been sent, or is being sent."
-                    );
-            }
-        }
-        /// <summary>
         /// Evaluates the capabilities of the client and
         /// sets any private fields appropriately.
         /// </summary>
@@ -306,7 +289,7 @@ namespace McSherry.Zener.Net.Serialisation
             set
             {
                 base.CheckClosed();
-                this.CheckWritten();
+                base.CheckCanModify();
 
                 // If the value isn't changing, we don't need
                 // to take any action.
@@ -362,12 +345,21 @@ namespace McSherry.Zener.Net.Serialisation
             set
             {
                 base.CheckClosed();
-                this.CheckWritten();
+                base.CheckCanModify();
 
                 // If it isn't possible to use compression,
                 // there's no point making an assignment.
                 if (_canCompress) _useCompression = value;
             }
+        }
+        /// <summary>
+        /// Whether the serialiser will accept modifications
+        /// to the headers, response status, connection details,
+        /// and so on.
+        /// </summary>
+        public override bool CanModifyHeaders
+        {
+            get { return _bodyWritten; }
         }
 
         /// <summary>
