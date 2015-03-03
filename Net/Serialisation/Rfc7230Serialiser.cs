@@ -70,6 +70,11 @@ namespace McSherry.Zener.Net.Serialisation
             /// The header field used to send cookies.
             /// </summary>
             public const string SetCookie = "Set-Cookie";
+            /// <summary>
+            /// The header used by the client to send any cookies
+            /// it has stored.
+            /// </summary>
+            public const string Cookie = "Cookie";
         }
 
         /// <summary>
