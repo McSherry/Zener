@@ -483,6 +483,24 @@ namespace McSherry.Zener.Net.Serialisation
                         "The client took too long to send its headers."
                         );
                 }
+                // We also want to make sure that the client doesn't send an
+                // unreasonable quantity of headers, and this could both slow
+                // the web server down, and could result in an increase in
+                // memory usage.
+                //
+                // We're using the limit defined as a constant in our base
+                // class.
+                if (hdrBdr.Length >= MaxHeaderLength)
+                {
+                    // If we're here, the client has sent too much data in
+                    // its headers, so we need to throw an exception.
+                    throw new HttpException(
+                        status:     HttpStatus.RequestEntityTooLarge,
+                        message:    "The headers sent by the client were longer " +
+                                    "than the server's acceptable maximum (" +
+                                    MaxHeaderLength + " bytes)."
+                        );
+                }
 
                 // We've already read a line from the stream and verified that it
                 // is not null or empty, so we can append it to the StringBuilder.
