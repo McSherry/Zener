@@ -19,6 +19,11 @@ namespace McSherry.Zener.Net.Serialisation
     /// The base class for classes implementing an HttpResponse
     /// serialiser.
     /// </summary>
+    /// <remarks>
+    /// The values of all public properties must be retained even
+    /// after closing. Implementations should prohibit modification
+    /// after closing, but must allow retrieval.
+    /// </remarks>
     public abstract class HttpSerialiser
         : IDisposable
     {
