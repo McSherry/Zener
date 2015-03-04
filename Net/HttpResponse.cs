@@ -325,21 +325,6 @@ namespace McSherry.Zener.Net
         }
 
         /// <summary>
-        /// The response line that will be sent with the server's response.
-        /// </summary>
-        public string ResponseLine
-        {
-            get
-            {
-                return String.Format(
-                    "HTTP/{0} {1} {2}\r\n",
-                    HTTP_VERSION,
-                    this.StatusCode.GetCode(),
-                    this.StatusCode.GetMessage()
-                    );
-            }
-        }
-        /// <summary>
         /// The HTTP status code to be returned by the server.
         /// </summary>
         /// <exception cref="System.InvalidOperationException">
