@@ -212,6 +212,11 @@ namespace McSherry.Zener.Net.Serialisation
         /// our response.
         /// </summary>
         private IEncoder _compressor;
+        /// <summary>
+        /// The backing field we're using for our Connection
+        /// property.
+        /// </summary>
+        private HttpConnection _connection;
 
         /// <summary>
         /// Creates a new Rfc7230Serialiser.
@@ -284,6 +289,15 @@ namespace McSherry.Zener.Net.Serialisation
             this.EvaluateClient(request);
         }
 
+        /// <summary>
+        /// Instructs the serialiser on how to handle the connection
+        /// once the response has been serialised and sent.
+        /// </summary>
+        public override HttpConnection Connection
+        {
+            get { return _connection; }
+            set { _connection = value; }
+        }
         /// <summary>
         /// Whether the serialiser should buffer its output,
         /// and only send when flushed.

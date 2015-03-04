@@ -253,6 +253,15 @@ namespace McSherry.Zener.Net.Serialisation
         }
 
         /// <summary>
+        /// Instructs the serialiser on how to handle the connection
+        /// once the response has been serialised and sent.
+        /// </summary>
+        public abstract HttpConnection Connection
+        {
+            get;
+            set;
+        }
+        /// <summary>
         /// Whether the serialiser should buffer its
         /// output and only send when flushed.
         /// </summary>

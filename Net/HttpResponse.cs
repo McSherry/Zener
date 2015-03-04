@@ -373,33 +373,6 @@ namespace McSherry.Zener.Net
                 _encoding = value;
             }
         }
-        /// <summary>
-        /// How the connection to the client should
-        /// be handled after the server has sent this
-        /// request.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// This defaults to KeepAlive.
-        /// </para>
-        /// <para>
-        /// If the response is being sent to an HTTP/1.0
-        /// client, this value may be ignored unless the
-        /// client explicitly lists support for persistent
-        /// connections.
-        /// </para>
-        /// </remarks>
-        public HttpConnection Connection
-        {
-            get { return _httpConn; }
-            set
-            {
-                this.CheckSerialiser();
-                this.Serialiser.CheckCanModify();
-
-                _httpConn = value;
-            }
-        }
 
         /// <summary>
         /// Writes the provided value to the response.
