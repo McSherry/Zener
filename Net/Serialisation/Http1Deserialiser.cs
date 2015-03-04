@@ -373,7 +373,7 @@ namespace McSherry.Zener.Net.Serialisation
         protected override void Deserialise()
         {
             // We'll be using the starting time to implement a timeout.
-            DateTime start = DateTime.Now;
+            DateTime start = DateTime.UtcNow;
 
             // The client is permitted to send any number of blank lines
             // before the request line and its headers. These lines may
@@ -388,7 +388,7 @@ namespace McSherry.Zener.Net.Serialisation
                 // If more time than the short-circuit timeout permits has
                 // elapsed, it means that the client took too long to send
                 // its first header/the request line.
-                if ((DateTime.Now - start).TotalMilliseconds >= ShortCircuitTimeout)
+                if ((DateTime.UtcNow - start).TotalMilliseconds >= ShortCircuitTimeout)
                 {
                     // At this point, we don't know what the client speaks.
                     // It might speak HTTP, it might not. It might even be
@@ -448,7 +448,7 @@ namespace McSherry.Zener.Net.Serialisation
                 // that we don't time out. This time we won't be using the short
                 // circuit timeout, but the default timeout value provided by the
                 // HttpDeserialiser base class.
-                if ((DateTime.Now - start).TotalMilliseconds > DefaultTimeout)
+                if ((DateTime.UtcNow - start).TotalMilliseconds > DefaultTimeout)
                 {
                     // The timeout has elapsed, so we need to throw the
                     // appropriate exception and provide a suitable error
@@ -623,7 +623,7 @@ namespace McSherry.Zener.Net.Serialisation
                         {
                             // If the timeout expires while we're reading, we need
                             // to throw an exception.
-                            if ((DateTime.Now - start).TotalMilliseconds > DefaultTimeout)
+                            if ((DateTime.UtcNow - start).TotalMilliseconds > DefaultTimeout)
                             {
                                 throw new HttpRequestTimeoutException(
                                     "The client took too long to send its request body."
