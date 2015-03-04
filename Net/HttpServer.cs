@@ -230,7 +230,7 @@ namespace McSherry.Zener.Net
             try
             {
                 // Attempt to create a request object.
-                req = new Http1Deserialiser(ns).Request;
+                req = new Http1Deserialiser(ns).Deserialise();
 
                 // If the client supports it, enable
                 // HTTP compression. The developer will

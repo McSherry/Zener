@@ -347,6 +347,11 @@ namespace McSherry.Zener.Net.Serialisation
             request._cookies = cookies;
         }
 
+        /// <summary>
+        /// The HttpRequest we'll be using as a cache.
+        /// </summary>
+        private HttpRequest Request;
+
         static Http1Deserialiser()
         {
             RequestLineWhiteSpace = new HashSet<char>(new[] 
@@ -366,12 +371,47 @@ namespace McSherry.Zener.Net.Serialisation
         }
 
         /// <summary>
-        /// The method which implements deserialisation using the
-        /// protected RequestStream property, and which assigns the
-        /// deserialised data to the protected pRequest
+        /// Creates a new Http1Deserialiser.
         /// </summary>
-        protected override void Deserialise()
+        /// <param name="input">The stream containing the request.</param>
+        public Http1Deserialiser(Stream input)
+            : base(input)
         {
+            this.Request = null;
+        }
+
+        /// <summary>
+        /// Deserialises a request from the input stream the deserialiser
+        /// was initialised with.
+        /// </summary>
+        /// <returns>
+        /// A request deserialised from the input stream.
+        /// </returns>
+        /// <remarks>
+        /// If the deserialiser has already deserialised a request, this
+        /// method will return that request.
+        /// </remarks>
+        public override HttpRequest Deserialise(bool returnPrevious)
+        {
+            // The caller can specify whether they wish to have 
+            // the previously-deserialised request, so we need to
+            // check both that they have reqested this, and that
+            // we have a cached request.
+            if (returnPrevious && this.Request != null)
+            {
+                // If the cached request has been requested and we
+                // have a cached request, return the request.
+                return this.Request;
+            }
+            else
+            {
+                // If we don't have a cached request, or if the
+                // caller has requested we deserialise a new request,
+                // we set the private field to a new, empty HttpRequest
+                // instance.
+                this.Request = new HttpRequest();
+            }
+
             // We'll be using the starting time to implement a timeout.
             DateTime start = DateTime.UtcNow;
 
@@ -408,7 +448,7 @@ namespace McSherry.Zener.Net.Serialisation
             // contain the client's request line. To parse it, we hand it off to
             // the ParseRequestLine function along with the HttpRequest we want to
             // populate with values.
-            ParseRequestLine(base.Request, line);
+            ParseRequestLine(this.Request, line);
             // The next request line should contain headers. It would be highly
             // unusual for a client to send a request with no headers, but it
             // would be completely valid.
@@ -416,7 +456,7 @@ namespace McSherry.Zener.Net.Serialisation
 
             // Regardless of whether there are headers to parse, we're going to
             // need to 
-            base.Request._headers = new HttpHeaderCollection();
+            this.Request._headers = new HttpHeaderCollection();
             // How we proceed depends on whether the line is empty or not. If it
             // is empty, it means that the client has sent no headers, so we don't
             // have anything more to parse.
@@ -425,8 +465,8 @@ namespace McSherry.Zener.Net.Serialisation
                 // If we're here, there's nothing left to parse from the
                 // request. Set anything we would have parsed to its default
                 // value.
-                base.Request._post = new Empty();
-                base.Request._cookies = new Empty();
+                this.Request._post = new Empty();
+                this.Request._cookies = new Empty();
 
                 // Since there's nothing left to do, skip to the exit
                 // point of the method. This will perform any required finishing
@@ -469,8 +509,8 @@ namespace McSherry.Zener.Net.Serialisation
                     // If we're here, the client has sent too much data in
                     // its headers, so we need to throw an exception.
                     throw new HttpException(
-                        status:     HttpStatus.RequestEntityTooLarge,
-                        message:    "The headers sent by the client were longer " +
+                        status: HttpStatus.RequestEntityTooLarge,
+                        message: "The headers sent by the client were longer " +
                                     "than the server's acceptable maximum (" +
                                     MaxHeaderLength + " bytes)."
                         );
@@ -493,7 +533,7 @@ namespace McSherry.Zener.Net.Serialisation
                 // a StringReader, and the StringReader in to ParseMany.
                 using (var sr = new StringReader(hdrBdr.ToString()))
                 {
-                    base.Request.Headers.AddRange(HttpHeader.ParseMany(sr));
+                    this.Request.Headers.AddRange(HttpHeader.ParseMany(sr));
                 }
             }
             catch (ArgumentException aex)
@@ -513,7 +553,7 @@ namespace McSherry.Zener.Net.Serialisation
             // The 'Content-Length' header tells us two things: 1) whether the
             // client has sent a request body; and 2) how long, in bytes, that
             // request body is.
-            var ctnLen = base.Request
+            var ctnLen = this.Request
                 .Headers[Rfc7230Serialiser.Headers.ContentLength]
                 // It is possible that the client has sent multiple
                 // 'Content-Length' headers (it could be a programmable client
@@ -525,7 +565,7 @@ namespace McSherry.Zener.Net.Serialisation
             // If the client sent a request body, we need to know its type
             // to be able to parse it. This means that the client should also
             // have sent a 'Content-Type' header.
-            var ctnType = base.Request
+            var ctnType = this.Request
                 .Headers[Rfc7230Serialiser.Headers.ContentType]
                 // For the same reason as with the 'Content-Length' header,
                 // we take the last 'Content-Type' header present in the
@@ -567,7 +607,7 @@ namespace McSherry.Zener.Net.Serialisation
                 // to check for this.
                 if (contentLength == 0)
                 {
-                    base.Request._post = new Empty();
+                    this.Request._post = new Empty();
                     // If the body is zero-length, we have nothing to read,
                     // so we skip to the end of the body-reading block.
                     goto readBodyExit;
@@ -590,7 +630,7 @@ namespace McSherry.Zener.Net.Serialisation
                     // We're not going to be parsing any POST data, so we
                     // need to make sure the HttpRequest.POST property gives
                     // an Empty.
-                    base.Request._post = new Empty();
+                    this.Request._post = new Empty();
                     goto readBodyExit;
                 }
 
@@ -646,7 +686,7 @@ namespace McSherry.Zener.Net.Serialisation
                                 offset: runningTotal,
                                 // The count is just the number of bytes read subtracted
                                 // from the number of bytes to be read.
-                                count:  bodyBuffer.Length - runningTotal
+                                count: bodyBuffer.Length - runningTotal
                                 );
                         }
 
@@ -658,9 +698,9 @@ namespace McSherry.Zener.Net.Serialisation
                         // returning Empty. They should also only throw exceptions that
                         // are subclasses of HttpException, so we shouldn't need a
                         // try-catch around them.
-                        base.Request._post = PostHandlers[contentType](
-                            request:    base.Request,
-                            body:       bodyStream
+                        this.Request._post = PostHandlers[contentType](
+                            request: this.Request,
+                            body: bodyStream
                             );
                     }
                 }
@@ -673,29 +713,21 @@ namespace McSherry.Zener.Net.Serialisation
             // field to an Empty.
             else
             {
-                base.Request._post = new Empty();
+                this.Request._post = new Empty();
             }
 
             // The client may or may not have sent cookies. Call the cookie-parsing
             // method, which will determine whether the client has sent cookies, parse
             // them if it has, and make any appropriate assignments.
-            ParseCookies(base.Request);
+            ParseCookies(this.Request);
 
         deserialiseExit:
             // The user shouldn't be able to modify the headers, since they
             // were sent in a request and are concrete. To ensure that the
             // user doesn't, we mark the HttpHeaderCollection read-only.
-            base.Request._headers.IsReadOnly = true;
-        }
-
-        /// <summary>
-        /// Creates a new Http1Deserialiser.
-        /// </summary>
-        /// <param name="input">The stream containing the request.</param>
-        public Http1Deserialiser(Stream input)
-            : base(input)
-        {
-
+            this.Request._headers.IsReadOnly = true;
+            // Return our deserialised request.
+            return this.Request;
         }
 
         /// <summary>
