@@ -715,17 +715,6 @@ namespace McSherry.Zener.Net.Serialisation
         /// The stream containing the request to deserialise.
         /// </summary>
         protected readonly Stream RequestStream;
-        /// <summary>
-        /// The request to assign deserialised values to.
-        /// </summary>
-        protected readonly HttpRequest pRequest;
-
-        /// <summary>
-        /// The method which implements deserialisation using the
-        /// protected RequestStream property, and which assigns the
-        /// deserialised data to the protected pRequest
-        /// </summary>
-        protected abstract void Deserialise();
 
         /// <summary>
         /// Creates a new HttpDeserialiser.
@@ -756,19 +745,42 @@ namespace McSherry.Zener.Net.Serialisation
             }
 
             this.RequestStream = input;
-            this.pRequest = new HttpRequest();
-
-            this.Deserialise();
         }
 
         /// <summary>
-        /// The request that was created by deserialising
-        /// the data in the provided stream.
+        /// Deserialises a request from the input stream the deserialiser
+        /// was initialised with.
         /// </summary>
-        public HttpRequest Request
+        /// <returns>
+        /// A request deserialised from the input stream.
+        /// </returns>
+        /// <remarks>
+        /// If the deserialiser has already deserialised a request, this
+        /// method will return that request.
+        /// </remarks>
+        public HttpRequest Deserialise()
         {
-            get { return this.pRequest; }
+            return this.Deserialise(returnPrevious: true);
         }
+        /// <summary>
+        /// Deserialises a request from the provided input stream.
+        /// </summary>
+        /// <param name="returnPrevious">
+        /// Whether the deserialiser should return the previously-deserialised
+        /// HttpRequest, if available. If this is false, the deserialiser will
+        /// attempt to deserialise a new HttpRequest from the Stream.
+        /// </param>
+        /// <returns>A request deserialised from the input stream.</returns>
+        /// <remarks>
+        /// <para>
+        /// Implementations must cache the previously-deserialised request. 
+        /// </para>
+        /// <para>
+        /// If an implementation does not have a cached request, it must
+        /// deserialise one from the stream, cache it, and return it.
+        /// </para>
+        /// </remarks>
+        public abstract HttpRequest Deserialise(bool returnPrevious);
 
         /// <summary>
         /// Releases any resources held by the deserialiser.
