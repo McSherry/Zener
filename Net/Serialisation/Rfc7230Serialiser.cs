@@ -300,7 +300,13 @@ namespace McSherry.Zener.Net.Serialisation
         public override HttpConnection Connection
         {
             get { return _connection; }
-            set { _connection = value; }
+            set 
+            {
+                base.CheckClosed();
+                base.CheckCanModify();
+
+                _connection = value; 
+            }
         }
         /// <summary>
         /// Whether the serialiser should buffer its output,
