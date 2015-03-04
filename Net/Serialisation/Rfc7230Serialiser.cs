@@ -20,14 +20,14 @@ namespace McSherry.Zener.Net.Serialisation
     /// A class for serialising an HttpResponse class to
     /// an HTTP/1.1 (RFC 7230) response.
     /// </summary>
-    public sealed class Rfc7230Serialiser
+    public class Rfc7230Serialiser
         : HttpSerialiser, IDisposable
     {        
         /// <summary>
         /// A class providing a set of constants for common
         /// HTTP header names.
         /// </summary>
-        internal static class Headers
+        protected internal static class Headers
         {
             /// <summary>
             /// The header that will contain the encodings that the
@@ -89,17 +89,17 @@ namespace McSherry.Zener.Net.Serialisation
         /// <summary>
         /// The format string used for HTTP/1.1 headers.
         /// </summary>
-        private const string HeaderFormat       = "{0}: {1}\r\n";
+        protected const string HeaderFormat       = "{0}: {1}\r\n";
         // It's quite likely that we'll be using chunked
         // encoding when writing to the stream, so we might
         // as well preëmptively get the instance. Having it
         // as a private field will save us a method call on
         // each write, too.
-        private static readonly IEncoder Chunker = ChunkedEncoder.Create();
+        protected static readonly IEncoder Chunker = ChunkedEncoder.Create();
         /// <summary>
         /// The bytes used as a newline in HTTP/1.1 headers.
         /// </summary>
-        private static readonly byte[] HttpNewline;
+        protected static readonly byte[] HttpNewline;
 
         static Rfc7230Serialiser()
         {
@@ -109,20 +109,20 @@ namespace McSherry.Zener.Net.Serialisation
         /// <summary>
         /// Whether we are able to enable HTTP compression.
         /// </summary>
-        private bool _canCompress;
+        protected bool _canCompress;
         /// <summary>
         /// Whether we are going to use HTTP compression.
         /// </summary>
-        private bool _useCompression;
+        protected bool _useCompression;
         /// <summary>
         /// Whether output buffering is enabled.
         /// </summary>
-        private bool _buffer;
+        protected bool _buffer;
         /// <summary>
         /// Whether we've started writing the
         /// response body to the network.
         /// </summary>
-        private bool _bodyWritten;
+        protected bool _bodyWritten;
 
         /// <summary>
         /// Evaluates the capabilities of the client and
@@ -134,7 +134,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// <exception cref="System.ArgumentNullException">
         /// Thrown when the provided HttpRequest is null.
         /// </exception>
-        internal void EvaluateClient(HttpRequest request)
+        protected internal virtual void EvaluateClient(HttpRequest request)
         {
             if (request == null)
             {
@@ -206,17 +206,17 @@ namespace McSherry.Zener.Net.Serialisation
         /// <summary>
         /// The stream we'll buffer output to.
         /// </summary>
-        private MemoryStream _outputBuffer;
+        protected MemoryStream _outputBuffer;
         /// <summary>
         /// The encoder we'll be using when compressing
         /// our response.
         /// </summary>
-        private IEncoder _compressor;
+        protected IEncoder _compressor;
         /// <summary>
         /// The backing field we're using for our Connection
         /// property.
         /// </summary>
-        private HttpConnection _connection;
+        protected HttpConnection _connection;
 
         /// <summary>
         /// Creates a new Rfc7230Serialiser.
