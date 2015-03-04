@@ -106,8 +106,6 @@ namespace McSherry.Zener.Net.Serialisation
             }
         }
 
-        private static readonly Version Rfc7230 = new Version(1, 1);
-
         /// <summary>
         /// Creates an HttpSerialiser instance based on the provided
         /// version.
