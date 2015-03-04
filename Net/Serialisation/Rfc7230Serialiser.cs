@@ -129,16 +129,12 @@ namespace McSherry.Zener.Net.Serialisation
         protected bool _bodyWritten;
 
         /// <summary>
-        /// Evaluates the capabilities of the client and
-        /// sets any private fields appropriately.
+        /// Rfc7230Serialiser's implementation of EvaluateClient
+        /// as a protected method so it can be called in EvaluateClient
+        /// implementations of Rfc7230Serialiser subclasses.
         /// </summary>
-        /// <param name="request">
-        /// The client's request.
-        /// </param>
-        /// <exception cref="System.ArgumentNullException">
-        /// Thrown when the provided HttpRequest is null.
-        /// </exception>
-        protected internal virtual void EvaluateClient(HttpRequest request)
+        /// <param name="request">The request to evaluate.</param>
+        protected void IntlEvaluateClient(HttpRequest request)
         {
             if (request == null)
             {
@@ -422,6 +418,22 @@ namespace McSherry.Zener.Net.Serialisation
         public override bool CanModifyHeaders
         {
             get { return !_bodyWritten; }
+        }
+
+        /// <summary>
+        /// Evaluates the capabilities advertised by the client
+        /// in the provided request and makes any relevant changes
+        /// to the serialiser's configuration.
+        /// </summary>
+        /// <param name="request">
+        /// The request to evaluate the client's capabilities from.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided HttpRequest is null.
+        /// </exception>
+        public override void EvaluateClient(HttpRequest request)
+        {
+            this.IntlEvaluateClient(request);
         }
 
         /// <summary>

@@ -232,6 +232,10 @@ namespace McSherry.Zener.Net
                 // Attempt to create a request object.
                 req = new Http1Deserialiser(ns).Deserialise();
 
+                // Calls the serialiser's method for self-configuring
+                // based on the request sent by the client.
+                httpSer.EvaluateClient(req);
+                
                 // If the client supports it, enable
                 // HTTP compression. The developer will
                 // also need to enable output buffering

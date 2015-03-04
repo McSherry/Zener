@@ -310,6 +310,19 @@ namespace McSherry.Zener.Net.Serialisation
             get;
             protected set;
         }
+
+        /// <summary>
+        /// Evaluates the capabilities advertised by the client
+        /// in the provided request and makes any relevant changes
+        /// to the serialiser's configuration.
+        /// </summary>
+        /// <param name="request">
+        /// The request to evaluate the client's capabilities from.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided HttpRequest is null.
+        /// </exception>
+        public abstract void EvaluateClient(HttpRequest request);
         
         /// <summary>
         /// Writes data to the serialiser. This data will
