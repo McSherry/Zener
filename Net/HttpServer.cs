@@ -283,8 +283,6 @@ namespace McSherry.Zener.Net
                     // We then, using information taken from the request, create
                     // a response serialiser that is appropriate for the client's
                     // request version.
-                    //
-                    // TODO: Handle unsupported protocols when creating a serialiser.
                     httpSer = HttpSerialiser.Create(
                         // The method uses the HTTP version the client specifies
                         // to determine which serialiser to use.
