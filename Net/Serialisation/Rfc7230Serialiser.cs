@@ -205,6 +205,31 @@ namespace McSherry.Zener.Net.Serialisation
                     }
                 }
             }
+
+            // We need to determine whether the client will accept persistent
+            // connections, or whether it wants to close the connection after
+            // we send the response.
+            //
+            // The client indicates this via its 'Connection' header.
+            var connHdr = request.Headers[Headers.Connection].LastOrDefault();
+            // If the client hasn't sent an HTTP header, we don't have to make
+            // any changes because we have defaulted to closing the connection.
+            if (connHdr != default(HttpHeader))
+            {
+                // If the value of the 'Connection' header sent to us by the
+                // client equals 'keep-alive', we'll set the value of our
+                // property Connection to KeepAlive instead of the default Close.
+                if (connHdr.Value.Equals(
+                    value:          HttpConnection.KeepAlive.GetValue(),
+                    comparisonType: StringComparison.OrdinalIgnoreCase
+                    ))
+                {
+                    this.Connection = HttpConnection.KeepAlive;
+                }
+
+                // If we haven't made any changes above, we don't need to do
+                // anything special as we already default to 'close'.
+            }
         }
 
         /// <summary>
@@ -253,6 +278,14 @@ namespace McSherry.Zener.Net.Serialisation
             _canCompress = false;
             _useCompression = false;
             _compressor = null;
+            // As we haven't been provided with an HttpRequest, we don't
+            // know whether the client deems persistent connections acceptable,
+            // so we default to closing them.
+            //
+            // This default value has the added benefit of improving HTTP/1.0
+            // client compatibility, as 1.0 clients may not support persistent
+            // connections, and so may not send a 'Connection' header.
+            _connection = HttpConnection.Close;
             // We're disabling output buffering by default, as it doing
             // so will generally provide better performance. Output buffering
             // being disabled means we'll be sending using chunked encoding,
