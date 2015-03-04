@@ -166,6 +166,45 @@ namespace McSherry.Zener.Net.Serialisation
                     );
             }
         }
+        /// <summary>
+        /// Creates an HttpSerialiser instance based on the provided
+        /// version and configures it using the provided HttpRequest.
+        /// </summary>
+        /// <param name="httpVersion">
+        /// The version of HTTP to create a serialiser for. Only the
+        /// major and minor versions are considered.
+        /// </param>
+        /// <param name="request">
+        /// The HttpRequest to use when configuring the serialiser.
+        /// </param>
+        /// <param name="response">
+        /// The HttpResponse to be serialised.
+        /// </param>
+        /// <param name="output">
+        /// The Stream to write the serialised data to.
+        /// </param>
+        /// <returns>
+        /// An HttpSerialiser instance for the specified HTTP version.
+        /// </returns>
+        /// <exception cref="System.NotSupportedException">
+        /// Thrown when no serialiser exists for the specified HTTP
+        /// version.
+        /// </exception>
+        public static HttpSerialiser Create(
+            Version httpVersion,
+            HttpRequest request, HttpResponse response,
+            Stream output
+            )
+        {
+            // Create a serialiser using the version/etc that was
+            // passed to the method.
+            var httpSer = HttpSerialiser.Create(httpVersion, response, output);
+            // Configure the created serialiser using the provided
+            // HttpRequest.
+            httpSer.Configure(request);
+            // Return the created+configured serialiser.
+            return httpSer;
+        }
 
         /// <summary>
         /// The stream to which any response data should be
