@@ -134,7 +134,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// implementations of Rfc7230Serialiser subclasses.
         /// </summary>
         /// <param name="request">The request to evaluate.</param>
-        protected void IntlEvaluateClient(HttpRequest request)
+        protected void IntlConfigure(HttpRequest request)
         {
             if (request == null)
             {
@@ -319,7 +319,7 @@ namespace McSherry.Zener.Net.Serialisation
             HttpResponse response, Stream output
             ) : this(response, output)
         {
-            this.EvaluateClient(request);
+            this.Configure(request);
         }
 
         /// <summary>
@@ -431,9 +431,9 @@ namespace McSherry.Zener.Net.Serialisation
         /// <exception cref="System.ArgumentNullException">
         /// Thrown when the provided HttpRequest is null.
         /// </exception>
-        public override void EvaluateClient(HttpRequest request)
+        public override void Configure(HttpRequest request)
         {
-            this.IntlEvaluateClient(request);
+            this.IntlConfigure(request);
         }
 
         /// <summary>

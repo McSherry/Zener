@@ -234,7 +234,7 @@ namespace McSherry.Zener.Net
 
                 // Calls the serialiser's method for self-configuring
                 // based on the request sent by the client.
-                httpSer.EvaluateClient(req);
+                httpSer.Configure(req);
                 
                 // If the client supports it, enable
                 // HTTP compression. The developer will

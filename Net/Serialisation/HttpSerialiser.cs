@@ -322,7 +322,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// <exception cref="System.ArgumentNullException">
         /// Thrown when the provided HttpRequest is null.
         /// </exception>
-        public abstract void EvaluateClient(HttpRequest request);
+        public abstract void Configure(HttpRequest request);
         
         /// <summary>
         /// Writes data to the serialiser. This data will
