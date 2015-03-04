@@ -80,6 +80,12 @@ namespace McSherry.Zener.Net.Serialisation
             /// it has stored.
             /// </summary>
             public const string Cookie = "Cookie";
+
+            /// <summary>
+            /// The header used by client and server to indicate how
+            /// the connection should be handled after the response is sent.
+            /// </summary>
+            public const string Connection = "Connection";
         }
 
         /// <summary>
@@ -533,6 +539,14 @@ namespace McSherry.Zener.Net.Serialisation
                         );
                 }
 
+                // We need to, based on how we've been configured, report to
+                // the client how we will be handling the connection after
+                // sending the response.
+                base.Response.Headers.Add(
+                    fieldName:  Headers.Connection,
+                    fieldValue: this.Connection.GetValue(),
+                    overwrite:  true
+                    );
                 // We're required to send a 'Date' header in a specific format
                 // to indicate to the client when the response was generated.
                 // Thankfully, the DateTime class provides us with a formatter
