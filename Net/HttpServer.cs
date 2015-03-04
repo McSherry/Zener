@@ -285,29 +285,38 @@ namespace McSherry.Zener.Net
             httpSer.Close(flush: true);
             // Dispose any resources held by the serialiser.
             httpSer.Dispose();
-            // We need to support HTTP pipelining for HTTP/1.1 compliance, and
-            // this is how we're going to do it. Pipelining involves the user
-            // agent sending multiple requests, one after the other, without
-            // waiting for a response. This means that, if a user agent is using
-            // pipelining, we'll still have data in our receive buffers after
-            // processing the first request.
-            if (ns.DataAvailable)
+
+            // If we are to keep the connection alive, we should check for any
+            // further data the client has sent us. Clients may reuse connections
+            // to save negotiating a new TCP connection, which is comparatively
+            // costly.
+            //
+            // By implementing this, we support HTTP pipelining (where requests
+            // are sent one after the other in order to be processed and responded
+            // to one-by-one on the same connection.
+            if (httpSer.Connection == HttpConnection.KeepAlive)
             {
-                // The pipelined requests aren't specially formatted, it's just
-                // one HTTP request after another. This means we don't need to
-                // write any special code, and we can just call the method we're
-                // currently in again.
-                this.HttpRequestHandler(tclo);
+                // TODO: Implement better keep-alive support here (issue #47).
+                if (ns.DataAvailable)
+                {
+                    // The pipelined requests aren't specially formatted, it's just
+                    // one HTTP request after another. This means we don't need to
+                    // write any special code, and we can just call the method we're
+                    // currently in again.
+                    this.HttpRequestHandler(tclo);
+                }
             }
-            else
-            {
-                // If there's no data remaining in our receive buffers, there
-                // are no more requests to process. This means that we can close
-                // the streams and connections.
-                ns.Close();
-                ns.Dispose();
-                tcl.Close();
-            }
+
+            // In the below code, we are assuming that the keep-alive scope above
+            // will block until the keep-alive timeout expires, which means we can
+            // just close the connection once we've exited from it.
+            //
+            // This also means we don't need to check to see whether we've been
+            // instructed to close the connection, as if we have the above expressions
+            // won't evaluate to true and we'll bypass the if-statement and end up here.
+            ns.Close();
+            ns.Dispose();
+            tcl.Close();
         }
         private void EmitMessage(MessageType msgType, IList<object> args, HttpResponse res)
         {
