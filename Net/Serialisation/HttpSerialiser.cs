@@ -125,10 +125,6 @@ namespace McSherry.Zener.Net.Serialisation
         /// <returns>
         /// An HttpSerialiser instance for the specified HTTP version.
         /// </returns>
-        /// <exception cref="System.NotSupportedException">
-        /// Thrown when no serialiser exists for the specified HTTP
-        /// version.
-        /// </exception>
         public static HttpSerialiser Create(
             Version httpVersion,
             HttpResponse response, Stream output
@@ -155,15 +151,43 @@ namespace McSherry.Zener.Net.Serialisation
                     );
             }
 
-            if (httpVersion.Equals(Rfc7230))
+            // We first need to switch based on the major version.
+            switch (httpVersion.Major)
             {
-                return new Rfc7230Serialiser(response, output);
-            }
-            else
-            {
-                throw new NotSupportedException(
-                    "There is no serialiser for the specified version."
-                    );
+                // We're using HTTP/1.x as the default, so any
+                // unrecognised versions will end up going to
+                // here.
+                case 1:
+                default:
+                {
+                    // Now that we know our major version, we can
+                    // narrow it down using the minor version.
+                    switch (httpVersion.Minor)
+                    {
+                        /* Right now we only support HTTP/1.1, so
+                         * any HTTP/1.x protocols get pushed through 
+                         * here.
+                        **/
+                        default:
+                        /* RFC 7230 is the first (of several) RFCs that
+                         * specify HTTP/1.1. We're using RFC naming to
+                         * avoid hard-to-read class names. Consider:
+                         * 
+                         *      +------------------+-------------------+
+                         *      |     Version      |        RFC        |
+                         *      |------------------+-------------------|
+                         *      | Http10Serialiser | Rfc2616Serialiser |
+                         *      | Http11Serialiser | Rfc7230Serialiser |
+                         *      +------------------+-------------------+
+                         * 
+                         * Although the version is not immediately
+                         * evident if you don't know the RFC numbers, I
+                         * would argue that RFC-based class names are
+                         * easier to read when you know what you're after.
+                        **/
+                        case 1: return new Rfc7230Serialiser(response, output);
+                    }
+                }
             }
         }
         /// <summary>
