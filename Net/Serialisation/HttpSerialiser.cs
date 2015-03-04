@@ -210,10 +210,6 @@ namespace McSherry.Zener.Net.Serialisation
         /// <returns>
         /// An HttpSerialiser instance for the specified HTTP version.
         /// </returns>
-        /// <exception cref="System.NotSupportedException">
-        /// Thrown when no serialiser exists for the specified HTTP
-        /// version.
-        /// </exception>
         public static HttpSerialiser Create(
             Version httpVersion,
             HttpRequest request, HttpResponse response,
