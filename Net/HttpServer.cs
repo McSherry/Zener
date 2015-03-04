@@ -150,8 +150,24 @@ namespace McSherry.Zener.Net
     /// </summary>
     public sealed class HttpServer
     {
+        /// <summary>
+        /// The port with the lowest number that can be considered
+        /// an ephemeral TCP port.
+        /// </summary>
         private const int TCP_EPHEMERAL_MIN = 49152;
+        /// <summary>
+        /// The port with the greatest number that can be considered
+        /// an ephemeral TCP port.
+        /// </summary>
         private const int TCP_EPHEMERAL_MAX = 65535;
+        /// <summary>
+        /// The number of milliseconds the server will wait on keep-alive
+        /// requests to send more data.
+        /// </summary>
+        private const int HTTP_KEEPALIVE_TIMEOUT = 1500;
+        /// <summary>
+        /// The random number generator used to generate random ports.
+        /// </summary>
         private static Random _rng;
 
         /// <summary>
@@ -300,6 +316,8 @@ namespace McSherry.Zener.Net
             // to one-by-one on the same connection.
             if (httpSer.Connection == HttpConnection.KeepAlive)
             {
+                // We'll be using this to measure our keep-alive time-out.
+                DateTime start = DateTime.UtcNow;
                 // TODO: Implement better keep-alive support here (issue #47).
                 if (ns.DataAvailable)
                 {
