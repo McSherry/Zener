@@ -259,26 +259,7 @@ namespace McSherry.Zener.Net
     public sealed class HttpResponse
     {
         private const string 
-            HDR_SETCOOKIE       = "Set-Cookie",
-            HDR_CONTENTLENGTH   = "Content-Length",
-            HDR_XFERENCODING    = "Transfer-Encoding",
-            HDR_SERVER          = "Server",
-            HDR_CONTENTTYPE     = "Content-Type",
-            HDR_DATE            = "Date",
-            HDR_ACCEPTENCODING  = "Accept-Encoding",
-            HDR_CONTENTENCODING = "Content-Encoding",
-
-            HDRF_CHUNKEDXFER    = "chunked",
-            HDRF_SERVER         = "Zener/{0}",
-            HDRF_CONTENTTYPE    = "text/html",
-            HDRF_ENCODING_GZIP  = "gzip",
-            HDRF_ENCODING_ANY   = "*",
-
-            HTTP_VERSION        = "1.1",
             HTTP_NEWLINE        = "\r\n"
-            ;
-        internal const int
-            TX_BUFFER_SIZE      = 16384
             ;
 
         private HttpStatus _httpStatus;
