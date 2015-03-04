@@ -90,11 +90,9 @@ namespace McSherry.Zener.Net.Serialisation
         /// The format string used for HTTP/1.1 headers.
         /// </summary>
         protected const string HeaderFormat       = "{0}: {1}\r\n";
-        // It's quite likely that we'll be using chunked
-        // encoding when writing to the stream, so we might
-        // as well preëmptively get the instance. Having it
-        // as a private field will save us a method call on
-        // each write, too.
+        /// <summary>
+        /// The encoder used to apply chunked encoding to data.
+        /// </summary>
         protected static readonly IEncoder Chunker = ChunkedEncoder.Create();
         /// <summary>
         /// The bytes used as a newline in HTTP/1.1 headers.

@@ -263,7 +263,6 @@ namespace McSherry.Zener.Net
             ;
 
         private HttpStatus _httpStatus;
-        private HttpConnection _httpConn;
         private HttpHeaderCollection _headers;
         private HttpCookieCollection _cookies;
         private Encoding _encoding;
