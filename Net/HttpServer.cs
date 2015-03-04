@@ -236,36 +236,145 @@ namespace McSherry.Zener.Net
 
             NetworkStream ns = tcl.GetStream();
 
-            HttpRequest req;
-            HttpResponse res = new HttpResponse();
 
             /* TODO: Implement code to determine which serialiser to use.
              */
-            HttpSerialiser httpSer = new Rfc7230Serialiser(res, ns);
+            //HttpSerialiser httpSer = new Rfc7230Serialiser(res, ns);
+            //HttpDeserialiser httpDes = new Http1Deserialiser(ns);
 
+
+            HttpRequest req;
+            HttpDeserialiser httpDes;
+            HttpResponse res;
+            HttpSerialiser httpSer = null;
             try
             {
-                // Attempt to create a request object.
-                req = new Http1Deserialiser(ns).Deserialise();
+                // We assume that the client will be speaking HTTP/1.x
+                // by default, and set our deserialiser variable appropriately.
+                httpDes = new Http1Deserialiser(ns);
 
-                // Calls the serialiser's method for self-configuring
-                // based on the request sent by the client.
-                httpSer.Configure(req);
-                
-                // If the client supports it, enable
-                // HTTP compression. The developer will
-                // also need to enable output buffering
-                // to make use of HTTP compression.
-                //res.EnableCompression(req);
+                /* There are a few reasons we need to loop when processing HTTP
+                 * requests at this level.
+                 *
+                 *      1.  If HTTP requests are pipelined, we're going to need
+                 *          (or want) to reuse the deserialiser.
+                 *       
+                 *      2.  If we need to switch protocols (say, the client
+                 *          requested a change to HTTP/2), we're going to need
+                 *          to create a new deserialiser and serialiser, assign
+                 *          them to our variables, and then loop to process
+                 *          further requests.
+                 *          
+                 *          It's quite possible that we'll need to make further
+                 *          modifications if implementing HTTP/2, as these are
+                 *          being made before HTTP/2 has been finalised (still
+                 *          being edited before being published in an RFC).
+                **/
+                do
+                {
+                    // Attempt to create a request object. We don't want to
+                    // retrieve a request cached by the deserialiser, so we
+                    // pass False to the method.
+                    req = httpDes.Deserialise(returnPrevious: false);
+                    // The request created successfully, so we can now go ahead
+                    // with creating our response. The first thing to do is create
+                    // the empty HttpResponse object.
+                    res = new HttpResponse();
+                    // We then, using information taken from the request, create
+                    // a response serialiser that is appropriate for the client's
+                    // request version.
+                    //
+                    // TODO: Handle unsupported protocols when creating a serialiser.
+                    httpSer = HttpSerialiser.Create(
+                        // The method uses the HTTP version the client specifies
+                        // to determine which serialiser to use.
+                        httpVersion: req.HttpVersion,
+                        // By passing a HttpRequest to the Create method, we then
+                        // don't have to call Configure on the serialiser we are
+                        // returned, as the Create method will do it for us.
+                        request: req,
+                        response: res,
+                        output: ns
+                        );
 
-                // If creation succeeds, emit a message
-                // with the request and response objects
-                // as its arguments.
-                this.EmitMessage(
-                    MessageType.RequestReceived,
-                    new object[] { req, res }.ToList(),
-                    res
-                    );
+                    // If creation succeeds, emit a message
+                    // with the request and response objects
+                    // as its arguments.
+                    this.EmitMessage(
+                        MessageType.RequestReceived,
+                        new object[] { req, res }.ToList(),
+                        res
+                        );
+
+                    // If we're at this point, deserialisation and serialisation
+                    // appear to have gone well, so what we need to do now is close
+                    // the serialiser (ensuring it flushes if it has not already).
+                    httpSer.Close(flush: true);
+                    // We then release any resources that the serialiser held.
+                    httpSer.Dispose();
+
+                    // To support HTTP pipelining, we need to check whether the
+                    // client wants us to keep the connection alive. If it does,
+                    // it's probably going to send us additional requests on the
+                    // connection.
+                    if (httpSer.Connection == HttpConnection.KeepAlive)
+                    {
+                        // While we may need to wait for the additional requests,
+                        // we can't wait forever. We're going to use a time-out on
+                        // keep-alive requests to make sure that the thread doesn't
+                        // keep idling on nothing.
+                        DateTime start = DateTime.UtcNow;
+                        // We'll set this to true when we want to attempt to
+                        // deserialise another request.
+                        bool attemptDeserialise = false;
+                        // We'll keep iterating whilst the time-out has not expired.
+                        while (
+                            (DateTime.UtcNow - start).TotalMilliseconds <= HTTP_KEEPALIVE_TIMEOUT
+                            )
+                        {
+                            // We'll use the NetworkStream's DataAvailable property to determine
+                            // whether there's a request that we need to process.
+                            if (attemptDeserialise = ns.DataAvailable)
+                            {
+                                // If there's data to attempt to process, we want to break
+                                // out of the loop.
+                                break;
+                            }
+                            else
+                            {
+                                // This gives up our current slice of execution time.
+                                // We're doing this to attempt to prevent maxing out whichever
+                                // CPU core this loop is executing on. Plus, it will allow
+                                // other operating system threads (potentially other Zener
+                                // threads) to run.
+                                //
+                                // This isn't a perfect solution, as if no other threads
+                                // are waiting we'll retain our execution time slice and
+                                // will probably cause a CPU spike.
+                                Thread.Yield();
+                            }
+                        }
+
+                        // This field will tell us whether our keep-alive wait-loop
+                        // determined whether we should attempt to process data or
+                        // not.
+                        if (attemptDeserialise)
+                        {
+                            // If we are to process data, skip to the next iteration
+                            // in the while loop.
+                            continue;
+                        }
+                    }
+
+                    // If we end up here, we don't have anything more to process. Either
+                    // we're closing the connection because the serialiser was configured
+                    // to do this, or we waited for additional data and the client didn't
+                    // send us any within a short enough time.
+                    //
+                    // Since there's nothing more to do, break out of the loop.
+                    break;
+                }
+                while (true);
             }
             catch (HttpFatalException)
             {
@@ -274,12 +383,47 @@ namespace McSherry.Zener.Net
                 // terminate the connection without a response. This
                 // is generally done when the connection is not in a
                 // recoverable state (e.g. completely malformed data).
-                httpSer.Close();
-                ns.Close();
-                ns.Dispose();
-                tcl.Close();
+                //
+                // As the "finally" block will get executed anyway, we
+                // have already done everything we need to as we've
+                // prevented the HttpFatalException from propagating
+                // and crashing the program.
+            }
+            catch (HttpException hex)
+            {
+                // If we're here, something has thrown a HttpException
+                // before we could locate an appropriate virtual host to
+                // grab the error handler from. This will probably be a
+                // malformed request or similar.
 
-                return;
+                // We're going to send a response using our default error
+                // handler, so we need to create all the same bumf we would
+                // have done with a successful request.
+                res = new HttpResponse();
+                // The problem here is that we don't know what protocol the
+                // client speaks, and we've got no way to determine because
+                // we've got no HttpRequest object to work from.
+                //
+                // HTTP/1.1 is currently the most popular version of the
+                // protocol, so we'll take a safe guess and use a serialiser
+                // for HTTP/1.1.
+                httpSer = new Rfc7230Serialiser(res, ns);
+                // We're handing off to any subscribers to the message pump
+                // to handle this. We have our own default error handler,
+                // but it's possible that whatever subscribes to the message
+                // pump does too, and it would probably prefer to use its
+                // own over ours.
+                this.EmitMessage(
+                    MessageType.InvokeErrorHandler,
+                    new object[] { hex, res }.ToList(),
+                    res
+                    );
+
+                // Make sure that all data is sent to the network and that
+                // any resources the serialiser used are disposed of before
+                // we exit.
+                httpSer.Close(flush: true);
+                httpSer.Dispose();
             }
             catch (IOException ioex)
             {
@@ -289,56 +433,22 @@ namespace McSherry.Zener.Net
                 // skip it and continue on.
                 if (ioex.InnerException is SocketException)
                 {
-                    httpSer.Close();
-                    ns.Close();
-                    ns.Dispose();
-                    tcl.Close();
-
-                    return;
+                    // We don't need to do anything, as we'll fall through
+                    // to the "finally" block which will handle closing and
+                    // disposing for us.
                 }
                 else throw;
             }
-
-            // We're finished with this request, so we can close it. This
-            // will flush any buffers to the network, and with close/dispose
-            // any disposable resources.
-            httpSer.Close(flush: true);
-            // Dispose any resources held by the serialiser.
-            httpSer.Dispose();
-
-            // If we are to keep the connection alive, we should check for any
-            // further data the client has sent us. Clients may reuse connections
-            // to save negotiating a new TCP connection, which is comparatively
-            // costly.
-            //
-            // By implementing this, we support HTTP pipelining (where requests
-            // are sent one after the other in order to be processed and responded
-            // to one-by-one on the same connection.
-            if (httpSer.Connection == HttpConnection.KeepAlive)
+            finally
             {
-                // We'll be using this to measure our keep-alive time-out.
-                DateTime start = DateTime.UtcNow;
-                // TODO: Implement better keep-alive support here (issue #47).
-                if (ns.DataAvailable)
-                {
-                    // The pipelined requests aren't specially formatted, it's just
-                    // one HTTP request after another. This means we don't need to
-                    // write any special code, and we can just call the method we're
-                    // currently in again.
-                    this.HttpRequestHandler(tclo);
-                }
+                // We've nothing left to process, so we can close/dispose of any network
+                // resources we were using. We won't be using them. This makes sure that,
+                // regardless of how we got here (successfully or via an exception), that
+                // everything is closed and disposed.
+                ns.Close();
+                ns.Dispose();
+                tcl.Close();
             }
-
-            // In the below code, we are assuming that the keep-alive scope above
-            // will block until the keep-alive timeout expires, which means we can
-            // just close the connection once we've exited from it.
-            //
-            // This also means we don't need to check to see whether we've been
-            // instructed to close the connection, as if we have the above expressions
-            // won't evaluate to true and we'll bypass the if-statement and end up here.
-            ns.Close();
-            ns.Dispose();
-            tcl.Close();
         }
         private void EmitMessage(MessageType msgType, IList<object> args, HttpResponse res)
         {
