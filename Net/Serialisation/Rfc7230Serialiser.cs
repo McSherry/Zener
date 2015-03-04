@@ -539,7 +539,7 @@ namespace McSherry.Zener.Net.Serialisation
                     fieldName:  Headers.Server,
                     fieldValue: String.Format(
                                     "Zener/{0}",
-                                    ZenerCore.Version.ToString(3)
+                                    Zener.Version.ToString(3)
                                     ),
                     overwrite:  true
                     );
