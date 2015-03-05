@@ -43,7 +43,6 @@ namespace McSherry.Zener
             // thread-local storage.
             TLS_VHOST           = "VirtualHost"
             ;
-        private static readonly Version _ver;
 
         // To support virtual hosting, and having individual error handlers
         // for individual virtual hosts, we're going to need to have somewhere
@@ -62,21 +61,12 @@ namespace McSherry.Zener
 
         static ZenerCore()
         {
-            _ver = Assembly.GetCallingAssembly().GetName().Version;
             TLS = new ThreadLocal<StrObjDict>(() => new StrObjDict());
         }
 
         private List<HttpServer> _httpServers;
         private ZenerContext _context;
         private object _lockbox;
-
-        /// <summary>
-        /// The current version of Zener.
-        /// </summary>
-        public static Version Version
-        {
-            get { return _ver; }
-        }
 
         private void VirtualHostAddedHandler(object sender, VirtualHost host)
         {

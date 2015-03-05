@@ -21,6 +21,27 @@ namespace McSherry.Zener
     public static class Zener
     {
         /// <summary>
+        /// This version string is used both by the Version static property
+        /// (which is used in the 'Server' header) and in setting the version
+        /// string for the assembly.
+        /// </summary>
+        internal const string VersionString = "0.12.0";
+
+        static Zener()
+        {
+            Version = new Version(VersionString);
+        }
+
+        /// <summary>
+        /// The current version of Zener.
+        /// </summary>
+        public static Version Version
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
         /// Reads a single line from a stream and returns the ASCII-encoded string.
         /// </summary>
         /// <param name="stream">The stream to read from.</param>

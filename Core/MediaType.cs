@@ -72,6 +72,51 @@ namespace McSherry.Zener.Core
             /// </summary>
             Parameter
         }
+
+        /// <summary>
+        /// Implements an IEqualityComparer for MediaType that uses
+        /// the MediaType.IsEquivalent method to determine equality.
+        /// </summary>
+        public class EquivalencyComparer : IEqualityComparer<MediaType>
+        {
+            /// <summary>
+            /// Determines whether the left-hand MediaType is
+            /// equivalent to the right-hand MediaType.
+            /// </summary>
+            /// <param name="lhs">The left-hand MediaType.</param>
+            /// <param name="rhs">The right-hand MediaType.</param>
+            /// <returns>
+            /// True if the left-hand MediaType is equivalent
+            /// to the right-hand MediaType.
+            /// </returns>
+            public bool Equals(MediaType lhs, MediaType rhs)
+            {
+                return lhs.IsEquivalent(rhs);
+            }
+            /// <summary>
+            /// Retrieves a hash code for the MediaType.
+            /// </summary>
+            /// <param name="mt">
+            /// The MediaType to retrieve the hash code for.
+            /// </param>
+            /// <returns>
+            /// The hash code of the provided MediaType.
+            /// </returns>
+            public int GetHashCode(MediaType mt)
+            {
+                unchecked
+                {
+                    return
+                        (mt.SuperType.GetHashCode()         * 2)    +
+                        (mt.RegistrationTree.GetHashCode()  * 3)    +
+                        (mt.SubType.GetHashCode()           * 5)    +
+                        0x4389AB3 // Random prime number as a seed
+                        ;
+                        
+                }
+            }
+        }
+
         private static readonly Dictionary<MediaTypeRegTree, string>
             MediaTypeRegTreeStrings = new Dictionary<MediaTypeRegTree, string>()
         {
@@ -557,6 +602,35 @@ namespace McSherry.Zener.Core
 
             return type;
         }
+        /// <summary>
+        /// Attempts to create a MediaType class from a string.
+        /// </summary>
+        /// <param name="mediaType">The string to parse.</param>
+        /// <param name="type">
+        /// The MediaType that will be given the parsed value if
+        /// creation succeeds.
+        /// </param>
+        /// <returns>True if creation succeeds.</returns>
+        public static bool TryCreate(string mediaType, out MediaType type)
+        {
+            bool success;
+
+            try
+            {
+                type = MediaType.Create(mediaType);
+                success = true;
+            }
+            // Yes, I know, bad practice to catch all exceptions. However,
+            // the whole point of this method is to not throw an exception
+            // when something goes wrong with parsing the MediaType.
+            catch (Exception)
+            {
+                type = null;
+                success = false;
+            }
+
+            return success;
+        }
         
         /// <summary>
         /// Converts a string to a MediaType by passing the string
@@ -594,6 +668,13 @@ namespace McSherry.Zener.Core
             return type.ToString();
         }
 
+        /// <summary>
+        /// A wildcard media type for all text media types.
+        /// </summary>
+        public static MediaType Text
+        {
+            get { return "text/*"; }
+        }
         /// <summary>
         /// The media type for plain text content.
         /// </summary>
@@ -635,6 +716,13 @@ namespace McSherry.Zener.Core
         public static MediaType Wildcard
         {
             get { return "*/*"; }
+        }
+        /// <summary>
+        /// The media type used for arbitrary binary data.
+        /// </summary>
+        public static MediaType OctetStream
+        {
+            get { return "application/octet-stream"; }
         }
 
         private MediaType() { }
