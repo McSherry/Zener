@@ -25,7 +25,7 @@ namespace McSherry.Zener
         /// (which is used in the 'Server' header) and in setting the version
         /// string for the assembly.
         /// </summary>
-        internal const string VersionString = "0.12.0";
+        internal const string VersionString = "0.13.0";
 
         static Zener()
         {
