@@ -98,6 +98,13 @@ namespace McSherry.Zener.Net.Serialisation
             // As we won't be sure if the client supports chunked encoding,
             // we need to enable output buffering by default.
             base._buffer = true;
+
+            // Persistent connections are an extension to HTTP/1.0, so we
+            // need to default to having them disabled.
+            _supportsPersist = false;
+            // We also have to set the connection property to ensure that
+            // connections are closed by default.
+            base._connection = HttpConnection.Close;
         }
 
         /// <summary>
@@ -123,6 +130,34 @@ namespace McSherry.Zener.Net.Serialisation
                 // If the client does support chunked encoding, it doesn't
                 // matter whether the user enables or disables output buffering.
                 base.BufferOutput = value;
+            }
+        }
+        /// <summary>
+        /// Instructs the serialiser on how to handle the connection
+        /// once the response has been serialised and sent.
+        /// </summary>
+        public override HttpConnection Connection
+        {
+            get
+            {
+                return base.Connection;
+            }
+            set
+            {
+                base.CheckClosed();
+                base.CheckCanModify();
+
+                // If the user is trying to enable persistent connections but the
+                // client has not reported support for persistent connections, we
+                // can't allow it to be enabled.
+                //
+                // We do this because, unlike with HTTP/1.1, HTTP/1.0 does not, as
+                // part of the specification, include support for persistent
+                // connections. Instead, persistent connections are an extension to
+                // HTTP/1.0, and support for them must be reported explicitly.
+                if (!_supportsPersist) return;
+
+                base.Connection = value;
             }
         }
 
