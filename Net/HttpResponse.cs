@@ -199,6 +199,21 @@ namespace McSherry.Zener.Net
         /// header could not be met by the server.
         /// </summary>
         ExpectationFailed               = 417,
+        /// <summary>
+        /// Status code 428. Indicates that the origin server requires that the
+        /// client's request is conditional.
+        /// </summary>
+        PreconditionRequired            = 428,
+        /// <summary>
+        /// Status code 429. Indicates that the user has sent too great a number
+        /// of requests within a given time period. Intended for rate-limiting.
+        /// </summary>
+        TooManyRequests                 = 429,
+        /// <summary>
+        /// Status code 431. Indicates that the header fields sent by the client
+        /// are larger than the server is willing to process. 
+        /// </summary>
+        RequestHeaderFieldsTooLarge     = 431,
 
         /// <summary>
         /// Status code 500. The server encountered an error or issue which
@@ -232,7 +247,13 @@ namespace McSherry.Zener.Net
         /// supported by the server, and thus the server could not fulfill the
         /// request.
         /// </summary>
-        HttpVersionNotSupported         = 505
+        HttpVersionNotSupported         = 505,
+        /// <summary>
+        /// Status code 511. Indicates that the client must authenticate before
+        /// it can gain network access. This status code should not be used by
+        /// origin servers, and responses should not display a log-in field.
+        /// </summary>
+        NetworkAuthenticationRequired   = 511
     }
     /// <summary>
     /// How the HTTP server should handle the connection to
