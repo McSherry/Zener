@@ -96,7 +96,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// <summary>
         /// The format string used for the response line.
         /// </summary>
-        private const string ResponseLineFormat = "HTTP/1.1 {0} {1}\r\n";
+        private const string ResponseLineFormat = "HTTP/{0} {1} {2}\r\n";
         /// <summary>
         /// The format string used for HTTP/1.1 headers.
         /// </summary>
@@ -233,6 +233,16 @@ namespace McSherry.Zener.Net.Serialisation
         }
 
         /// <summary>
+        /// The HTTP version to be used in the response headers. Defaults
+        /// to 1.1.
+        /// </summary>
+        protected virtual Version HttpVersion
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// The stream we'll buffer output to.
         /// </summary>
         protected MemoryStream _outputBuffer;
@@ -272,6 +282,8 @@ namespace McSherry.Zener.Net.Serialisation
         public Rfc7230Serialiser(HttpResponse response, Stream output)
             : base(response, output)
         {
+            this.HttpVersion = new Version(1, 1);
+
             // We haven't been provided with an HttpRequest, so it
             // isn't possible for us to determine whether the client
             // supports compression.
@@ -707,6 +719,7 @@ namespace McSherry.Zener.Net.Serialisation
                 byte[] hbuf = Encoding.ASCII
                     .GetBytes(String.Format(
                         ResponseLineFormat,
+                        this.HttpVersion.ToString(2),
                         base.Response.StatusCode.GetCode(),
                         base.Response.StatusCode.GetMessage()
                         ));

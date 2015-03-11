@@ -37,7 +37,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// implementations of Rfc2616Serialiser subclasses.
         /// </summary>
         /// <param name="request">The request to evaluate.</param>
-        protected void Rfc2616IntlConfigure(HttpRequest request)
+        private void Rfc2616IntlConfigure(HttpRequest request)
         {
             // If the client supports chunked encoding, it will indicate
             // it in its 'TE' header. HTTP/1.0 clients are not required, and
@@ -92,6 +92,11 @@ namespace McSherry.Zener.Net.Serialisation
         public Rfc2616Serialiser(HttpResponse response, Stream output)
             : base(response, output)
         {
+            // Make sure we set the superclass's HttpVersion properly.
+            // Rfc7230Serialiser uses this to send the version to the
+            // client.
+            base.HttpVersion = new Version(1, 0);
+
             // Client's aren't required to support chunked encoding, so
             // we prevent the enabling of chunked encoding by default.
             _supportsChunked = false;
