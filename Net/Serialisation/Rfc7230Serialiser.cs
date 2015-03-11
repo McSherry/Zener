@@ -134,7 +134,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// implementations of Rfc7230Serialiser subclasses.
         /// </summary>
         /// <param name="request">The request to evaluate.</param>
-        protected void IntlConfigure(HttpRequest request)
+        protected void Rfc7230IntlConfigure(HttpRequest request)
         {
             if (request == null)
             {
@@ -433,7 +433,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// </exception>
         public override void Configure(HttpRequest request)
         {
-            this.IntlConfigure(request);
+            this.Rfc7230IntlConfigure(request);
         }
 
         /// <summary>
