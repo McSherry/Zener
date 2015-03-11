@@ -44,6 +44,11 @@ namespace McSherry.Zener.Net.Serialisation
             /// for transfer.
             /// </summary>
             public const string TransferEncoding = "Transfer-Encoding";
+            /// <summary>
+            /// The header used by the client to indicate the transfer
+            /// encoding methods it supports.
+            /// </summary>
+            public const string TE = "TE";
 
             /// <summary>
             /// The header providing the length, in bytes, of the response
