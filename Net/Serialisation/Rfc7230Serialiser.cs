@@ -134,8 +134,8 @@ namespace McSherry.Zener.Net.Serialisation
         protected bool _bodyWritten;
 
         /// <summary>
-        /// Rfc7230Serialiser's implementation of EvaluateClient
-        /// as a protected method so it can be called in EvaluateClient
+        /// Rfc7230Serialiser's implementation of Configure
+        /// as a protected method so it can be called in Configure
         /// implementations of Rfc7230Serialiser subclasses.
         /// </summary>
         /// <param name="request">The request to evaluate.</param>

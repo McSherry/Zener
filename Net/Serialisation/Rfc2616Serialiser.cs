@@ -32,6 +32,42 @@ namespace McSherry.Zener.Net.Serialisation
         private bool _supportsPersist;
 
         /// <summary>
+        /// Rfc2616Serialiser's implementation of Configure
+        /// as a protected method so it can be called in Configure
+        /// implementations of Rfc2616Serialiser subclasses.
+        /// </summary>
+        /// <param name="request">The request to evaluate.</param>
+        protected void Rfc2616IntlConfigure(HttpRequest request)
+        {
+            // If the client supports chunked encoding, it will indicate
+            // it in its 'TE' header. HTTP/1.0 clients are not required, and
+            // so are not guaranteed, to support chunked encoding, so we need
+            // to check for it.
+            var xferEnc = request.Headers[Headers.TE].LastOrDefault();
+            // If the client hasn't included a 'TE' header, it doesn't really
+            // matter as we default to having chunked encoding disabled.
+            if (xferEnc != default(HttpHeader))
+            {
+                // We're going to treat the 'TE' header as an ordered CSV header,
+                // and remove any options marked as unacceptable. This will leave
+                // us with all the transfer encodings the client will accept.
+                var ocsv = new OrderedCsvHttpHeader(xferEnc, true);
+                // We then check whether the client has included a 'chunked' item
+                // in its list of supported encodings.
+                if (ocsv.Items.Contains(Chunker.Name, StringComparer.OrdinalIgnoreCase))
+                {
+                    // If it has, it supports chunked encoding. This means we can now
+                    // allow the user to modify output-buffering settings.
+                    _supportsChunked = true;
+                    // We also enable chunked encoding, as it can provide better performance
+                    // than buffering. This is as a result of it sending data as soon as it's
+                    // written rather than waiting for all the data to be accumulated.
+                    base._buffer = false;
+                }
+            }
+        }
+
+        /// <summary>
         /// Creates a new Rfc2616Serialiser.
         /// </summary>
         /// <param name="response">
@@ -90,38 +126,25 @@ namespace McSherry.Zener.Net.Serialisation
             }
         }
 
+        /// <summary>
+        /// Evaluates the capabilities advertised by the client
+        /// in the provided request and makes any relevant changes
+        /// to the serialiser's configuration.
+        /// </summary>
+        /// <param name="request">
+        /// The request to evaluate the client's capabilities from.
+        /// </param>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when the provided HttpRequest is null.
+        /// </exception>
         public override void Configure(HttpRequest request)
         {
             // Rfc7230Serialiser performs checks that we would
             // perform anyway, so we can call its Configure method.
             base.Rfc7230IntlConfigure(request);
-
-            // If the client supports chunked encoding, it will indicate
-            // it in its 'TE' header. HTTP/1.0 clients are not required, and
-            // so are not guaranteed, to support chunked encoding, so we need
-            // to check for it.
-            var xferEnc = request.Headers[Headers.TE].LastOrDefault();
-            // If the client hasn't included a 'TE' header, it doesn't really
-            // matter as we default to having chunked encoding disabled.
-            if (xferEnc != default(HttpHeader))
-            {
-                // We're going to treat the 'TE' header as an ordered CSV header,
-                // and remove any options marked as unacceptable. This will leave
-                // us with all the transfer encodings the client will accept.
-                var ocsv = new OrderedCsvHttpHeader(xferEnc, true);
-                // We then check whether the client has included a 'chunked' item
-                // in its list of supported encodings.
-                if (ocsv.Items.Contains(Chunker.Name, StringComparer.OrdinalIgnoreCase))
-                {
-                    // If it has, it supports chunked encoding. This means we can now
-                    // allow the user to modify output-buffering settings.
-                    _supportsChunked = true;
-                    // We also enable chunked encoding, as it can provide better performance
-                    // than buffering. This is as a result of it sending data as soon as it's
-                    // written rather than waiting for all the data to be accumulated.
-                    base._buffer = false;
-                }
-            }
+            // We then use our own configuration method to do the
+            // rest of the configuring that needs to be done.
+            this.Rfc2616IntlConfigure(request);
         }
     }
 }
