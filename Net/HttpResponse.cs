@@ -114,6 +114,19 @@ namespace McSherry.Zener.Net
         /// not be cached.
         /// </summary>
         TemporaryRedirect               = 307,
+        /// <summary>
+        /// <para>
+        /// Status code 308. Specifies that all future
+        /// requests to this URI should be sent to the URI
+        /// specified in the 'Location' header.
+        /// </para>
+        /// <para>
+        /// This status code requires that the request method
+        /// is not changed from POST to GET when sending a
+        /// request to the new URI.
+        /// </para>
+        /// </summary>
+        PermanentRedirect               = 308,
 
         /// <summary>
         /// Status code 400. The server was unable to understand the client's

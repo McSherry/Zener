@@ -42,6 +42,7 @@ namespace McSherry.Zener.Net
                 { (HttpStatus)304, "Not Modified" },
                 { (HttpStatus)305, "Use Proxy" },
                 { (HttpStatus)307, "Temporary Redirect" },
+                { (HttpStatus)308, "Permanent Redirect" },
 
                 { (HttpStatus)400, "Bad Request" },
                 { (HttpStatus)401, "Unauthorized" },
