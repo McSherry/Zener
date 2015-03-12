@@ -44,6 +44,11 @@ namespace McSherry.Zener.Net.Serialisation
             /// for transfer.
             /// </summary>
             public const string TransferEncoding = "Transfer-Encoding";
+            /// <summary>
+            /// The header used by the client to indicate the transfer
+            /// encoding methods it supports.
+            /// </summary>
+            public const string TE = "TE";
 
             /// <summary>
             /// The header providing the length, in bytes, of the response
@@ -91,7 +96,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// <summary>
         /// The format string used for the response line.
         /// </summary>
-        private const string ResponseLineFormat = "HTTP/1.1 {0} {1}\r\n";
+        private const string ResponseLineFormat = "HTTP/{0} {1} {2}\r\n";
         /// <summary>
         /// The format string used for HTTP/1.1 headers.
         /// </summary>
@@ -129,12 +134,12 @@ namespace McSherry.Zener.Net.Serialisation
         protected bool _bodyWritten;
 
         /// <summary>
-        /// Rfc7230Serialiser's implementation of EvaluateClient
-        /// as a protected method so it can be called in EvaluateClient
+        /// Rfc7230Serialiser's implementation of Configure
+        /// as a protected method so it can be called in Configure
         /// implementations of Rfc7230Serialiser subclasses.
         /// </summary>
         /// <param name="request">The request to evaluate.</param>
-        protected void IntlConfigure(HttpRequest request)
+        protected void Rfc7230IntlConfigure(HttpRequest request)
         {
             if (request == null)
             {
@@ -209,23 +214,32 @@ namespace McSherry.Zener.Net.Serialisation
             // The client indicates this via its 'Connection' header.
             var connHdr = request.Headers[Headers.Connection].LastOrDefault();
             // If the client hasn't sent an HTTP header, we don't have to make
-            // any changes because we have defaulted to closing the connection.
+            // any changes because we have defaulted to keeping the connection
+            // alive, which is the default action in HTTP/1.1.
             if (connHdr != default(HttpHeader))
             {
                 // If the value of the 'Connection' header sent to us by the
-                // client equals 'keep-alive', we'll set the value of our
-                // property Connection to KeepAlive instead of the default Close.
-                if (connHdr.Value.Equals(
+                // client is not 'keep-alive', we treat the connection as
+                // non-persistent and set it to be closed after the response
+                // is sent.
+                if (!connHdr.Value.Equals(
                     value:          HttpConnection.KeepAlive.GetValue(),
                     comparisonType: StringComparison.OrdinalIgnoreCase
                     ))
                 {
-                    this.Connection = HttpConnection.KeepAlive;
+                    this.Connection = HttpConnection.Close;
                 }
-
-                // If we haven't made any changes above, we don't need to do
-                // anything special as we already default to 'close'.
             }
+        }
+
+        /// <summary>
+        /// The HTTP version to be used in the response headers. Defaults
+        /// to 1.1.
+        /// </summary>
+        protected virtual Version HttpVersion
+        {
+            get;
+            set;
         }
 
         /// <summary>
@@ -268,6 +282,8 @@ namespace McSherry.Zener.Net.Serialisation
         public Rfc7230Serialiser(HttpResponse response, Stream output)
             : base(response, output)
         {
+            this.HttpVersion = new Version(1, 1);
+
             // We haven't been provided with an HttpRequest, so it
             // isn't possible for us to determine whether the client
             // supports compression.
@@ -275,13 +291,10 @@ namespace McSherry.Zener.Net.Serialisation
             _useCompression = false;
             _compressor = null;
             // As we haven't been provided with an HttpRequest, we don't
-            // know whether the client deems persistent connections acceptable,
-            // so we default to closing them.
-            //
-            // This default value has the added benefit of improving HTTP/1.0
-            // client compatibility, as 1.0 clients may not support persistent
-            // connections, and so may not send a 'Connection' header.
-            _connection = HttpConnection.Close;
+            // know whether the client deems persistent connections acceptable.
+            // HTTP/1.1 requires that, unless otherwise specified, all connections
+            // be treated as persistent.
+            _connection = HttpConnection.KeepAlive;
             // We're disabling output buffering by default, as it doing
             // so will generally provide better performance. Output buffering
             // being disabled means we'll be sending using chunked encoding,
@@ -433,7 +446,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// </exception>
         public override void Configure(HttpRequest request)
         {
-            this.IntlConfigure(request);
+            this.Rfc7230IntlConfigure(request);
         }
 
         /// <summary>
@@ -706,6 +719,7 @@ namespace McSherry.Zener.Net.Serialisation
                 byte[] hbuf = Encoding.ASCII
                     .GetBytes(String.Format(
                         ResponseLineFormat,
+                        this.HttpVersion.ToString(2),
                         base.Response.StatusCode.GetCode(),
                         base.Response.StatusCode.GetMessage()
                         ));

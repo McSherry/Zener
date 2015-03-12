@@ -236,13 +236,6 @@ namespace McSherry.Zener.Net
 
             NetworkStream ns = tcl.GetStream();
 
-
-            /* TODO: Implement code to determine which serialiser to use.
-             */
-            //HttpSerialiser httpSer = new Rfc7230Serialiser(res, ns);
-            //HttpDeserialiser httpDes = new Http1Deserialiser(ns);
-
-
             HttpRequest req;
             HttpDeserialiser httpDes;
             HttpResponse res;

@@ -168,8 +168,9 @@ namespace McSherry.Zener.Net.Serialisation
                         **/
                         default:
                         /* RFC 7230 is the first (of several) RFCs that
-                         * specify HTTP/1.1. We're using RFC naming to
-                         * avoid hard-to-read class names. Consider:
+                         * specify HTTP/1.1, and RFC 2616 is the analogue
+                         * for HTTP/1.0. We're using RFC naming to avoid
+                         * hard-to-read class names. Consider:
                          * 
                          *      +------------------+-------------------+
                          *      |     Version      |        RFC        |
@@ -183,6 +184,7 @@ namespace McSherry.Zener.Net.Serialisation
                          * would argue that RFC-based class names are
                          * easier to read when you know what you're after.
                         **/
+                        case 0: return new Rfc2616Serialiser(response, output);
                         case 1: return new Rfc7230Serialiser(response, output);
                     }
                 }
