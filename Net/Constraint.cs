@@ -40,7 +40,7 @@ namespace McSherry.Zener.Net
             }
 
             this.Name = name;
-            _doCompare = String.IsNullOrEmpty(this.Regex = regex);
+            _doCompare = !String.IsNullOrEmpty(this.Regex = regex);
 
             if (_doCompare) _regex = new Regex(regex);
         }
