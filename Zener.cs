@@ -127,5 +127,125 @@ namespace McSherry.Zener
                 window[window.Length - 1] = (byte)next;
             }
         }
+
+        /// <summary>
+        /// Calculates the Levenshtein distance between the
+        /// two provided sequences.
+        /// </summary>
+        /// <typeparam name="T">The type of value each sequence contains.</typeparam>
+        /// <param name="lhs">
+        /// The sequence used as the reference. The distance calculated is
+        /// the distance from this sequence.
+        /// </param>
+        /// <param name="rhs">
+        /// The sequence to compare against the reference.
+        /// </param>
+        /// <returns>
+        /// An integer, the value of which is the Levenshtein distance between
+        /// the sequences.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown when one or more of the provided sequences is null.
+        /// </exception>
+        public static int Levenshtein<T>(
+            this IEnumerable<T> lhs,
+            IEnumerable<T> rhs
+            )
+        {
+            if (lhs == null || rhs == null)
+            {
+                throw new ArgumentNullException(
+                    "Neither of the provided sequences can be null."
+                    );
+            }
+
+            // The current count of Levenshtein distance.
+            int count = 0;
+            // Whether the lhs param is longer than rhs.
+            bool lhsLongest;
+
+            // We can make this a bit faster depending on what
+            // type of sequence we've been passed.
+            if (lhs is string)
+            {
+                string  slhs = lhs as string,
+                        srhs = rhs as string;
+
+                lhsLongest = slhs.Length > srhs.Length;
+                // If one of the strings is longer than the other,
+                // the distance is going to be, minimally, the difference
+                // in length of the two strings.
+                count += lhsLongest
+                    ? slhs.Length - srhs.Length
+                    : srhs.Length - slhs.Length
+                    ;
+            }
+            else if (lhs is T[])
+            {
+                T[] alhs = (T[])lhs,
+                    arhs = (T[])rhs;
+
+                lhsLongest = alhs.Length > arhs.Length;
+
+                count += lhsLongest
+                    ? alhs.Length - arhs.Length
+                    : arhs.Length - alhs.Length
+                    ;
+            }
+            else if (lhs is IList<T>)
+            {
+                IList<T>    llhs = (IList<T>)lhs,
+                            lrhs = (IList<T>)rhs;
+
+                lhsLongest = llhs.Count > lrhs.Count;
+
+                count += lhsLongest
+                    ? llhs.Count - lrhs.Count
+                    : lrhs.Count - llhs.Count
+                    ;
+            }
+            else
+            {
+                int lhsCount = lhs.Count(),
+                    rhsCount = rhs.Count();
+
+                lhsLongest = lhsCount > rhsCount;
+
+                count += lhsLongest
+                    ? lhsCount - rhsCount
+                    : rhsCount - lhsCount
+                    ;
+            }
+
+            // We need to iterate over the shortest sequence. This
+            // is because we've already taken in to account the "extra"
+            // characters at the end of the longest sequence.
+            IEnumerator<T> shortest, longest;
+            if (lhsLongest)
+            {
+                shortest    = rhs.GetEnumerator();
+                longest     = lhs.GetEnumerator();
+            }
+            else
+            {
+                shortest    = lhs.GetEnumerator();
+                longest     = rhs.GetEnumerator();
+            }
+
+            // We need to increment both at the same time, as we're
+            // going to be comparing them.
+            while (shortest.MoveNext() && longest.MoveNext())
+            {
+                // If the items at the same position are not equal, then
+                // we can count that as a required modification and increment
+                // the variable tracking the Levenshtein distance.
+                if (!shortest.Current.Equals(longest.Current))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
     }
 }
