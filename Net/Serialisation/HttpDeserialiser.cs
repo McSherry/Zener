@@ -102,7 +102,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// a variable name. Used with key-value parsers (such as for
         /// POST/GET variables).
         /// </summary>
-        private static readonly char[] VarStartProhibited;
+        private static readonly HashSet<char> VarStartProhibited;
         /// <summary>
         /// The multipart/form-data format makes use of the
         /// double-dash in places. Having these bytes handy
@@ -133,19 +133,6 @@ namespace McSherry.Zener.Net.Serialisation
         /// </summary>
         protected static readonly Dictionary<MediaType, PostDataHandler> PostHandlers;
 
-        /// <summary>
-        /// Filters any characters that are not permitted in C# variable
-        /// names from the provided string.
-        /// </summary>
-        /// <param name="str">The string to filter.</param>
-        /// <returns>
-        /// The string, with any prohibited characters filtered out.
-        /// </returns>
-        protected static string FilterInvalidNameCharacters(string str)
-        {
-            return new string(str.Where(VarPermitted.Contains).ToArray())
-                .TrimStart(VarStartProhibited);
-        }
         /// <summary>
         /// Parses the provided string, assuming it is in the
         /// application/x-www-form-urlencoded format.
@@ -676,12 +663,29 @@ namespace McSherry.Zener.Net.Serialisation
             return dyn.Count == 0 ? (dynamic)new Empty() : dyn;
         }
 
+        /// <summary>
+        /// Filters any characters that are not permitted in C# variable
+        /// names from the provided string.
+        /// </summary>
+        /// <param name="str">The string to filter.</param>
+        /// <returns>
+        /// The string, with any prohibited characters filtered out.
+        /// </returns>
+        public static string FilterInvalidNameCharacters(string str)
+        {
+            return new string(str
+                .Where(VarPermitted.Contains)
+                .SkipWhile(VarStartProhibited.Contains)
+                .ToArray()
+                );
+        }
+
         static HttpDeserialiser()
         {
             VarPermitted = new HashSet<char>(
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
                 );
-            VarStartProhibited = "0123456789".ToCharArray();
+            VarStartProhibited = new HashSet<char>("0123456789");
 
             MultipartDoubleDash = Encoding.ASCII.GetBytes("--");
             CRLF = Encoding.ASCII.GetBytes("\r\n");
