@@ -38,10 +38,12 @@ namespace McSherry.Zener.Core
         {
             List<string> @params = new List<string>();
 
-            bool inParam = false;
+            bool    inParam = false, // Whether we're currently inside a parameter.
+                    inRegex = false; // Whether we're currently inside a regex.
             StringBuilder nameBuilder = new StringBuilder();
             for (int i = 0; i < format.Length; i++)
             {
+                bool lastIter = i == format.Length - 1;
                 char c = format[i];
 
                 if (!inParam && c == '[')
@@ -73,42 +75,88 @@ namespace McSherry.Zener.Core
                 }
                 else if (inParam)
                 {
-
-                    // Make sure that we're not at the end of the string.
-                    // We're going to be checking one character ahead to
-                    // see whether this is a literal.
-                    if (i != format.Length - 1)
+                    // If we're in a regex, we don't care about the characters
+                    // unless they're a closing bracket.
+                    if (inRegex)
                     {
-                        // If there is a double bracket, we count it as a
-                        // literal.
-                        if ((c == '[' || c == ']') && format[i + 1] == c)
+                        // We only care about closing brackets.
+                        if (c == ']')
                         {
-                            // Append the literal to the builder.
-                            nameBuilder.Append(c);
-                            // Advance the position past the literal.
-                            i++;
-                            // Make sure we move immediately to the next
-                            // iteration.
-                            continue;
+                            // If it's a double bracket, it's a literal.
+                            if (!lastIter && format[i + 1] == c)
+                            {
+                                // Increment past the second bracket.
+                                i++;
+                            }
+                            // If not, it's a closing bracket.
+                            else
+                            {
+                                // Set the values indicating whether we're
+                                // in a parameter or regex to false.
+                                inParam = (inRegex = false);
+                                // If it is a closing bracket, we need to add
+                                // it to the list of parameters.
+                                @params.Add(nameBuilder.ToString());
+                                // Empty the name builder.
+                                nameBuilder.Clear();
+                            }
                         }
+                        
+                        // If it isn't a closing bracket, we don't care about
+                        // it. We're looking for names, not the value of the
+                        // regex.
+                        continue;
                     }
-
-                    // If we're here, the bracket isn't a literal. Since it
-                    // isn't a literal, we need to check whether it's a closing
-                    // bracket.
-                    if (c == ']')
-                    {
-                        // If it is a closing bracket, we need to add it to
-                        // the list of parameters.
-                        inParam = false;
-                        @params.Add(nameBuilder.ToString());
-                        nameBuilder.Clear();
-                    }
-                    // If it isn't a closing bracket it, add it to the name of
-                    // the variable.
                     else
                     {
-                        nameBuilder.Append(c);
+                        // If we hit a colon, it means we're going to
+                        // find a regular expression after it.
+                        if (c == ':')
+                        {
+                            // Indicate we're now in a regex.
+                            inRegex = true;
+                        }
+                        // If we hit a right square bracket, it may be a closing
+                        // bracket.
+                        else if (c == ']')
+                        {
+                            // If it's not the last iteration, check ahead to see
+                            // whether there is another right square bracket. If
+                            // there is, this is a literal.
+                            if (!lastIter && format[i+1] == c)
+                            {
+                                // Move past the second square bracket.
+                                i++;
+                                // Append the literal.
+                                nameBuilder.Append(c);
+                            }
+                            // Otherwise, this is a closing bracket, and indicates
+                            // that we're now at the end of the variale declaration.
+                            else
+                            {
+                                // Set the values indicating whether we're
+                                // in a parameter or regex to false.
+                                inParam = (inRegex = false);
+                                // If it is a closing bracket, we need to add
+                                // it to the list of parameters.
+                                @params.Add(nameBuilder.ToString());
+                                // Empty the name builder.
+                                nameBuilder.Clear();
+                            }
+                        }
+                        else
+                        {
+                            // We need to check for left square bracket literals, too.
+                            if (c == '[' && !lastIter && format[i+1] == c)
+                            {
+                                // If it is one, move past the second bracket.
+                                i++;
+                            }
+
+                            // If we're here, we don't care what the character is, so
+                            // just append it to the name builder.
+                            nameBuilder.Append(c);
+                        }
                     }
                 }
                 else continue;
