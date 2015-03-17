@@ -46,28 +46,70 @@ namespace McSherry.Zener.Core
 
                 if (!inParam && c == '[')
                 {
-                    inParam = true;
-
-                    // If this is an unbounded parameter,
-                    // it will have an asterisk before its
-                    // name. This isn't part of the name,
-                    // so we need to skip it.
-                    if (format[i + 1] == '*')
+                    // If there are two left square brackets in a row,
+                    // we're counting it as a bracket literal.
+                    if (format[i + 1] == '[')
                     {
-                        i++;
+                        // Skip past the second bracket.
+                        ++i;
+                    }
+                    // If not, we treat it like the opening bracket in
+                    // a variable declaration.
+                    else
+                    {
+                        inParam = true;
+
+                        // If this is an unbounded parameter,
+                        // it will have an asterisk before its
+                        // name. This isn't part of the name,
+                        // so we need to skip it.
+                        if (format[i + 1] == '*')
+                        {
+                            i++;
+                        }
                     }
 
                     continue;
                 }
-                else if (inParam && c == ']')
-                {
-                    inParam = false;
-                    @params.Add(nameBuilder.ToString());
-                    nameBuilder.Clear();
-                }
                 else if (inParam)
                 {
-                    nameBuilder.Append(c);
+
+                    // Make sure that we're not at the end of the string.
+                    // We're going to be checking one character ahead to
+                    // see whether this is a literal.
+                    if (i != format.Length - 1)
+                    {
+                        // If there is a double bracket, we count it as a
+                        // literal.
+                        if ((c == '[' || c == ']') && format[i + 1] == c)
+                        {
+                            // Append the literal to the builder.
+                            nameBuilder.Append(c);
+                            // Advance the position past the literal.
+                            i++;
+                            // Make sure we move immediately to the next
+                            // iteration.
+                            continue;
+                        }
+                    }
+
+                    // If we're here, the bracket isn't a literal. Since it
+                    // isn't a literal, we need to check whether it's a closing
+                    // bracket.
+                    if (c == ']')
+                    {
+                        // If it is a closing bracket, we need to add it to
+                        // the list of parameters.
+                        inParam = false;
+                        @params.Add(nameBuilder.ToString());
+                        nameBuilder.Clear();
+                    }
+                    // If it isn't a closing bracket it, add it to the name of
+                    // the variable.
+                    else
+                    {
+                        nameBuilder.Append(c);
+                    }
                 }
                 else continue;
             }
