@@ -41,6 +41,22 @@ namespace McSherry.Zener.Core
             bool    inParam = false, // Whether we're currently inside a parameter.
                     inRegex = false; // Whether we're currently inside a regex.
             StringBuilder nameBuilder = new StringBuilder();
+
+            // To be called when at the end of a variable declaration.
+            Action flush = delegate
+            {
+                // Set inParam, inRegex to false.
+                inParam = (inRegex = false);
+                // Add the parameter name to the list, removing any
+                // invalid characters first.
+                @params.Add(
+                    Net.Serialisation.HttpDeserialiser.FilterInvalidNameCharacters(
+                        nameBuilder.ToString()
+                    ));
+                // Empty the builder.
+                nameBuilder.Clear();
+            };
+
             for (int i = 0; i < format.Length; i++)
             {
                 bool lastIter = i == format.Length - 1;
@@ -91,14 +107,7 @@ namespace McSherry.Zener.Core
                             // If not, it's a closing bracket.
                             else
                             {
-                                // Set the values indicating whether we're
-                                // in a parameter or regex to false.
-                                inParam = (inRegex = false);
-                                // If it is a closing bracket, we need to add
-                                // it to the list of parameters.
-                                @params.Add(nameBuilder.ToString());
-                                // Empty the name builder.
-                                nameBuilder.Clear();
+                                flush();
                             }
                         }
                         
@@ -134,14 +143,7 @@ namespace McSherry.Zener.Core
                             // that we're now at the end of the variale declaration.
                             else
                             {
-                                // Set the values indicating whether we're
-                                // in a parameter or regex to false.
-                                inParam = (inRegex = false);
-                                // If it is a closing bracket, we need to add
-                                // it to the list of parameters.
-                                @params.Add(nameBuilder.ToString());
-                                // Empty the name builder.
-                                nameBuilder.Clear();
+                                flush();
                             }
                         }
                         else
