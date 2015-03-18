@@ -259,6 +259,8 @@ namespace McSherry.Zener.Core
             {
                 while (fIndex < format.Length)
                 {
+                    bool lastIter = fIndex + 1 == format.Length;
+
                     // Find start of a param wild-card
                     if (!inParam && format[fIndex] == '[')
                     {
@@ -266,7 +268,10 @@ namespace McSherry.Zener.Core
                         // square bracket is an asterisk, the
                         // variable is unbounded (i.e. its value
                         // can contain any characters).
-                        if (allowUnbounded && format[fIndex + 1] == '*')
+                        if (
+                            !lastIter && allowUnbounded && 
+                            format[fIndex + 1] == '*'
+                            )
                         {
                             paramIsUnbounded = true;
                             // The asterisk isn't part of the
@@ -276,7 +281,10 @@ namespace McSherry.Zener.Core
                         }
                         // If there are two left square brackets in a row,
                         // it's a literal and not the start of a variable.
-                        else if (allowLiterals && format[fIndex + 1] == '[')
+                        else if (
+                            !lastIter && allowLiterals &&
+                            format[fIndex + 1] == '['
+                            )
                         {
                             // Add the square bracket to the format builder.
                             formatBuilder.Append(format[fIndex]);
@@ -297,7 +305,10 @@ namespace McSherry.Zener.Core
                     {
                         // As we did above, we need to check whether
                         // this is just a bracket literal.
-                        if (format[fIndex + 1] == ']')
+                        if (
+                            !lastIter && allowLiterals &&
+                            format[fIndex + 1] == ']'
+                            )
                         {
                             // It is a literal, so add a right square
                             // bracket to the name builder.
