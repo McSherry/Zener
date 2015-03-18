@@ -344,12 +344,26 @@ namespace McSherry.Zener.Core
                 int colonIndex;
                 // A return value of -1 means that there is no colon in the
                 // string, and so there is no regular expression.
-                if ((colonIndex = paramName.IndexOf(':')) > -1)
+                if (allowRegex && (colonIndex = paramName.IndexOf(':')) > -1)
                 {
-                    // The regular expression is every character after the
-                    // first colon. We need to add one so that we don't get
-                    // the colon in the regular expression.
-                    valRegex = new Regex(paramName.Substring(colonIndex + 1));
+                    // We're not going to surround this in a try-catch block. It's
+                    // the job of the caller to validate the regex before we attempt
+                    // to parse it.
+                    valRegex = new Regex(
+                        // We need to ensure that a partial match doesn't throw
+                        // off the result. To do this, we ensure that the regular
+                        // expression applies to the entire string. Even if the
+                        // user includes these themselves, there shouldn't be a
+                        // problem.
+                        //
+                        // If the user decides to put a backwards slash at the end
+                        // of their regular expression, they'll cause themself a
+                        // problem as that will escape the $.
+                        //
+                        // As the regular expression is every character after the
+                        // colon, we need to add one to the index of the colon.
+                        String.Format("^{0}$", paramName.Substring(colonIndex + 1))
+                        );
                     // Now that we've extracted the regular expression, we need
                     // to take it out of the string containing the parameter
                     // name. As above, we make sure the colon isn't in the name,
@@ -405,13 +419,18 @@ namespace McSherry.Zener.Core
                         // regular expression constraint, if one is
                         // present.
                         //
-                        // First, we ensure a regex is present through means
-                        // of a null check. If one is present, we check whether
-                        // it is a match.
+                        // First, we ensure that regex validation is enabled.
+                        //
+                        // Second, we ensure a regex is present through means
+                        // of a null check. If one is present, we then check
+                        // whether it is a match.
                         //
                         // If it isn't a match, we can't proceed and have to
                         // exit.
-                        if (valRegex != null && !valRegex.IsMatch(paramValue))
+                        if (
+                            allowRegex &&
+                            valRegex != null && !valRegex.IsMatch(paramValue)
+                            )
                         {
                             // These steps ensure that parsing will end immediately.
                             pIndex = int.MaxValue;
