@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.IO;
 using System.Dynamic;
@@ -219,12 +220,22 @@ namespace McSherry.Zener.Core
         ///     Whether to permit the use of unbounded variables in
         ///     format strings.
         /// </param>
+        /// <param name="allowRegex">
+        ///     Whether to permit the use of regular expressions in variable
+        ///     declarations.
+        /// </param>
+        /// <param name="allowLiterals">
+        ///     Whether to permit the use of square bracket literals ([[ and
+        ///     ]]).
+        /// </param>
         /// <returns>True if the specified path matches the given format.</returns>
         public static bool IsFormatMatch(
             string path, string format,
             out dynamic parameters,
             char delimiter      = '/',
-            bool allowUnbounded = true
+            bool allowUnbounded = true,
+            bool allowRegex     = true,
+            bool allowLiterals  = true
             )
         {
             format = format.Trim(' ', delimiter);
@@ -241,6 +252,8 @@ namespace McSherry.Zener.Core
                 paramValBuilder = new StringBuilder();
             bool inParam = false, loop = true;
             bool paramIsUnbounded = false;
+            //bool paramHasRegex = false;
+            Regex valRegex = null;
 
             while (loop)
             {
@@ -253,13 +266,27 @@ namespace McSherry.Zener.Core
                         // square bracket is an asterisk, the
                         // variable is unbounded (i.e. its value
                         // can contain any characters).
-                        if (format[fIndex + 1] == '*' && allowUnbounded)
+                        if (allowUnbounded && format[fIndex + 1] == '*')
                         {
                             paramIsUnbounded = true;
                             // The asterisk isn't part of the
                             // variable's name, so we can skip
                             // past it.
                             fIndex++;
+                        }
+                        // If there are two left square brackets in a row,
+                        // it's a literal and not the start of a variable.
+                        else if (allowLiterals && format[fIndex + 1] == '[')
+                        {
+                            // Add the square bracket to the format builder.
+                            formatBuilder.Append(format[fIndex]);
+                            // Increment past the current and next square
+                            // bracket.
+                            fIndex += 2;
+                            // It's a literal, so we don't want to treat it
+                            // as the opening bracket of a variable declaration.
+                            // Immediately skip to the next iteration.
+                            continue;
                         }
 
                         inParam = true;
@@ -268,6 +295,21 @@ namespace McSherry.Zener.Core
                     // Find end of a param wild-card
                     else if (inParam && format[fIndex] == ']')
                     {
+                        // As we did above, we need to check whether
+                        // this is just a bracket literal.
+                        if (format[fIndex + 1] == ']')
+                        {
+                            // It is a literal, so add a right square
+                            // bracket to the name builder.
+                            paramNameBuilder.Append(format[fIndex]);
+                            // We need to increment past the double
+                            // bracket, so we add two.
+                            fIndex += 2;
+                            // This isn't a closing bracket, so we skip
+                            // to the next iteration immediately.
+                            continue;
+                        }
+
                         inParam = false;
                         fIndex++;
                         break;
@@ -282,6 +324,45 @@ namespace McSherry.Zener.Core
                     {
                         paramNameBuilder.Append(formatOriginal[fIndex++]);
                     }
+                }
+
+                // We now need to determine whether the parameter has a
+                // regular expression constraint on its value. There is
+                // a simple check for this: see if the parameter name
+                // contains a colon (:).
+                //
+                // Get the contents of the name builder. We're going to be
+                // using it in the below code anyway.
+                string paramName = paramNameBuilder.ToString();
+                
+                // If there is a regular expression in the declaration, we
+                // need to know where it starts. We can do this by taking
+                // the index of the colon, and adding one. We're also going
+                // to need to trim the end of the string of the appropriate
+                // number of characters to make sure the regular expression
+                // isn't in the name of the parameter.
+                int colonIndex;
+                // A return value of -1 means that there is no colon in the
+                // string, and so there is no regular expression.
+                if ((colonIndex = paramName.IndexOf(':')) > -1)
+                {
+                    // The regular expression is every character after the
+                    // first colon. We need to add one so that we don't get
+                    // the colon in the regular expression.
+                    valRegex = new Regex(paramName.Substring(colonIndex + 1));
+                    // Now that we've extracted the regular expression, we need
+                    // to take it out of the string containing the parameter
+                    // name. As above, we make sure the colon isn't in the name,
+                    // this time by subtracting one since the text we want is
+                    // before the colon.
+                    paramName = paramName.Substring(0, colonIndex - 1);
+                }
+                // If we're getting to this branch, there's no regular expression.
+                // We're using the same variable for each iteration, so we need to
+                // null it to indicate that there's no regular expression present.
+                else
+                {
+                    valRegex = null;
                 }
 
                 while (pIndex < path.Length)
@@ -299,7 +380,7 @@ namespace McSherry.Zener.Core
                         }
                         else
                         {
-                            if (paramNameBuilder.Length == 0)
+                            if (paramName.Length == 0)
                             {
                                 pIndex = int.MaxValue;
                                 break;
@@ -319,8 +400,26 @@ namespace McSherry.Zener.Core
                             continue;
                         }
 
+                        string paramValue = paramValBuilder.ToString();
+                        // We need to ensure that the value matches the
+                        // regular expression constraint, if one is
+                        // present.
+                        //
+                        // First, we ensure a regex is present through means
+                        // of a null check. If one is present, we check whether
+                        // it is a match.
+                        //
+                        // If it isn't a match, we can't proceed and have to
+                        // exit.
+                        if (valRegex != null && !valRegex.IsMatch(paramValue))
+                        {
+                            // These steps ensure that parsing will end immediately.
+                            pIndex = int.MaxValue;
+                            break;
+                        }
+
                         inParam = false;
-                        dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                        dynObj[paramName] = paramValBuilder.ToString();
                         paramNameBuilder.Clear();
                         paramValBuilder.Clear();
                         break;
@@ -335,7 +434,7 @@ namespace McSherry.Zener.Core
                 {
                     if (inParam)
                     {
-                        dynObj[paramNameBuilder.ToString()] = paramValBuilder.ToString();
+                        dynObj[paramName.ToString()] = paramValBuilder.ToString();
                         paramNameBuilder.Clear();
                         paramValBuilder.Clear();
                     }
