@@ -333,6 +333,23 @@ namespace McSherry.Zener.Core
                     // Param name
                     else
                     {
+                        // We need to check for literals here, too. While
+                        // the use of a left square bracket literal isn't
+                        // strictly required within a variable name, it'd
+                        // be odd if right bracket literals worked but left
+                        // ones didn't, so we add it in to prevent confusion.
+                        if (
+                            !lastIter && allowLiterals &&
+                            format[fIndex] == '[' &&
+                            format[fIndex + 1] == '['
+                            )
+                        {
+                            // Increment past the first square bracket. We
+                            // don't need to append it here, as the below
+                            // appending will do it for us.
+                            ++fIndex;
+                        }
+
                         paramNameBuilder.Append(formatOriginal[fIndex++]);
                     }
                 }
