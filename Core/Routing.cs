@@ -449,7 +449,7 @@ namespace McSherry.Zener.Core
                         }
 
                         inParam = false;
-                        dynObj[paramName] = paramValBuilder.ToString();
+                        dynObj[paramName] = paramValue;
                         paramNameBuilder.Clear();
                         paramValBuilder.Clear();
                         break;
@@ -464,6 +464,21 @@ namespace McSherry.Zener.Core
                 {
                     if (inParam)
                     {
+                        // Just like above, we ensure that the regular expression
+                        // constraint, if present, would consider the value a match.
+                        // If the value isn't a match, we break out of the loop and
+                        // end up returning false.
+                        string paramValue = paramValBuilder.ToString();
+                        if (
+                            allowRegex &&
+                            valRegex != null && !valRegex.IsMatch(paramValue)
+                            )
+                        {
+                            // These steps ensure that parsing will end immediately.
+                            pIndex = int.MaxValue;
+                            break;
+                        }
+
                         dynObj[paramName.ToString()] = paramValBuilder.ToString();
                         paramNameBuilder.Clear();
                         paramValBuilder.Clear();
