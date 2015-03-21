@@ -62,7 +62,7 @@ namespace McSherry.Zener.Net.Serialisation
                     // We also enable chunked encoding, as it can provide better performance
                     // than buffering. This is as a result of it sending data as soon as it's
                     // written rather than waiting for all the data to be accumulated.
-                    base._buffer = false;
+                    base.BufferOutput = false;
                 }
             }
         }
@@ -102,7 +102,7 @@ namespace McSherry.Zener.Net.Serialisation
             _supportsChunked = false;
             // As we won't be sure if the client supports chunked encoding,
             // we need to enable output buffering by default.
-            base._buffer = true;
+            base.BufferOutput = true;
 
             // Persistent connections are an extension to HTTP/1.0, so we
             // need to default to having them disabled.
