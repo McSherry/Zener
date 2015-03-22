@@ -82,7 +82,6 @@
     <Compile Include="Core\Route.cs" />
     <Compile Include="Core\Router.cs" />
     <Compile Include="Core\Routing.cs" />
-    <Compile Include="Net\Constraint.cs" />
     <Compile Include="Net\HttpServerMessage.cs" />
     <Compile Include="Net\HttpHeader.cs" />
     <Compile Include="Net\HttpCookie.cs" />
