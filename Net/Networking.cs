@@ -61,13 +61,17 @@ namespace McSherry.Zener.Net
                 { (HttpStatus)415, "Unsupported Media Type" },
                 { (HttpStatus)416, "Request range not satisfiable" },
                 { (HttpStatus)417, "Expectation Failed" },
+                { (HttpStatus)428, "Precondition Required" },
+                { (HttpStatus)429, "Too Many Requests" },
+                { (HttpStatus)431, "Request Header Fields Too Large" },
 
                 { (HttpStatus)500, "Internal Server Error" },
                 { (HttpStatus)501, "Not Implemented" },
                 { (HttpStatus)502, "Bad Gateway" },
                 { (HttpStatus)503, "Service Unavailable" },
                 { (HttpStatus)504, "Gateway Time-out" },
-                { (HttpStatus)505, "HTTP Version not supported" }
+                { (HttpStatus)505, "HTTP Version not supported" },
+                { (HttpStatus)511, "Network Authentication Required" },
             };
         #endregion
         private const string

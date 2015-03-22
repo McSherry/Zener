@@ -100,7 +100,7 @@ namespace McSherry.Zener.Core
         /*****/
 
         private List<MediaType> _types;
-        private List<List<string>> _extensions;
+        private List<IList<string>> _extensions;
         private List<MediaTypeHandler> _handlers;
         private MediaType _defaultType;
 
@@ -134,7 +134,7 @@ namespace McSherry.Zener.Core
         public MediaTypeMap()
         {
             _types = new List<MediaType>();
-            _extensions = new List<List<string>>();
+            _extensions = new List<IList<string>>();
             _handlers = new List<MediaTypeHandler>();
 
             this.DefaultType = MediaType.PlainText;
@@ -161,7 +161,7 @@ namespace McSherry.Zener.Core
             return this.Add(
                 mediaType:  mediaType,
                 handler:    MediaTypeMap.DefaultMediaTypeHandler,
-                extensions: extensions.ToList()
+                extensions: extensions
                 );
         }
         /// <summary>
@@ -178,7 +178,7 @@ namespace McSherry.Zener.Core
         /// chaining calls to MediaTypeMap.Add.
         /// </returns>
         public MediaTypeMap Add(
-            MediaType mediaType, List<string> extensions
+            MediaType mediaType, IList<string> extensions
             )
         {
             return this.Add(
@@ -225,7 +225,7 @@ namespace McSherry.Zener.Core
             return this.Add(
                 mediaType:  mediaType,
                 handler:    handler,
-                extensions: extensions.ToList()
+                extensions: extensions
                 );
         }
         /// <summary>
@@ -260,7 +260,7 @@ namespace McSherry.Zener.Core
         public MediaTypeMap Add(
             MediaType mediaType,
             MediaTypeHandler handler,
-            List<string> extensions
+            IList<string> extensions
             )
         {
             if (mediaType == null)
@@ -526,7 +526,7 @@ namespace McSherry.Zener.Core
                 _defaultType = this._defaultType,
                 _types = new List<MediaType>(this._types),
                 _handlers = new List<MediaTypeHandler>(this._handlers),
-                _extensions = new List<List<string>>(this._extensions)
+                _extensions = new List<IList<string>>(this._extensions)
             };
         }
         /// <summary>
