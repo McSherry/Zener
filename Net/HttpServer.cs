@@ -293,7 +293,7 @@ namespace McSherry.Zener.Net
                     // as its arguments.
                     this.EmitMessage(
                         MessageType.RequestReceived,
-                        new object[] { req, res }.ToList(),
+                        new object[] { req, res },
                         res
                         );
 
@@ -406,7 +406,7 @@ namespace McSherry.Zener.Net
                 // own over ours.
                 this.EmitMessage(
                     MessageType.InvokeErrorHandler,
-                    new object[] { hex, res }.ToList(),
+                    new object[] { hex, res },
                     res
                     );
 
@@ -472,7 +472,7 @@ namespace McSherry.Zener.Net
                  */
                 this.EmitMessage(
                     MessageType.InvokeErrorHandler,
-                    new object[] { hex, res }.ToList(),
+                    new object[] { hex, res },
                     res
                     );
             }
