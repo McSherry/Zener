@@ -161,7 +161,7 @@ namespace McSherry.Zener.Core
             return this.Add(
                 mediaType:  mediaType,
                 handler:    MediaTypeMap.DefaultMediaTypeHandler,
-                extensions: extensions
+                extensions: (IList<string>)extensions
                 );
         }
         /// <summary>
@@ -225,7 +225,7 @@ namespace McSherry.Zener.Core
             return this.Add(
                 mediaType:  mediaType,
                 handler:    handler,
-                extensions: extensions
+                extensions: (IList<string>)extensions
                 );
         }
         /// <summary>
