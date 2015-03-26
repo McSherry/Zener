@@ -80,7 +80,7 @@ namespace McSherry.Zener.Core
 
             if (validHandlers.Count == 0)
             {
-                return new Tuple<Route, dynamic>[0].ToList();
+                return new Tuple<Route, dynamic>[0];
             }
 
             return validHandlers
