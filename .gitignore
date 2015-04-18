@@ -6,3 +6,4 @@ bin/
 *.html
 *.vsp
 *.psess
+*.nupkg
