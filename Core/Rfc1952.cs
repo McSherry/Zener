@@ -171,7 +171,7 @@ namespace McSherry.Zener.Core
                     );
             }
 
-            uint crc = 0,
+            uint crc = CRC_INIT,
                 c = crc ^ 0xFFFFFFFF;
 
             int b = 0;

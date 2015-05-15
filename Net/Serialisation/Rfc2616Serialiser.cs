@@ -51,7 +51,7 @@ namespace McSherry.Zener.Net.Serialisation
                 // We're going to treat the 'TE' header as an ordered CSV header,
                 // and remove any options marked as unacceptable. This will leave
                 // us with all the transfer encodings the client will accept.
-                var ocsv = new OrderedCsvHttpHeader(xferEnc, true);
+                var ocsv = new OrderedCsvHttpHeader(xferEnc, removeUnacceptable: true);
                 // We then check whether the client has included a 'chunked' item
                 // in its list of supported encodings.
                 if (ocsv.Items.Contains(Chunker.Name, StringComparer.OrdinalIgnoreCase))
