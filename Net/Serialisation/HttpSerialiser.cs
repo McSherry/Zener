@@ -32,7 +32,7 @@ namespace McSherry.Zener.Net.Serialisation
         /// used in response to the contents of a client's
         /// 'Accept-Encoding' header.
         /// </summary>
-        protected internal static class Encoders
+        public static class Encoders
         {
             /// <summary>
             /// The names (case-insensitive) of the encodings with the
@@ -45,23 +45,7 @@ namespace McSherry.Zener.Net.Serialisation
                 // We're going to consider names to be case-insensitive.
                 _encNamesAndTypes = new Dictionary<string, Type>(
                     StringComparer.OrdinalIgnoreCase
-                    )
-                    {
-
-                    };
-
-                // We need a parameterless constructor for this stuff
-                // to work, so we check all of the types in the encoder
-                // dictionary to make sure that they all have one. If
-                // one or more doesn't, throw an exception.
-                if (_encNamesAndTypes.Values.Any(
-                    T => T.GetConstructor(Type.EmptyTypes) == null
-                    ))
-                {
-                    throw new ApplicationException(
-                        "All IEncoders must have a parameterless constructor."
-                        );
-                }
+                    );
             }
 
             /// <summary>
@@ -103,6 +87,20 @@ namespace McSherry.Zener.Net.Serialisation
                 // If we can retrieve an encoder, create an instance of it
                 // and return it to the caller.
                 return (IEncoder)Activator.CreateInstance(T);
+            }
+            /// <summary>
+            /// Adds an encoder to the list of encoders.
+            /// </summary>
+            /// <typeparam name="T">The type of the encoder to add.</typeparam>
+            /// <param name="name">
+            /// The name to register the encoder with. This must be the name
+            /// used in the "Accept-Encoding" header sent by the client. This
+            /// name is case-insensitive.
+            /// </param>
+            public static void Register<T>(string name)
+                where T : IEncoder, new()
+            {
+                _encNamesAndTypes[name] = typeof(T);
             }
         }
 
