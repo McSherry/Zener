@@ -28,16 +28,16 @@ namespace McSherry.Zener.Net
             DecimalPlaces       = 3
             ;
         private const decimal
-            // The default q-value we'll use if an item
-            // does not have a q-value.
             // The minimum acceptable weighting.
             MinimumWeighting    = 0.000M,
             // The maximum acceptable weighting.
             MaximumWeighting    = 1.000M,
+            // The default q-value we'll use if an item
+            // does not have a q-value.
             DefaultWeighting    = MaximumWeighting
             ;
         private const char
-            Delimiter = ';'
+            Delimiter           = ';'
             ;
         private const string
             // The key used to store the weighting value.
@@ -194,7 +194,7 @@ namespace McSherry.Zener.Net
             }
 
             // Remove any q-values from the indexed dictionaries.
-            foreach (var ix in ixDicts) ix.Remove("q");
+            foreach (var ix in ixDicts) ix.Remove(WeightingKey);
 
             // Just having two separate code paths is probably going to
             // be faster and more readable than having some weird combinatorial
