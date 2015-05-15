@@ -25,6 +25,8 @@ namespace McSherry.Zener.Net
         private const char 
             BASE64_PADCHAR  = '='
             ;
+        private static readonly HashSet<char> BASE64_ALPHA_SET
+            = new HashSet<char>(BASE64_ALPHA);
 
         /// <summary>
         /// Encodes the provided data in the RFC 2045 Base64 format,
@@ -228,9 +230,8 @@ namespace McSherry.Zener.Net
                     );
             }
 
-            var alpha = BASE64_ALPHA.ToCharArray();
             var fdata = data
-                .Where(c => alpha.Contains(c) || c == BASE64_PADCHAR)
+                .Where(c => BASE64_ALPHA_SET.Contains(c) || c == BASE64_PADCHAR)
                 .ToArray();
 
             // We couldn't test length before because it was possible that
