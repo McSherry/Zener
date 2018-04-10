@@ -1,121 +1,37 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2120DAD8-C4E8-4122-B1D8-86ED751FF3C9}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>McSherry.Zener</RootNamespace>
-    <AssemblyName>Zener</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
-    <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisIgnoreGeneratedCode>false</CodeAnalysisIgnoreGeneratedCode>
-    <DocumentationFile>bin\Debug\Zener.XML</DocumentationFile>
-    <LangVersion>5</LangVersion>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <DocumentationFile>bin\Release\Zener.XML</DocumentationFile>
-    <LangVersion>5</LangVersion>
-    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
-    <CodeAnalysisIgnoreGeneratedCode>false</CodeAnalysisIgnoreGeneratedCode>
-    <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Archives\Archiving.cs" />
-    <Compile Include="Archives\CabinetArchive.cs" />
-    <Compile Include="Archives\FileBuffer.cs" />
-    <Compile Include="Archives\Filemark.cs" />
-    <Compile Include="Archives\Archive.cs" />
-    <Compile Include="Archives\GzipArchive.cs" />
-    <Compile Include="Archives\KeyedFileBuffer.cs" />
-    <Compile Include="Archives\SingleFileArchive.cs" />
-    <Compile Include="Archives\TarArchive.cs" />
-    <Compile Include="Archives\UstarArchive.cs" />
-    <Compile Include="Archives\ZlibArchive.cs" />
-    <Compile Include="Core\Coding\ChunkedEncoder.cs" />
-    <Compile Include="Core\Coding\Coding.cs" />
-    <Compile Include="Core\Coding\IDecoder.cs" />
-    <Compile Include="Core\Coding\IEncoder.cs" />
-    <Compile Include="Core\HostRouter.cs" />
-    <Compile Include="Core\IndexedDictionary.cs" />
-    <Compile Include="Core\MediaType.cs" />
-    <Compile Include="Core\VirtualHost.cs" />
-    <Compile Include="Core\MediaTypeMap.cs" />
-    <Compile Include="Core\Rfc1952.cs" />
-    <Compile Include="Core\Route.cs" />
-    <Compile Include="Core\Router.cs" />
-    <Compile Include="Core\Routing.cs" />
-    <Compile Include="Net\HttpServerMessage.cs" />
-    <Compile Include="Net\HttpHeader.cs" />
-    <Compile Include="Net\HttpCookie.cs" />
-    <Compile Include="Net\HttpCookieCollection.cs" />
-    <Compile Include="Net\HttpHeaderCollection.cs" />
-    <Compile Include="Net\HttpRequest.cs" />
-    <Compile Include="Net\HttpResponse.cs" />
-    <Compile Include="Net\CsvHttpHeader.cs" />
-    <Compile Include="Net\NamedParametersHttpHeader.cs" />
-    <Compile Include="Net\NameValueHttpHeader.cs" />
-    <Compile Include="Net\Networking.cs" />
-    <Compile Include="Net\OrderedCsvHttpHeader.cs" />
-    <Compile Include="Net\Serialisation\Http1Deserialiser.cs" />
-    <Compile Include="Net\Serialisation\HttpDeserialiser.cs" />
-    <Compile Include="Net\Serialisation\HttpSerialiser.cs" />
-    <Compile Include="Net\Rfc2045.cs" />
-    <Compile Include="Net\Rfc2616.cs" />
-    <Compile Include="Net\Rfc3896.cs" />
-    <Compile Include="Net\Serialisation\Rfc2616Serialiser.cs" />
-    <Compile Include="Net\Serialisation\Rfc7230Serialiser.cs" />
-    <Compile Include="Net\Serialisation\Serialise.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Net\HttpServer.cs" />
-    <Compile Include="Zener.cs" />
-    <Compile Include="ZenerCore.cs" />
-    <Compile Include="ZenerContext.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include=".travis.yml" />
-    <None Include="ClassDiagram1.cd" />
-    <None Include="LICENCE" />
-  </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <!-- Package Properties -->
+        <PackageId>McSherry.Zener</PackageId>
+        <Authors>Liam McSherry</Authors>
+        <Copyright>2014-2018 (c) Liam McSherry</Copyright>
+        <PackageVersion>0.13.0</PackageVersion>
+        
+        <!-- Assembly Properties -->
+        <RootNamespace>McSherry.Zener</RootNamespace>
+        <AssemblyName>McSherry.Zener</AssemblyName>
+    
+        <!-- Build Information -->
+        <TargetFrameworks>
+            net40;
+            netstandard2.0
+        </TargetFrameworks>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+    
+    <!-- .NET Framework 4.0 -->
+    <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+        <Reference Include="Microsoft.CSharp" />
+    </ItemGroup>
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    
+    </PropertyGroup>
+    
+    <!-- .NET Standard 2.0 -->
+    <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+        <PackageReference Include="Microsoft.CSharp" Version="4.4.0" />
+    </ItemGroup>
+    <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    
+    </PropertyGroup>
 </Project>

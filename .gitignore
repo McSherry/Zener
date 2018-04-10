@@ -7,3 +7,4 @@ bin/
 *.vsp
 *.psess
 *.nupkg
+.vs/

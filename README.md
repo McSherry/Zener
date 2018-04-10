@@ -11,7 +11,7 @@ Zener is an embeddable HTTP server with supporting logic. It handles loading res
 
 As well as being great for software using an HTML GUI, Zener is also a perfectly capable general-purpose web server.
 
-Zener is written in C# 5.0, and has been tested against .NET 4 Client Profile and Mono 3.12.0. It is released under the BSD 3-Clause licence.
+Zener is written in C# 5.0, and has been tested against .NET 4 Client Profile and Mono 3.12.0. It is released under the BSD 3-Clause licence. Zener will also build under .NET Standard 2.0.
 
 ## Performance
 
