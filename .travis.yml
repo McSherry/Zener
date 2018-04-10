@@ -1,2 +1,4 @@
 language: csharp
 solution: Zener.csproj
+install:
+    nuget restore Zener.csproj
